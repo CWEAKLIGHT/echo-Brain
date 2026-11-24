@@ -5,10 +5,27 @@ const IntentScript = preload("res://scripts/battle/battle_intent.gd")
 const CELL_SIZE: float = 64.0
 const BOARD_ORIGIN := Vector2(384.0, 72.0)
 const BOARD_SIZE := 8
-const END_TURN_RECT := Rect2(1010.0, 620.0, 210.0, 64.0)
+const END_TURN_RECT := Rect2(940.0, 620.0, 300.0, 60.0)
+const SKILL_PANEL_X: float = 940.0
+const SKILL_PANEL_W: float = 300.0
+const SKILL_FIRST_Y: float = 112.0
+const SKILL_BTN_H: float = 50.0
+const SKILL_BTN_STEP: float = 56.0
+
+## Skill bar order mirrors OathkeeperSkillCatalog.create_prototype_skills().
+## "mode" decides whether the skill fires on press (self) or waits for a target.
+const SKILL_BAR := [
+	{"id": "attack", "name": "普通攻击", "hint": "相邻敌人 · 物理伤害", "cost": 1, "mode": "actor"},
+	{"id": "oathguard_stance", "name": "誓盾架势", "hint": "自身 · 抵御下一次攻击", "cost": 1, "mode": "self"},
+	{"id": "watchwall", "name": "守望壁垒", "hint": "自身 · 建立十字守护区", "cost": 1, "mode": "self"},
+	{"id": "judgment_mark", "name": "裁决印记", "hint": "1–4 格 · 标记敌人", "cost": 1, "mode": "actor"},
+	{"id": "echo_counter", "name": "回响反击", "hint": "自身 · 受击时反击", "cost": 1, "mode": "self"},
+	{"id": "oath_severance", "name": "誓约裁断", "hint": "1–2 格 · 需印记 · 打断", "cost": 2, "mode": "actor"},
+]
 
 var controller: BattleController
-var status_message: String = "点击格子移动，点击相邻敌人进行攻击。"
+var status_message: String = "点击格子移动；点右侧技能后选择目标。"
+var selected_skill: int = 0
 
 
 func _ready() -> void:
@@ -30,8 +47,10 @@ func _draw() -> void:
 	_draw_header()
 	_draw_board()
 	_draw_telegraphs()
+	_draw_target_hints()
 	_draw_actors()
 	_draw_hud()
+	_draw_skill_panel()
 
 
 func _draw_header() -> void:
@@ -65,6 +84,20 @@ func _draw_actors() -> void:
 		draw_arc(center, 22.0, 0.0, TAU, 48, outline, 3.0)
 		var glyph := "守" if actor.team == "player" else ("射" if actor.archetype == "marksman" else ("术" if actor.archetype == "area_controller" else "锋"))
 		draw_string(ThemeDB.fallback_font, center + Vector2(-7.0, 7.0), glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#17191d"))
+		_draw_actor_badges(actor_id, actor, center)
+
+
+## Status markers: player stances ring the caster, judgment marks ring the enemy.
+func _draw_actor_badges(actor_id: String, actor, center: Vector2) -> void:
+	if actor.team == "player":
+		if controller.statuses.has_status(actor_id, &"oathguard"):
+			draw_arc(center, 27.0, 0.0, TAU, 48, Color("#7fb8d8"), 3.0)
+		if controller.statuses.has_status(actor_id, &"echo_counter"):
+			draw_arc(center, 31.0, 0.0, TAU, 48, Color("#e0b25c"), 2.0)
+		return
+	if controller.statuses.has_status(actor_id, &"judgment_mark"):
+		draw_arc(center, 27.0, 0.0, TAU, 48, Color("#c98be0"), 3.0)
+		draw_string(ThemeDB.fallback_font, center + Vector2(-7.0, -28.0), "印", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#e6c9f2"))
 
 
 func _draw_telegraphs() -> void:
@@ -103,6 +136,37 @@ func _draw_telegraphs() -> void:
 				draw_arc(wait_center, 27.0, 0.0, TAU, 48, Color("#8c8b84"), 2.0)
 
 
+## Highlights the enemies the selected skill could legally hit right now.
+func _draw_target_hints() -> void:
+	if controller.phase != ControllerScript.BattlePhase.PLAYER:
+		return
+	if selected_skill < 0 or selected_skill >= SKILL_BAR.size():
+		return
+	var skill: Dictionary = SKILL_BAR[selected_skill]
+	if skill["mode"] != "actor":
+		return
+	var player = controller.get_actor("sevrin")
+	if player == null:
+		return
+	var range_min: int = 1
+	var range_max: int = 1
+	match skill["id"]:
+		"judgment_mark":
+			range_max = 4
+		"oath_severance":
+			range_max = 2
+	for actor_id in controller.actors:
+		var actor = controller.actors[actor_id]
+		if actor.team != "enemy" or not actor.is_alive():
+			continue
+		var distance: int = absi(actor.cell.x - player.cell.x) + absi(actor.cell.y - player.cell.y)
+		if distance < range_min or distance > range_max:
+			continue
+		if skill["id"] == "oath_severance" and not controller.statuses.has_status(actor_id, &"judgment_mark"):
+			continue
+		draw_arc(_cell_center(actor.cell), 31.0, 0.0, TAU, 48, Color(0.95, 0.85, 0.55, 0.55), 2.0)
+
+
 func _draw_hud() -> void:
 	var font = ThemeDB.fallback_font
 	draw_string(font, Vector2(48, 145), "回合  %02d" % controller.turn_number, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#d9d4c8"))
@@ -113,7 +177,7 @@ func _draw_hud() -> void:
 		draw_string(font, Vector2(48, 263), "生命  %d / %d" % [sevrin.health, sevrin.max_health], HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("#b9b7ad"))
 		draw_string(font, Vector2(48, 290), "攻击 %d  防御 %d" % [sevrin.attack, sevrin.defense], HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#b9b7ad"))
 		draw_string(font, Vector2(48, 313), "魔抗 %d" % sevrin.magic_resistance, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#b9b7ad"))
-	draw_string(font, Vector2(48, 330), status_message, HORIZONTAL_ALIGNMENT_LEFT, 360, 15, Color("#aaa79e"))
+	_draw_wrapped(font, status_message, Vector2(48, 348), 320.0, 15, Color("#aaa79e"), 2)
 	draw_string(font, Vector2(48, 425), "敌方行动顺序", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#c5a45c"))
 	var order_y := 455.0
 	for index in range(controller.intents.size()):
@@ -122,12 +186,71 @@ func _draw_hud() -> void:
 		var state_label: String = "  [待执行]" if intent.state == IntentScript.IntentState.ACTIVE else ("  [已执行]" if intent.state == IntentScript.IntentState.RESOLVED else "  [已取消]")
 		draw_string(font, Vector2(48, order_y), "%d. %s — %s%s" % [index + 1, _actor_name(intent.source_actor_id), action_label, state_label], HORIZONTAL_ALIGNMENT_LEFT, 315, 13, Color("#c7c2b6"))
 		order_y += 24.0
-	draw_rect(END_TURN_RECT, Color("#4b4030"), true)
-	draw_rect(END_TURN_RECT, Color("#c4a66c"), false, 2.0)
-	draw_string(font, END_TURN_RECT.position + Vector2(35.0, 40.0), "结束回合", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#f0e5d0"))
 	if controller.phase == ControllerScript.BattlePhase.FINISHED:
 		draw_rect(Rect2(330.0, 300.0, 620.0, 110.0), Color(0.06, 0.07, 0.08, 0.94), true)
 		draw_string(font, Vector2(510.0, 365.0), "战斗结束：" + ("胜利" if controller.battle_result == "victory" else "失败"), HORIZONTAL_ALIGNMENT_LEFT, -1, 34, Color("#e4d2aa"))
+
+
+func _draw_skill_panel() -> void:
+	var font = ThemeDB.fallback_font
+	draw_string(font, Vector2(SKILL_PANEL_X, 96), "技能", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("#e4dfd3"))
+
+	for index in range(SKILL_BAR.size()):
+		var skill: Dictionary = SKILL_BAR[index]
+		var rect := _skill_rect(index)
+		var affordable: bool = controller.ap != null and controller.ap.can_spend(int(skill["cost"]))
+		var is_selected: bool = (index == selected_skill and skill["mode"] == "actor")
+		var bg := Color("#3a3f46") if is_selected else Color("#262a2f")
+		var border := Color("#d4b77b") if is_selected else Color("#45484c")
+		if not affordable:
+			bg = Color("#1e2124")
+			border = Color("#33363a")
+		draw_rect(rect, bg, true)
+		draw_rect(rect, border, false, 2.0 if is_selected else 1.0)
+		var text_color := Color("#f0e5d0") if affordable else Color("#6b6a66")
+		draw_string(font, rect.position + Vector2(14.0, 21.0), str(skill["name"]), HORIZONTAL_ALIGNMENT_LEFT, -1, 17, text_color)
+		draw_string(font, rect.position + Vector2(14.0, 39.0), str(skill["hint"]), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, text_color)
+		var cost_label := "%d AP" % int(skill["cost"])
+		draw_string(font, rect.position + Vector2(rect.size.x - 52.0, 30.0), cost_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#d4b77b") if affordable else Color("#6b6a66"))
+
+	var end_color := Color("#4b4030") if controller.phase == ControllerScript.BattlePhase.PLAYER else Color("#2a2d31")
+	draw_rect(END_TURN_RECT, end_color, true)
+	draw_rect(END_TURN_RECT, Color("#c4a66c"), false, 2.0)
+	draw_string(font, END_TURN_RECT.position + Vector2(100.0, 38.0), "结束回合", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#f0e5d0"))
+
+	var hint_y := 470.0
+	draw_string(font, Vector2(SKILL_PANEL_X, hint_y), "操作", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#9b9a94"))
+	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 24.0), "点格子移动，最多两格直线", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
+	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 44.0), "自身技能点一下即生效", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
+	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 64.0), "选中技能后，黄圈标出可打目标", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
+	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 84.0), "紫圈＋「印」= 已被裁决印记标记", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
+
+
+func _skill_rect(index: int) -> Rect2:
+	return Rect2(SKILL_PANEL_X, SKILL_FIRST_Y + float(index) * SKILL_BTN_STEP, SKILL_PANEL_W, SKILL_BTN_H)
+
+
+## Character-level wrapping so CJK status text breaks cleanly instead of clipping.
+func _draw_wrapped(font: Font, text: String, pos: Vector2, max_width: float, size: int, color: Color, max_lines: int) -> void:
+	var lines: Array[String] = []
+	var current := ""
+	for i in range(text.length()):
+		var ch := text.substr(i, 1)
+		var trial := current + ch
+		if current != "" and font.get_string_size(trial, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x > max_width:
+			lines.append(current)
+			current = ch
+		else:
+			current = trial
+	if current != "":
+		lines.append(current)
+	var y := pos.y
+	for i in range(mini(lines.size(), max_lines)):
+		var line_text: String = lines[i]
+		if i == max_lines - 1 and lines.size() > max_lines:
+			line_text += "…"
+		draw_string(font, Vector2(pos.x, y), line_text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, color)
+		y += float(size) + 6.0
 
 
 func _cell_rect(cell: Vector2i) -> Rect2:
@@ -148,8 +271,15 @@ func _input(event: InputEvent) -> void:
 func _handle_tap(position: Vector2) -> void:
 	if controller.phase != ControllerScript.BattlePhase.PLAYER:
 		return
+
+	for index in range(SKILL_BAR.size()):
+		if _skill_rect(index).has_point(position):
+			_on_skill_pressed(index)
+			return
+
 	if END_TURN_RECT.has_point(position):
 		controller.end_player_turn()
+		status_message = "敌方已行动，新回合开始。"
 		queue_redraw()
 		return
 
@@ -161,11 +291,7 @@ func _handle_tap(position: Vector2) -> void:
 	for actor_id in controller.actors:
 		var actor = controller.actors[actor_id]
 		if actor.team == "enemy" and actor.is_alive() and actor.cell == cell:
-			if controller.request_player_attack(actor_id):
-				status_message = "攻击已完成。"
-			else:
-				status_message = "目标必须与角色相邻，且需要 1 点行动点。"
-			queue_redraw()
+			_use_skill_on(actor_id)
 			return
 
 	var path := _path_to_cell(controller.get_actor("sevrin").cell, cell)
@@ -175,6 +301,62 @@ func _handle_tap(position: Vector2) -> void:
 		status_message = "移动完成，消耗 1 点行动点。"
 	else:
 		status_message = "无法移动，请检查行动点和路径。"
+	queue_redraw()
+
+
+func _on_skill_pressed(index: int) -> void:
+	var skill: Dictionary = SKILL_BAR[index]
+	if skill["mode"] == "self":
+		var cast_ok := false
+		match skill["id"]:
+			"oathguard_stance":
+				cast_ok = controller.request_oathguard_stance()
+			"watchwall":
+				cast_ok = controller.request_watchwall()
+			"echo_counter":
+				cast_ok = controller.request_echo_counter()
+		if cast_ok:
+			status_message = "「%s」已生效。" % str(skill["name"])
+		else:
+			status_message = "无法施放「%s」：行动点不足，或该状态已存在。" % str(skill["name"])
+		queue_redraw()
+		return
+	selected_skill = index
+	status_message = "已选择「%s」，点击目标敌人施放。" % str(skill["name"])
+	queue_redraw()
+
+
+func _use_skill_on(actor_id: String) -> void:
+	var skill: Dictionary = SKILL_BAR[selected_skill]
+	var cast_ok := false
+	match skill["id"]:
+		"attack":
+			cast_ok = controller.request_player_attack(actor_id)
+		"judgment_mark":
+			cast_ok = controller.request_judgment_mark(actor_id)
+		"oath_severance":
+			cast_ok = controller.request_oath_severance(actor_id)
+		_:
+			status_message = "该技能需要点击自身，不需要选择目标。"
+			queue_redraw()
+			return
+
+	if cast_ok:
+		match skill["id"]:
+			"attack":
+				status_message = "普通攻击命中。"
+			"judgment_mark":
+				status_message = "裁决印记已施加，目标被标记。"
+			"oath_severance":
+				status_message = "誓约裁断命中，目标意图已被打断。"
+	else:
+		match skill["id"]:
+			"attack":
+				status_message = "攻击失败：目标需正交相邻，且需要 1 点行动点。"
+			"judgment_mark":
+				status_message = "裁决印记失败：目标需在 1–4 格内且视线无遮挡。"
+			"oath_severance":
+				status_message = "誓约裁断失败：目标需带裁决印记，且距离 1–2 格。"
 	queue_redraw()
 
 
