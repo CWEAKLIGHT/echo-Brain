@@ -38,16 +38,28 @@ func _init(
 	magic_resistance = maxi(0, p_magic_resistance)
 
 
-func apply_damage(raw_damage: int, damage_type: String = "physical", final_reduction_percent: int = 0, resistance_penalty: int = 0) -> int:
+func apply_damage(
+	raw_damage: int,
+	damage_type: String = "physical",
+	final_reduction_percent: int = 0,
+	resistance_penalty: int = 0,
+	additional_reduction_percents: Array[int] = []
+) -> int:
 	if is_defeated or raw_damage <= 0:
 		return 0
 	var base_resistance: int = defense if damage_type == "physical" else (magic_resistance if damage_type == "magical" else 0)
 	var resistance: int = maxi(0, base_resistance - maxi(0, resistance_penalty))
 	var mitigated: int = CombatMathScript.calculate_damage(raw_damage, resistance)
-	var reduction: int = clampi(final_reduction_percent, 0, 100)
 	var final_damage: int = mitigated
-	if reduction > 0 and mitigated > 0:
-		final_damage = maxi(1, floori(float(mitigated) * float(100 - reduction) / 100.0))
+	# Contextual reductions (for example, area protection) resolve after resistance.
+	for reduction_percent in additional_reduction_percents:
+		var reduction: int = clampi(reduction_percent, 0, 100)
+		if reduction > 0 and final_damage > 0:
+			final_damage = maxi(1, floori(float(final_damage) * float(100 - reduction) / 100.0))
+	# Personal defensive states resolve last, preserving their existing precedence.
+	var personal_reduction: int = clampi(final_reduction_percent, 0, 100)
+	if personal_reduction > 0 and final_damage > 0:
+		final_damage = maxi(1, floori(float(final_damage) * float(100 - personal_reduction) / 100.0))
 	var applied: int = mini(final_damage, health)
 	health -= applied
 	if health <= 0:
