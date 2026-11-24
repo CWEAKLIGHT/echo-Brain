@@ -1,81 +1,97 @@
 # ECHO
 
-A 2D turn-based tactical roguelite prototype for Android (landscape-first), built with Godot 4.x and GDScript.
+ECHO 是一款使用 Godot 4.7.2 Standard 与 GDScript 开发的 2D 回合制战术游戏原型。
 
-## Project status
+## 项目状态
 
-**Milestone:** Prototype 0.1 foundations and first playable battle slice  
-**Engine target:** Godot 4.7.x Standard  
-**Primary platform:** Android (landscape-first)  
-**Current validation:** Source-level review and authored tests only. Godot editor import, script parsing, test execution, Android export, and device behavior still require runtime verification.
+- **里程碑**：Prototype 0.1，可运行战斗切片
+- **引擎版本**：Godot 4.7.2 Standard
+- **桌面开发与验证平台**：Windows 10/11（64 位）
+- **目标画面**：1280 × 720，横向布局
+- **移动端方向**：Android 横屏；本阶段优先完成 Windows 桌面导入与玩法验证
+- **验证状态**：已完成源码静态复核并加入战斗 UI 技能集成测试；仍需在 Godot 4.7.2 中实际导入、运行测试和主场景
 
-This repository is the independent home of ECHO and is separate from the Shiguang project.
+本仓库是 ECHO 的独立项目，与「拾光」完全分离。
 
-## Open and run on Windows
+## Windows 导入与运行
 
-1. Download and extract a Godot 4.x Standard Windows x86_64 build.
-2. Extract the ECHO project ZIP to a normal folder.
-3. Open Godot and choose **Import**.
-4. Select the extracted folder's `project.godot` file.
-5. Open the project and press **F5** to run the configured main scene.
+1. 安装 **Godot 4.7.2 Standard** 的 Windows x86_64 版本。不要下载 .NET 版本。
+2. 在 GitHub 仓库页面下载 `prototype/0.1` 分支 ZIP，并完整解压到普通文件夹。
+3. 启动 Godot，在项目管理器中点击 **导入（Import）**。
+4. 选择解压目录中的 `project.godot` 文件，点击导入并编辑。
+5. 等待首次资源扫描完成，然后按 **F5** 运行主场景。
 
-The project does not require the .NET build of Godot. The first desktop run does not require Android export templates.
+也可以直接下载当前开发分支：
 
-## Current Prototype 0.1 battle slice
+- [下载 prototype/0.1 分支 ZIP](https://github.com/qingxu443-dev/echo-game/archive/refs/heads/prototype/0.1.zip)
+- [打开 ECHO GitHub 仓库](https://github.com/qingxu443-dev/echo-game/tree/prototype/0.1)
 
-- In-game interface and player-facing combat text use Simplified Chinese by default.
-- Thousand-scale combat attributes: HP, attack, defense, and magic resistance for every unit.
-- Shared attack-multiplier and physical/magical mitigation formulas are documented in `docs/combat_stats_zh-CN.md`.
+首次运行不需要 Android 导出模板，也不需要 Godot .NET 版本。
 
-- One playable character: Sevrin, the Oathkeeper.
-- An 8×8 orthogonal grid battlefield.
-- Three ordinary enemy archetypes: Vanguard, Marksman, and Area Controller.
-- Three AP per player turn.
-- Player movement costs 1 AP and allows up to two orthogonal cells.
-- Basic adjacent attack costs 1 AP.
-- Enemy intents are captured at the start of the player turn and displayed in a deterministic order.
-- Vanguard: adjacent actor-locked melee, tile-locked charged strike, or pursuit.
-- Marksman: orthogonal line-of-sight aimed shot at provisional range 3–6.
-- Area Controller: provisional fixed five-cell orthogonal-cross ground pulse.
-- Enemy damage, death, intent cancellation, and battle victory/defeat termination.
-- Mouse and touch input for movement, attack, and End Turn.
+## 当前可玩的战斗内容
 
-The current battle view is a functional debug/prototype presentation, not final art. The temporary Hunter companion, complete Oathkeeper skill set, final battlefield art, and Android export are not yet complete.
+- 瑟弗林（守誓者）与 8 × 8 正交网格战场。
+- 三种敌人：先锋、神射手、区域术士。
+- 每回合 3 点 AP；移动消耗 1 AP，最多移动两格；普通攻击消耗 1 AP。
+- 敌人意图在玩家回合开始时公开，并按固定顺序执行。
+- 五个主动技能已接入第一版战斗界面和控制器：
+  - **誓盾架势**：下一次承伤额外降低 35%，符合条件的公开敌方攻击可产生回响。
+  - **守望壁垒**：以施放位置为中心建立五格十字区域，区域内友方承伤降低 20%。
+  - **裁决印记**：标记 1–4 格内且视线无遮挡的敌人，干预其后续攻击。
+  - **回响反击**：预备一次反击；符合条件的公开敌方攻击命中后触发。
+  - **誓约裁断**：对 1–2 格内带有裁决印记的敌人造成 1.4×物理伤害，并打断其当前活动意图。
+- 技能按钮、AP 消耗、目标选择、目标范围提示和状态标识。
+- 鼠标操作与键盘技能快捷键。
 
-## Design constraints
+## 桌面操作
 
-- Top-down square-grid battlefield; no diagonal movement.
-- A move costs 1 AP and can move up to two orthogonal cells.
-- Base player AP is 3 per turn.
-- Actions resolve immediately; they may only be canceled before target confirmation.
-- Enemy telegraphs are created at the start of the player turn and execute in a clearly visible fixed order.
-- Ordinary enemy telegraphs must accurately match their eventual execution.
-- No mid-run save, checkpoint, or run restoration system. Only out-of-run progression may persist.
+| 操作 | 输入 |
+|---|---|
+| 移动 | 鼠标左键点击可到达的格子 |
+| 普通攻击 | 点击右侧「普通攻击」，再点击相邻敌人；默认也可直接选择敌人 |
+| 誓盾架势 | 点击技能按钮，或按数字键 `2` |
+| 守望壁垒 | 点击技能按钮，或按数字键 `3` |
+| 裁决印记 | 点击技能按钮或按 `4`，再点击合法敌人 |
+| 回响反击 | 点击技能按钮，或按数字键 `5` |
+| 誓约裁断 | 点击技能按钮或按 `6`，再点击带有印记的合法敌人 |
+| 取消目标选择 | `Esc` 或鼠标右键 |
+| 结束回合 | 点击「结束回合」、`Enter` 或空格键 |
 
-Unconfirmed enemy values and behaviors remain provisional implementation choices for Prototype 0.1 playtesting, not final balance approvals.
+数字键 `1` 选择普通攻击。自身技能按下后立即施放；目标技能需要再点击战场上的敌人确认。
 
-## Repository layout
+## 自动化测试
 
-- `docs/`: design notes and project status
-- `scenes/main/`: main entry scene
-- `scripts/battle/`: grid rules, AP, intents, and battle controller
-- `scripts/actors/`: runtime actor model
-- `scripts/ui/`: first-pass battle view
-- `tests/`: headless test harness scripts
+在项目根目录、Godot 4.7.2 Standard 环境中运行：
 
-## Test harnesses
-
-After importing the project in Godot, the two test scripts can be run from a terminal with a compatible Godot executable:
-
-```text
+```sh
+godot --headless --editor --path . --quit
 godot --headless --path . --script res://tests/test_core_rules.gd
+godot --headless --path . --script res://tests/test_battle_status.gd
+godot --headless --path . --script res://tests/test_battle_area_effects.gd
+godot --headless --path . --script res://tests/test_battle_echo_counter.gd
 godot --headless --path . --script res://tests/test_battle_controller.gd
+godot --headless --path . --script res://tests/test_battle_view_skills.gd
 ```
 
-These commands are instructions only; the test harnesses have not yet been executed successfully in a Godot runtime. Do not treat them as passed until actual output confirms completion with zero failures.
+如果 Windows 没有把 Godot 加入 PATH，请使用 Godot 可执行文件的完整路径替换命令中的 `godot`。
 
-## Scope and project isolation
+这些命令是验证步骤，不代表测试已经通过。每个测试都应以实际输出中的零失败为准；headless 测试也不能替代 F5 主场景的鼠标、键盘和画面检查。
 
-Prototype 0.1 scope is intentionally frozen. Run progression, contracts, collections, economy, and the full roguelite chapter loop are outside this prototype.
+## 当前边界
 
-ECHO is independent from Shiguang. Do not add GitHub Actions workflows, paid automation, or changes to the Shiguang repository as part of this project.
+- 当前主场景直接进入原型战斗，没有正式标题菜单或关卡选择界面。
+- 当前战斗界面仍是功能原型表现，不是最终美术。
+- 伙伴、章节流程、局外成长、经济和存档不属于当前 Prototype 0.1 范围。
+- Android 导出和设备表现尚未验证。
+- 所有技能数值仍是待实际对局验证的原型基线。
+
+## 仓库结构
+
+- `docs/`：设计规范、项目状态和验证清单
+- `scenes/main/`：主入口场景
+- `scripts/battle/`：战斗规则、技能效果、意图与状态系统
+- `scripts/actors/`：战斗单位数据
+- `scripts/ui/`：原型战斗界面
+- `tests/`：规则、控制器、技能效果和 UI 集成测试
+
+ECHO 与「拾光」项目严格隔离。不要将拾光代码、配置或数据加入本仓库。
