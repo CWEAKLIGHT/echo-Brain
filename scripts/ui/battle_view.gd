@@ -47,6 +47,7 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, Vector2(1280.0, 720.0)), Color("#17191d"), true)
 	_draw_header()
 	_draw_board()
+	_draw_area_effects()
 	_draw_telegraphs()
 	_draw_target_hints()
 	_draw_actors()
@@ -73,6 +74,16 @@ func _draw_board() -> void:
 				draw_rect(rect.grow(-5.0), Color("#55504a"), false, 2.0)
 
 
+func _draw_area_effects() -> void:
+	var watchwall = controller.area_effects.get_effect(&"watchwall")
+	if watchwall == null:
+		return
+	for cell in watchwall.affected_cells:
+		var rect := _cell_rect(cell).grow(-3.0)
+		draw_rect(rect, Color(0.24, 0.52, 0.70, 0.16), true)
+		draw_rect(rect, Color("#76b6d2"), false, 2.0)
+
+
 func _draw_actors() -> void:
 	for actor_id in controller.actors:
 		var actor = controller.actors[actor_id]
@@ -95,10 +106,15 @@ func _draw_actor_badges(actor_id: String, actor, center: Vector2) -> void:
 			draw_arc(center, 27.0, 0.0, TAU, 48, Color("#7fb8d8"), 3.0)
 		if controller.statuses.has_status(actor_id, &"echo_counter"):
 			draw_arc(center, 31.0, 0.0, TAU, 48, Color("#e0b25c"), 2.0)
+		if controller.statuses.has_status(actor_id, &"echo"):
+			draw_arc(center, 35.0, 0.0, TAU, 48, Color("#c28ce0"), 2.0)
+			draw_string(ThemeDB.fallback_font, center + Vector2(-7.0, -38.0), "回", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#e8c9f6"))
 		return
 	if controller.statuses.has_status(actor_id, &"judgment_mark"):
 		draw_arc(center, 27.0, 0.0, TAU, 48, Color("#c98be0"), 3.0)
 		draw_string(ThemeDB.fallback_font, center + Vector2(-7.0, -28.0), "印", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#e6c9f2"))
+	if controller.statuses.has_status(actor_id, &"exposed"):
+		draw_string(ThemeDB.fallback_font, center + Vector2(-7.0, 35.0), "破", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#f0a16f"))
 
 
 func _draw_telegraphs() -> void:
@@ -349,7 +365,7 @@ func _handle_tap(position: Vector2) -> void:
 		if cast_ok:
 			status_message = "「%s」已生效。" % str(skill["name"])
 		else:
-			status_message = "无法施放「%s」：行动点不足，或该状态已存在。" % str(skill["name"])
+			status_message = "无法施放「%s」：行动点不足或当前阶段不允许。" % str(skill["name"])
 		queue_redraw()
 		return
 	selected_skill = index
