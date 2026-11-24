@@ -134,7 +134,10 @@ func _run() -> void:
 	_check(marked_pursuit_battle.request_judgment_mark("vanguard_00"), "Judgment Mark can target an enemy preparing to pursue")
 	_check(not marked_pursuit_battle.intents[0].judgment_marked, "pursuit does not consume or capture Judgment Mark as an attack")
 	_check(marked_pursuit_battle.end_player_turn(), "unmarked pursuit executes")
-	_check(not marked_pursuit_battle.statuses.has_status("vanguard_00", &"judgment_mark"), "unused mark expires after one enemy phase")
+	_check(marked_pursuit_battle.statuses.has_status("vanguard_00", &"judgment_mark"), "unused mark survives the first enemy phase")
+	_check(marked_pursuit_battle.intents[0].action_id == "basic_melee" and marked_pursuit_battle.intents[0].judgment_marked, "mark attaches to the enemy's next attack intent")
+	_check(marked_pursuit_battle.end_player_turn(), "next marked attack intent resolves")
+	_check(not marked_pursuit_battle.statuses.has_status("vanguard_00", &"judgment_mark"), "mark is consumed by the next attack intent")
 	marked_pursuit_battle.queue_free()
 
 	var marked_area_battle = ControllerScript.new()
