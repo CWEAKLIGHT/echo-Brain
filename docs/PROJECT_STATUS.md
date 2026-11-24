@@ -85,3 +85,5 @@ The main scene now opens an 8×8 tactical board with Sevrin, two Melee Vanguard 
 - Implemented the provisional Area Controller archetype: explicit `area_controller` encounter type, five-health provisional profile, range-2–4 fixed orthogonal-cross `ground_pulse`, area-locked one-damage resolution, and explicit cancellation when the captured area is empty. Added a distinct `C` actor marker and cross-cell telegraph rendering.
 - Added controller scenarios for area-lock metadata, damage to a player remaining in the footprint, and evasion by moving outside the captured area. Added the provisional behavior and acceptance criteria to the enemy specification.
 - Source-level implementation and test authoring only. Godot 4.x parsing and execution remain unverified because the runtime is unavailable in this environment.
+
+- Added a boundary regression scenario verifying the area-locked cross footprint is clipped to valid cells when its center is at the map corner.
