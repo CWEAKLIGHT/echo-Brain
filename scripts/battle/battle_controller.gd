@@ -107,7 +107,7 @@ func request_player_attack(target_actor_id: String, damage: int = 2) -> bool:
 		return false
 	if not ap.spend(1):
 		return false
-	_apply_damage(target_actor_id, damage, "player_attack")
+	_apply_damage(target_actor_id, damage, "sevrin", "player_attack")
 	_emit_event("attack_resolved", "sevrin", target_actor_id, "damage=%d" % damage)
 	_check_battle_end()
 	return true
@@ -175,7 +175,7 @@ func _next_pursuit_path(start: Vector2i, goal: Vector2i, actor_id: String, max_s
 	var found := false
 	while not queue.is_empty():
 		var current: Vector2i = queue.pop_front()
-		if current == goal:
+		if GridRulesScript.manhattan_distance(current, goal) == 1:
 			found = true
 			break
 		for direction in directions:
@@ -189,7 +189,21 @@ func _next_pursuit_path(start: Vector2i, goal: Vector2i, actor_id: String, max_s
 	if not found:
 		return []
 	var reversed_path: Array[Vector2i] = []
-	var cursor := goal
+	var cursor: Vector2i = queue.front() if false else start
+	# Recover the discovered adjacent cell: it is the last expanded node.
+	cursor = start
+	for candidate in came_from.keys():
+		if GridRulesScript.manhattan_distance(candidate, goal) == 1:
+			var candidate_path_length := 0
+			var trace: Vector2i = candidate
+			while trace != start:
+				candidate_path_length += 1
+				trace = came_from[trace]
+			if candidate_path_length > 0:
+				cursor = candidate
+				break
+	if cursor == start:
+		return []
 	while cursor != start:
 		reversed_path.push_front(cursor)
 		cursor = came_from[cursor]
@@ -233,7 +247,7 @@ func _resolve_actor_locked_attack(intent: RefCounted) -> void:
 	if GridRulesScript.manhattan_distance(source.cell, target.cell) != 1:
 		intent.cancel("actor_target_out_of_range")
 		return
-	_apply_damage(intent.target_actor_id, intent.damage, intent.action_id)
+	_apply_damage(intent.target_actor_id, intent.damage, intent.source_actor_id, intent.action_id)
 	intent.mark_resolved()
 	_emit_event("enemy_action_resolved", intent.source_actor_id, intent.target_actor_id, intent.action_id)
 
@@ -252,7 +266,7 @@ func _resolve_tile_locked_attack(intent: RefCounted) -> void:
 	if not GridRulesScript.has_clear_orthogonal_line(source.cell, intent.target_cell, blocked_cells, get_occupied_cells(intent.source_actor_id)):
 		intent.cancel("marked_cell_line_blocked")
 		return
-	_apply_damage(target_id, intent.damage, intent.action_id)
+	_apply_damage(target_id, intent.damage, intent.source_actor_id, intent.action_id)
 	intent.mark_resolved()
 	_emit_event("enemy_action_resolved", intent.source_actor_id, target_id, intent.action_id)
 
@@ -280,10 +294,10 @@ func _resolve_pursuit(intent: RefCounted) -> void:
 	_emit_event("enemy_action_resolved", intent.source_actor_id, "", "pursuit")
 
 
-func _apply_damage(target_actor_id: String, amount: int, source_action: String) -> void:
+func _apply_damage(target_actor_id: String, amount: int, source_actor_id: String, action_id: String) -> void:
 	var target = actors[target_actor_id]
 	var applied: int = target.apply_damage(amount)
-	_emit_event("damage_applied", source_action, target_actor_id, "damage=%d health=%d" % [applied, target.health])
+	_emit_event("damage_applied", source_actor_id, target_actor_id, "action=%s damage=%d health=%d" % [action_id, applied, target.health])
 	if target.is_defeated and target.team == "enemy":
 		for intent in intents:
 			if intent.source_actor_id == target_actor_id:
