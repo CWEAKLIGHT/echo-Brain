@@ -380,7 +380,57 @@ The Ranged Marksman creates a distant, readable single-cell threat. It teaches t
 
 ### Implementation boundary
 
-Encounter initialization now accepts an optional archetype array parallel to the enemy-cell array. An omitted array preserves the existing all-Vanguard fixtures. Supported values are explicitly validated (`vanguard`, `marksman`); unknown values or a mismatched array length reject the entire setup before live state is mutated. The actor stores its archetype, and both intent generation and UI presentation read that field. Enemy IDs retain the archetype prefix and original encounter index.
+Encounter initialization now accepts an optional archetype array parallel to the enemy-cell array. An omitted array preserves the existing all-Vanguard fixtures. Supported values are explicitly validated (`vanguard`, `marksman`, `area_controller`); unknown values or a mismatched array length reject the entire setup before live state is mutated. The actor stores its archetype, and both intent generation and UI presentation read that field. Enemy IDs retain the archetype prefix and original encounter index.
+
+
+## 10.3 Area Controller — provisional implementation specification
+
+> Status: Prototype implementation choice under delegated development authority. Shape, range, health, damage, and priority are provisional and require playtesting; this does not expand Prototype 0.1 scope.
+
+### Role and learning objective
+
+The Area Controller creates a fixed, avoidable zone threat. It teaches the player to read a multi-cell telegraph and spend movement to leave the threatened footprint before the enemy phase.
+
+### Runtime profile (provisional tuning values)
+
+| Property | Initial value | Notes |
+|---|---:|---|
+| Health | 5 | Provisional |
+| Attack damage | 1 | Per player-controlled actor in the footprint |
+| Effective range | Manhattan distance 2–4 | Measured from controller to the player cell at planning time |
+| Targeting mode | Area-locked | Captures the original footprint |
+| Footprint | Center cell plus its orthogonal neighbors | Up to five cells; clipped at map boundaries |
+| Execution priority | 1 | Shares the Vanguard basic-melee tier; stable row/column/actor-ID tie-break applies |
+
+### Action — Ground pulse
+
+- If the player is 2–4 Manhattan cells away, capture the player’s current cell as the center of a five-cell orthogonal cross: center, up, right, down, and left.
+- Cells outside the map are omitted. The resulting affected-cell list is fixed in the intent.
+- The action uses `ground_pulse`, target mode `AREA_LOCKED`, and provisional damage 1.
+- At execution, damage every living player-controlled actor still occupying a captured cell.
+- If no living player-controlled actor remains in the captured area, cancel with `marked_area_empty`. Do not move the area, retarget, or select a replacement action.
+- If the player is outside the 2–4 planning range, create an explicit `wait` intent.
+- This initial implementation has no line-of-sight requirement, movement, persistent hazard, status effect, or multi-turn zone.
+
+### Player counterplay
+
+- Read all highlighted cells, not only the center marker.
+- Use movement to leave the entire cross-shaped footprint before ending the turn.
+- Defeat or interrupt the Area Controller before its execution slot.
+
+### Acceptance tests
+
+1. A player at Manhattan distance 2–4 produces an area-locked `ground_pulse` intent.
+2. The intent captures the fixed cross footprint and one-damage preview.
+3. Boundary cells are clipped without generating out-of-bounds cells.
+4. A player remaining in the footprint takes the captured damage.
+5. A player leaving the footprint takes no damage and the intent cancels as `marked_area_empty`.
+6. A player outside the planning range produces a visible wait intent.
+7. Resolution never recenters the footprint or silently selects another action.
+
+### Implementation boundary
+
+Encounter initialization now accepts `area_controller` as a third explicit archetype. The actor stores that archetype; the battle UI uses a distinct `C` marker and renders each captured area cell from the intent record. All numerical values and the cross footprint remain provisional pending runtime playtesting.
 
 
 ## 11. Failure handling
