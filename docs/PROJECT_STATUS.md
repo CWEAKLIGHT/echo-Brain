@@ -120,3 +120,13 @@ The main scene now opens an 8×8 tactical board with Sevrin, two Melee Vanguard 
 - Reviewed remaining inferred local declarations (`:=`) across the tracked GDScript files. Calls used for inferred values now have declared return types; other matches derive from typed parameters, built-in constructors, literals, or built-in integer helpers.
 - Found and corrected stale README text that still described the repository as an unimplemented skeleton. README now describes the current playable battle slice, Windows import/run steps, test-harness commands, and the still-unverified runtime status.
 - Static review did not reveal another confirmed parser error. This is not equivalent to Godot parsing or execution: only a Godot 4.7.2 import and actual test run can establish that. The tester should re-download the latest ZIP before retrying so the fixes and README are included.
+
+
+## Chinese-first interface and scaled combat — 2026-11-24
+
+- Set the in-game battle interface, status messages, action labels, unit labels, and battlefield glyphs to Simplified Chinese by default.
+- Added four combat attributes to every runtime actor: health, attack, defense, and magic resistance.
+- Added a shared multiplier-based damage formula and separate physical-defense / magical-resistance mitigation.
+- Updated the Oathkeeper and three enemy archetypes to thousand-scale baseline values; added 0.7×–1.5× multipliers to current enemy attacks and a 1.0× player basic attack.
+- Added docs/combat_stats_zh-CN.md as the numeric baseline and rules reference, plus regression cases for multipliers and mitigation.
+- Source files and tests were committed and re-fetched. Godot 4.7.2 parsing and runtime test execution have not yet been performed; do not mark the tests as passed until they run in the engine.
