@@ -234,6 +234,96 @@ Each Prototype 0.1 enemy must be documented with:
 
 Only these three battlefield roles are confirmed at this stage. Names, visual designs, base stats, exact actions, targeting-mode assignments, priorities, and numerical values remain to be specified; the role descriptions do not approve any particular attack.
 
+
+## 10.1 Melee Vanguard — Prototype 0.1 behavior specification
+
+> Status: implementation baseline selected by the project maintainer under delegated design authority. Numerical balance remains subject to playtesting.
+
+### Role and learning objective
+
+The Melee Vanguard is the introductory pressure enemy. It teaches the player to read distance, preserve escape routes, and distinguish an actor-tracking attack from a fixed-cell attack. Its behavior is intentionally deterministic and uses no hidden target changes.
+
+### Runtime profile (initial tuning values)
+
+| Property | Initial value | Notes |
+|---|---:|---|
+| Health | 6 | Tuning baseline; not a final balance claim |
+| Movement | Up to 2 orthogonal cells | One movement action per enemy phase |
+| Basic attack damage | 1 | Actor-locked |
+| Charged strike damage | 2 | Tile-locked |
+| Basic attack range | Manhattan distance 1 | Adjacent orthogonal cells only |
+| Charged strike range | Manhattan distance 2 | Target cell must be reachable by a clear orthogonal line |
+| Charged strike footprint | One marked cell | No splash damage |
+
+### Action A — Pursuit
+
+- Used when neither attack is legal.
+- Select the living player-controlled actor with the shortest Manhattan distance; ties resolve by stable actor ID.
+- Find a shortest legal path toward that actor, using a deterministic neighbor order: up, right, down, left.
+- Move up to two cells along that path, stopping before an occupied or blocked cell.
+- If no legal step reduces distance, wait.
+- Pursuit is not an attack and creates no damage telegraph. The enemy's movement intent and destination should still be inspectable in the execution-order panel.
+- Movement never crosses diagonal edges, walls, obstacles, or occupied cells.
+
+### Action B — Basic melee attack
+
+- Legal when a living player-controlled actor is orthogonally adjacent.
+- Target mode: **actor-locked**.
+- Select the adjacent target with the lowest current health ratio; ties resolve by stable actor ID.
+- Telegraph: show the source enemy, named target, and the target actor's current cell.
+- At execution, follow the same target actor if it has moved.
+- If that target is defeated before execution, cancel the action; do not retarget.
+- Initial damage: 1.
+
+### Action C — Charged strike
+
+- Legal when a living player-controlled actor is exactly two orthogonal cells away on a straight, unobstructed line.
+- Target mode: **tile-locked**.
+- Select the eligible target by lowest current health ratio, then stable actor ID.
+- Telegraph the single original target cell, with a distinct charge marker and an explicit 2-damage preview.
+- The attack resolves at that original cell even if the actor moves away. It does not track the actor and does not expand to nearby cells.
+- If the original cell becomes blocked or otherwise illegal under the shared action validation rules, cancel the strike and log the reason.
+- Initial damage: 2.
+- No displacement, stun, armor break, or terrain effect in Prototype 0.1.
+
+### Selection priority and phase behavior
+
+At player-turn start, select exactly one intent for the upcoming enemy phase:
+1. Charged strike, if legal.
+2. Basic melee attack, if legal.
+3. Pursuit, if a legal step reduces distance.
+4. Wait.
+
+The selected intent and all target parameters are captured when the telegraph is generated. The AI is not rerun during execution. A later battlefield change may invalidate the captured action, but may not cause a replacement action to be selected.
+
+### Player counterplay
+
+- Move away from a charged strike's marked cell.
+- Use a successful control effect to cancel the Vanguard's current telegraph.
+- Defeat the Vanguard before its execution slot.
+- Use defensive or protective skills to mitigate an actor-locked basic attack.
+- Use obstacles and positioning to prevent or delay a legal pursuit/charge line.
+
+### Acceptance tests
+
+1. At Manhattan distance greater than 2, the Vanguard selects pursuit or wait, never an attack.
+2. At distance 2 on a clear straight line, it telegraphs a tile-locked charged strike.
+3. At orthogonal adjacency, it telegraphs an actor-locked basic attack.
+4. A diagonal target is not considered adjacent and cannot be charged.
+5. A wall or obstacle between the Vanguard and the charged-strike target prevents that strike.
+6. Moving the target after a basic-attack telegraph does not change the actor target.
+7. Moving the target after a charged-strike telegraph does not move the marked cell.
+8. Defeating the Vanguard cancels its telegraph immediately.
+9. Successful control cancels the current telegraph; failed control leaves it unchanged.
+10. If an earlier action blocks the original charged-strike cell, the strike cancels without retargeting or falling back to another action.
+11. Equal-distance and equal-health ties always resolve identically across repeated runs.
+12. The visible intent and actual execution report the same action ID, target mode, target, footprint, and damage.
+
+### Tuning note
+
+Health and damage are deliberately conservative starting values for the first playable encounter. They must be tested against the Oathkeeper's finalized health, armor, defensive skills, and the other two enemy types before being treated as balanced.
+
+
 ## 11. Failure handling
 
 - If an intent cannot be created, record a planning failure with a reason.
