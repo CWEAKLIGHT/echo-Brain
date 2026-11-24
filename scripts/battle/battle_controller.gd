@@ -9,6 +9,7 @@ const APBudgetScript = preload("res://scripts/battle/ap_budget.gd")
 const BattleActorScript = preload("res://scripts/actors/battle_actor.gd")
 const BattleIntentScript = preload("res://scripts/battle/battle_intent.gd")
 const CombatMathScript = preload("res://scripts/battle/combat_math.gd")
+const StatusCollectionScript = preload("res://scripts/battle/battle_status_collection.gd")
 
 enum BattlePhase { PLAYER, ENEMY, FINISHED }
 
@@ -23,6 +24,7 @@ var intents: Array = []
 var event_sequence: int = 0
 var turn_number: int = 0
 var battle_result: String = ""
+var statuses: BattleStatusCollection = StatusCollectionScript.new()
 
 
 func _ready() -> void:
@@ -65,6 +67,7 @@ func start_encounter(
 
 	ap.maximum = player_ap
 	actors.clear()
+	statuses.clear_all()
 	blocked_cells = candidate_blockers
 	intents.clear()
 	event_sequence = 0
@@ -147,6 +150,9 @@ func end_player_turn() -> bool:
 
 
 func _begin_player_turn() -> void:
+	var expired_statuses: int = statuses.expire_all_boundary(&"player_phase_start")
+	if expired_statuses > 0:
+		_emit_event("statuses_expired", "", "", "boundary=player_phase_start count=%d" % expired_statuses)
 	turn_number += 1
 	ap.reset()
 	phase = BattlePhase.PLAYER
@@ -276,6 +282,9 @@ func _resolve_enemy_phase() -> void:
 		if phase == BattlePhase.FINISHED:
 			break
 	if phase != BattlePhase.FINISHED:
+		var expired_statuses: int = statuses.expire_all_boundary(&"enemy_phase_end")
+		if expired_statuses > 0:
+			_emit_event("statuses_expired", "", "", "boundary=enemy_phase_end count=%d" % expired_statuses)
 		_begin_player_turn()
 
 
@@ -352,6 +361,10 @@ func _apply_damage(target_actor_id: String, amount: int, source_actor_id: String
 	var target = actors[target_actor_id]
 	var applied: int = target.apply_damage(amount, damage_type)
 	_emit_event("damage_applied", source_actor_id, target_actor_id, "action=%s type=%s raw=%d applied=%d health=%d" % [action_id, damage_type, amount, applied, target.health])
+	if target.is_defeated:
+		var removed_statuses: int = statuses.clear_actor(target_actor_id)
+		if removed_statuses > 0:
+			_emit_event("statuses_cleared", target_actor_id, "", "reason=actor_defeated count=%d" % removed_statuses)
 	if target.is_defeated and target.team == "enemy":
 		for intent in intents:
 			if intent.source_actor_id == target_actor_id:
@@ -381,6 +394,9 @@ func _finish_battle(result: String) -> void:
 	for intent in intents:
 		if intent.state == BattleIntentScript.IntentState.ACTIVE:
 			intent.cancel("battle_finished")
+	var removed_statuses: int = statuses.clear_all()
+	if removed_statuses > 0:
+		_emit_event("statuses_cleared", "", "", "reason=battle_finished count=%d" % removed_statuses)
 	battle_finished.emit(result)
 	_emit_event("battle_" + result, "", "", result)
 
