@@ -158,6 +158,8 @@ func _generate_enemy_intents() -> Array:
 			var pursuit_path: Array[Vector2i] = _next_pursuit_path(enemy.cell, target.cell, actor_id, 2)
 			if not pursuit_path.is_empty():
 				intent = BattleIntentScript.new("intent_%d_%s" % [turn_number, actor_id], actor_id, "pursuit", BattleIntentScript.TargetMode.NONE, "", pursuit_path[pursuit_path.size() - 1], pursuit_path, 0, 2)
+			else:
+				intent = BattleIntentScript.new("intent_%d_%s" % [turn_number, actor_id], actor_id, "wait", BattleIntentScript.TargetMode.NONE, "", enemy.cell, [], 0, 3)
 		if intent != null:
 			generated.append(intent)
 	generated.sort_custom(func(a, b):
@@ -224,6 +226,9 @@ func _resolve_enemy_phase() -> void:
 				_resolve_tile_locked_attack(intent)
 			"pursuit":
 				_resolve_pursuit(intent)
+			"wait":
+				intent.mark_resolved()
+				_emit_event("enemy_action_resolved", intent.source_actor_id, "", "wait")
 			_:
 				intent.cancel("unknown_action")
 		_check_battle_end()
