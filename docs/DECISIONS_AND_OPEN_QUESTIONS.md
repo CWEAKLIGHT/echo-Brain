@@ -18,6 +18,7 @@ Use these labels consistently:
 - Base player turn budget is 3 AP.
 - Actions resolve immediately and may only be canceled before target confirmation.
 - Enemy telegraphs are generated at the start of the player turn.
+- Telegraph targeting uses a mixed model: each action may lock to an actor, a grid cell, or an area according to its design; the telegraph must communicate the selected mode.
 - Enemy execution order is fixed and visibly communicated.
 - An enemy's telegraph is canceled immediately when that enemy dies.
 - Prototype companion actions are player-commanded, then automatically executed; the companion has one independent support action per player turn.
@@ -30,6 +31,7 @@ One playable Oathkeeper (Sevrin), one temporary Hunter companion, three ordinary
 
 ## Open questions — do not silently decide in code
 
+- Which targeting mode (actor-locked, tile-locked, or area-locked) should each individual Prototype 0.1 enemy action use?
 - How should a telegraph behave if its target moves before enemy execution?
 - What happens if the target leaves the telegraphed area?
 - How do successful and failed control/interruption effects change a telegraph?
