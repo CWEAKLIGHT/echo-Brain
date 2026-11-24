@@ -75,3 +75,6 @@ The main scene now opens an 8×8 tactical board with Sevrin, two Melee Vanguard 
 - Enemies that have no legal pursuit route now receive an explicit, visible `wait` intent instead of silently disappearing from the execution order. The wait intent resolves without movement or damage; a controller scenario covers a fully blocked enemy.
 
 - Added a provisional Ranged Marksman implementation specification: orthogonal line-of-fire, range 3–6, tile-locked single-cell aimed shot, 2 provisional damage, and explicit wait/cancel behavior. This is a design baseline for implementation and playtesting, not a claim that the archetype is implemented or balance-approved.
+
+- Implemented explicit enemy archetypes on runtime actors and optional, validated encounter archetype input. Existing encounters without an archetype list remain Vanguard encounters; unknown types and mismatched lists are rejected before state mutation.
+- Implemented the provisional Ranged Marksman aimed shot: orthogonal line-of-fire at range 3–6, tile-locked single-cell target, 2 damage, execution-time range/line revalidation, and wait intent when no legal shot exists. Added controller scenarios for a valid shot, blocked lane, and minimum-range failure. These tests are committed but not run in Godot 4.x.
