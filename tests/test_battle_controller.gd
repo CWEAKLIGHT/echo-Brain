@@ -107,6 +107,31 @@ func _run() -> void:
 	_check(mixed_battle.intents[0].state == IntentScript.IntentState.RESOLVED and mixed_battle.intents[1].state == IntentScript.IntentState.RESOLVED, "both mixed intents resolve")
 	mixed_battle.queue_free()
 
+	var area_battle = ControllerScript.new()
+	root.add_child(area_battle)
+	var area_types: Array[String] = ["area_controller"]
+	_check(area_battle.start_encounter(Vector2i(1, 1), [Vector2i(4, 1)], [], area_types), "area controller encounter starts")
+	var area_intent = area_battle.intents[0]
+	_check(area_battle.get_actor("area_controller_00").max_health == 5, "area controller uses provisional five health")
+	_check(area_intent.action_id == "ground_pulse", "area controller selects ground pulse in range")
+	_check(area_intent.target_mode == IntentScript.TargetMode.AREA_LOCKED, "ground pulse captures area lock")
+	_check(area_intent.affected_cells.size() == 5 and area_intent.affected_cells.has(Vector2i(1, 1)), "ground pulse captures fixed orthogonal cross footprint")
+	_check(area_battle.end_player_turn(), "ground pulse resolves during enemy phase")
+	_check(area_battle.get_actor("sevrin").health == 9, "ground pulse deals one damage inside marked area")
+	_check(area_intent.state == IntentScript.IntentState.RESOLVED, "ground pulse intent resolves")
+	area_battle.queue_free()
+
+	var evaded_area_battle = ControllerScript.new()
+	root.add_child(evaded_area_battle)
+	_check(evaded_area_battle.start_encounter(Vector2i(1, 1), [Vector2i(4, 1)], [], area_types), "evadable area controller encounter starts")
+	var evaded_area_intent = evaded_area_battle.intents[0]
+	var area_evade_path: Array[Vector2i] = [Vector2i(1, 2), Vector2i(2, 2)]
+	_check(evaded_area_battle.request_player_move(area_evade_path), "player can move outside the marked cross area")
+	_check(evaded_area_battle.end_player_turn(), "evaded ground pulse phase resolves")
+	_check(evaded_area_battle.get_actor("sevrin").health == 10, "ground pulse misses player outside captured area")
+	_check(evaded_area_intent.state == IntentScript.IntentState.CANCELED and evaded_area_intent.cancel_reason == "marked_area_empty", "empty ground pulse area cancels explicitly")
+	evaded_area_battle.queue_free()
+
 	var actor_lock_battle = ControllerScript.new()
 	root.add_child(actor_lock_battle)
 	_check(actor_lock_battle.start_encounter(Vector2i(1, 1), [Vector2i(2, 1)]), "actor-lock encounter starts")
