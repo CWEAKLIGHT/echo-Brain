@@ -138,3 +138,11 @@ The main scene now opens an 8×8 tactical board with Sevrin, two Melee Vanguard 
 - The kit emphasizes defensive timing, area protection, intent-aware marking, conditional counterattacks, and a high-cost interrupt rather than damage-only buttons.
 - Documented AP costs, target/range rules, duration, status consumption, intent cancellation, combo turns, event/settlement order, edge cases, and initial balance parameters.
 - This is a design specification only. No skill implementation has been committed yet; implementation must follow the documented order with per-step static review and Godot 4.7.2 validation when an engine environment is available.
+
+
+## Data-driven skill foundation — 2026-11-24
+
+- Added a typed `SkillDefinition` Resource with stable skill ID, Simplified Chinese display name/description, AP cost, target mode, range, damage type/multiplier, effect ID, duration, and judgment-mark requirement.
+- Added an Oathkeeper skill catalog containing the five designed skills as data; this does not yet execute skills or change the existing battle loop.
+- Added a dedicated skill-definition test harness covering catalog size/order, validation, AP costs, targeting/range, mark requirements, and invalid zero-AP data. Corrected the harness to aggregate failures reliably rather than passing an integer counter by value.
+- Re-fetched the new scripts and test file after writing. This remains source-level verification only. Godot 4.7.2 import and execution are still required; do not mark the new harness as passed until it runs in-engine.
