@@ -228,11 +228,6 @@ func _resolve_actor_locked_attack(intent) -> void:
 	if not actors.has(intent.target_actor_id) or not actors[intent.target_actor_id].is_alive():
 		intent.cancel("actor_target_defeated")
 		return
-	var source = actors[intent.source_actor_id]
-	var target = actors[intent.target_actor_id]
-	if GridRulesScript.manhattan_distance(source.cell, target.cell) != 1:
-		intent.cancel("actor_target_out_of_range")
-		return
 	_apply_damage(intent.target_actor_id, intent.damage, intent.source_actor_id, intent.action_id)
 	intent.mark_resolved()
 	_emit_event("enemy_action_resolved", intent.source_actor_id, intent.target_actor_id, intent.action_id)
