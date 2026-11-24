@@ -193,6 +193,16 @@ func _run() -> void:
 	_check(custom_bounds_battle.start_encounter(Vector2i(1, 1), [Vector2i(5, 5)]), "custom-size encounter accepts cells inside configured bounds")
 	_check(not custom_bounds_battle.start_encounter(Vector2i(1, 1), [Vector2i(6, 1)]), "enemy outside configured grid bounds is rejected")
 	_check(not custom_bounds_battle.start_encounter(Vector2i(1, 1), [Vector2i(5, 5)], [Vector2i(6, 1)]), "obstacle outside configured grid bounds is rejected")
+	custom_bounds_battle.grid_size = Vector2i(0, 6)
+	_check(not custom_bounds_battle.start_encounter(Vector2i(1, 1), [Vector2i(4, 4)]), "zero-width grid configuration is rejected")
+	_check(custom_bounds_battle.get_actor("sevrin") != null and custom_bounds_battle.get_actor("sevrin").cell == Vector2i(1, 1), "invalid grid configuration preserves active encounter state")
+	custom_bounds_battle.grid_size = Vector2i(6, 6)
+	custom_bounds_battle.player_ap = 0
+	_check(not custom_bounds_battle.start_encounter(Vector2i(1, 1), [Vector2i(4, 4)]), "zero AP configuration is rejected")
+	custom_bounds_battle.player_ap = 3
+	custom_bounds_battle.player_ap = 4
+	_check(custom_bounds_battle.start_encounter(Vector2i(1, 1), [Vector2i(4, 4)]), "valid encounter can restart after configuration correction")
+	_check(custom_bounds_battle.ap.maximum == 4 and custom_bounds_battle.ap.current == 4, "encounter applies the configured AP maximum")
 	custom_bounds_battle.queue_free()
 
 	var validation_battle = ControllerScript.new()
