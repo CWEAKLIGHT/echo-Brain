@@ -8,7 +8,7 @@ const BOARD_SIZE := 8
 const END_TURN_RECT := Rect2(1010.0, 620.0, 210.0, 64.0)
 
 var controller: BattleController
-var status_message: String = "Tap a cell to move. Tap an adjacent enemy to attack."
+var status_message: String = "点击格子移动，点击相邻敌人进行攻击。"
 
 
 func _ready() -> void:
@@ -36,8 +36,8 @@ func _draw() -> void:
 
 func _draw_header() -> void:
 	var font = ThemeDB.fallback_font
-	draw_string(font, Vector2(48, 52), "ECHO  /  PROTOTYPE 0.1", HORIZONTAL_ALIGNMENT_LEFT, -1, 26, Color("#e4dfd3"))
-	draw_string(font, Vector2(48, 82), "THE FIRST WATCH", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#9b9a94"))
+	draw_string(font, Vector2(48, 52), "回声计划  /  原型 0.1", HORIZONTAL_ALIGNMENT_LEFT, -1, 26, Color("#e4dfd3"))
+	draw_string(font, Vector2(48, 82), "初次守望", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#9b9a94"))
 
 
 func _draw_board() -> void:
@@ -105,27 +105,29 @@ func _draw_telegraphs() -> void:
 
 func _draw_hud() -> void:
 	var font = ThemeDB.fallback_font
-	draw_string(font, Vector2(48, 145), "TURN  %02d" % controller.turn_number, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#d9d4c8"))
-	draw_string(font, Vector2(48, 180), "AP  %d / %d" % [controller.ap.current, controller.ap.maximum], HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#d4b77b"))
-	draw_string(font, Vector2(48, 235), "SEVRIN", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("#e4dfd3"))
+	draw_string(font, Vector2(48, 145), "回合  %02d" % controller.turn_number, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#d9d4c8"))
+	draw_string(font, Vector2(48, 180), "行动点  %d / %d" % [controller.ap.current, controller.ap.maximum], HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#d4b77b"))
+	draw_string(font, Vector2(48, 235), "瑟弗林", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("#e4dfd3"))
 	var sevrin = controller.get_actor("sevrin")
 	if sevrin != null:
-		draw_string(font, Vector2(48, 263), "HP  %d / %d" % [sevrin.health, sevrin.max_health], HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("#b9b7ad"))
+		draw_string(font, Vector2(48, 263), "生命  %d / %d" % [sevrin.health, sevrin.max_health], HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("#b9b7ad"))
+		draw_string(font, Vector2(48, 290), "攻击 %d  防御 %d" % [sevrin.attack, sevrin.defense], HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#b9b7ad"))
+		draw_string(font, Vector2(48, 313), "魔抗 %d" % sevrin.magic_resistance, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#b9b7ad"))
 	draw_string(font, Vector2(48, 330), status_message, HORIZONTAL_ALIGNMENT_LEFT, 360, 15, Color("#aaa79e"))
-	draw_string(font, Vector2(48, 425), "ENEMY ORDER", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#c5a45c"))
+	draw_string(font, Vector2(48, 425), "敌方行动顺序", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#c5a45c"))
 	var order_y := 455.0
 	for index in range(controller.intents.size()):
 		var intent = controller.intents[index]
-		var action_label: String = intent.action_id.replace("_", " ").to_upper()
-		var state_label: String = "  [ACTIVE]" if intent.state == IntentScript.IntentState.ACTIVE else ("  [RESOLVED]" if intent.state == IntentScript.IntentState.RESOLVED else "  [CANCELED]")
-		draw_string(font, Vector2(48, order_y), "%d. %s — %s%s" % [index + 1, intent.source_actor_id, action_label, state_label], HORIZONTAL_ALIGNMENT_LEFT, 315, 13, Color("#c7c2b6"))
+		var action_label: String = _action_name(intent.action_id)
+		var state_label: String = "  [待执行]" if intent.state == IntentScript.IntentState.ACTIVE else ("  [已执行]" if intent.state == IntentScript.IntentState.RESOLVED else "  [已取消]")
+		draw_string(font, Vector2(48, order_y), "%d. %s — %s%s" % [index + 1, _actor_name(intent.source_actor_id), action_label, state_label], HORIZONTAL_ALIGNMENT_LEFT, 315, 13, Color("#c7c2b6"))
 		order_y += 24.0
 	draw_rect(END_TURN_RECT, Color("#4b4030"), true)
 	draw_rect(END_TURN_RECT, Color("#c4a66c"), false, 2.0)
-	draw_string(font, END_TURN_RECT.position + Vector2(35.0, 40.0), "END TURN", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#f0e5d0"))
+	draw_string(font, END_TURN_RECT.position + Vector2(35.0, 40.0), "结束回合", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#f0e5d0"))
 	if controller.phase == ControllerScript.BattlePhase.FINISHED:
 		draw_rect(Rect2(330.0, 300.0, 620.0, 110.0), Color(0.06, 0.07, 0.08, 0.94), true)
-		draw_string(font, Vector2(510.0, 365.0), "BATTLE  " + controller.battle_result.to_upper(), HORIZONTAL_ALIGNMENT_LEFT, -1, 34, Color("#e4d2aa"))
+		draw_string(font, Vector2(510.0, 365.0), "战斗结束：" + ("胜利" if controller.battle_result == "victory" else "失败"), HORIZONTAL_ALIGNMENT_LEFT, -1, 34, Color("#e4d2aa"))
 
 
 func _cell_rect(cell: Vector2i) -> Rect2:
@@ -160,19 +162,19 @@ func _handle_tap(position: Vector2) -> void:
 		var actor = controller.actors[actor_id]
 		if actor.team == "enemy" and actor.is_alive() and actor.cell == cell:
 			if controller.request_player_attack(actor_id):
-				status_message = "Attack resolved."
+				status_message = "攻击已完成。"
 			else:
-				status_message = "Enemy must be orthogonally adjacent; 1 AP required."
+				status_message = "目标必须与角色相邻，且需要 1 点行动点。"
 			queue_redraw()
 			return
 
 	var path := _path_to_cell(controller.get_actor("sevrin").cell, cell)
 	if path.is_empty():
-		status_message = "That destination is blocked or beyond the two-cell move limit."
+		status_message = "该位置无法到达，或超出两格移动范围。"
 	elif controller.request_player_move(path):
-		status_message = "Moved. 1 AP spent."
+		status_message = "移动完成，消耗 1 点行动点。"
 	else:
-		status_message = "Move unavailable. Check AP and path."
+		status_message = "无法移动，请检查行动点和路径。"
 	queue_redraw()
 
 
@@ -210,5 +212,29 @@ func _on_battle_event(_event: Dictionary) -> void:
 
 
 func _on_battle_finished(result: String) -> void:
-	status_message = "Encounter complete: " + result
+	status_message = "遭遇战结束：" + ("胜利" if result == "victory" else "失败")
 	queue_redraw()
+
+
+func _actor_name(actor_id: String) -> String:
+	if actor_id == "sevrin":
+		return "瑟弗林"
+	if actor_id.begins_with("vanguard"):
+		return "先锋"
+	if actor_id.begins_with("marksman"):
+		return "神射手"
+	if actor_id.begins_with("area_controller"):
+		return "区域术士"
+	return "未知单位"
+
+
+func _action_name(action_id: String) -> String:
+	var names := {
+		"charged_strike": "蓄力重击",
+		"basic_melee": "近战攻击",
+		"pursuit": "追击",
+		"aimed_shot": "瞄准射击",
+		"ground_pulse": "地脉脉冲",
+		"wait": "待机"
+	}
+	return names.get(action_id, "未知行动")
