@@ -125,6 +125,23 @@ func expire_all_boundary(boundary: StringName) -> int:
 	return removed_count
 
 
+func defer_status_boundary(status_id: StringName, from_boundary: StringName, to_boundary: StringName) -> int:
+	if status_id == &"" or from_boundary == &"" or to_boundary == &"" or from_boundary == to_boundary:
+		return 0
+	var deferred_count: int = 0
+	for actor_statuses in _statuses_by_actor.values():
+		if not actor_statuses is Dictionary:
+			continue
+		var value = actor_statuses.get(status_id)
+		if value == null:
+			continue
+		var status: BattleStatus = value as BattleStatus
+		if status.expiry_boundary == from_boundary:
+			status.expiry_boundary = to_boundary
+			deferred_count += 1
+	return deferred_count
+
+
 func clear_all() -> int:
 	var removed_count: int = 0
 	for actor_statuses in _statuses_by_actor.values():
