@@ -36,6 +36,8 @@ func start_encounter(
 	# Validate the complete setup before mutating live encounter state.
 	if not GridRulesScript.is_inside_bounds(player_cell, grid_size):
 		return false
+	if enemy_cells.is_empty():
+		return false
 	var candidate_blockers: Dictionary = {}
 	for cell in obstacles:
 		if not GridRulesScript.is_inside_bounds(cell):
