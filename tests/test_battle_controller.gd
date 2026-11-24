@@ -56,6 +56,33 @@ func _run() -> void:
 	wait_battle.queue_free()
 
 
+	var marksman_battle = ControllerScript.new()
+	root.add_child(marksman_battle)
+	var marksman_types: Array[String] = ["marksman"]
+	_check(marksman_battle.start_encounter(Vector2i(1, 1), [Vector2i(5, 1)], [], marksman_types), "marksman encounter starts with explicit archetype")
+	var shot_intent = marksman_battle.intents[0]
+	_check(marksman_battle.get_actor("marksman_00").archetype == "marksman", "enemy archetype is stored on actor")
+	_check(marksman_battle.get_actor("marksman_00").max_health == 4, "marksman uses provisional four health")
+	_check(shot_intent.action_id == "aimed_shot", "aligned target in range produces aimed shot")
+	_check(shot_intent.target_mode == IntentScript.TargetMode.TILE_LOCKED, "aimed shot captures tile lock")
+	_check(shot_intent.target_cell == Vector2i(1, 1) and shot_intent.damage == 2, "aimed shot captures marked cell and damage")
+	_check(marksman_battle.end_player_turn(), "aimed shot resolves during enemy phase")
+	_check(marksman_battle.get_actor("sevrin").health == 8, "aimed shot deals captured two damage")
+	_check(shot_intent.state == IntentScript.IntentState.RESOLVED, "aimed shot intent resolves")
+	marksman_battle.queue_free()
+
+	var blocked_marksman_battle = ControllerScript.new()
+	root.add_child(blocked_marksman_battle)
+	_check(blocked_marksman_battle.start_encounter(Vector2i(1, 1), [Vector2i(5, 1)], [Vector2i(3, 1)], marksman_types), "blocked marksman encounter starts")
+	_check(blocked_marksman_battle.intents[0].action_id == "wait", "blocked firing lane produces wait intent")
+	blocked_marksman_battle.queue_free()
+
+	var out_of_range_marksman_battle = ControllerScript.new()
+	root.add_child(out_of_range_marksman_battle)
+	_check(out_of_range_marksman_battle.start_encounter(Vector2i(1, 1), [Vector2i(3, 1)], [], marksman_types), "out-of-range marksman encounter starts")
+	_check(out_of_range_marksman_battle.intents[0].action_id == "wait", "target inside minimum range produces wait intent")
+	out_of_range_marksman_battle.queue_free()
+
 	var actor_lock_battle = ControllerScript.new()
 	root.add_child(actor_lock_battle)
 	_check(actor_lock_battle.start_encounter(Vector2i(1, 1), [Vector2i(2, 1)]), "actor-lock encounter starts")
