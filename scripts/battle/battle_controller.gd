@@ -219,7 +219,9 @@ func _resolve_enemy_phase() -> void:
 				_resolve_pursuit(intent)
 			_:
 				intent.cancel("unknown_action")
-	_check_battle_end()
+		_check_battle_end()
+		if phase == BattlePhase.FINISHED:
+			break
 	if phase != BattlePhase.FINISHED:
 		_begin_player_turn()
 
