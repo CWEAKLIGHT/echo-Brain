@@ -139,6 +139,34 @@ func request_player_attack(target_actor_id: String, damage_multiplier: float = 1
 	return true
 
 
+func request_judgment_mark(target_actor_id: String) -> bool:
+	if phase != BattlePhase.PLAYER or not actors.has("sevrin") or not actors.has(target_actor_id):
+		return false
+	var player = actors["sevrin"]
+	var target = actors[target_actor_id]
+	if not player.is_alive() or not target.is_alive() or target.team != "enemy":
+		return false
+	var distance: int = GridRulesScript.manhattan_distance(player.cell, target.cell)
+	if distance < 1 or distance > 4:
+		return false
+	if not GridRulesScript.has_clear_orthogonal_line(player.cell, target.cell, blocked_cells, get_occupied_cells()):
+		return false
+	if not ap.can_spend(1):
+		return false
+	if not ap.spend(1):
+		return false
+	if not statuses.apply_status(&"judgment_mark", "sevrin", target_actor_id, 1, 1, -1, &"enemy_phase_end"):
+		ap.current += 1
+		return false
+	for intent in intents:
+		if intent.source_actor_id == target_actor_id and intent.state == BattleIntentScript.IntentState.ACTIVE and intent.action_id in ["basic_melee", "aimed_shot", "charged_strike", "ground_pulse"]:
+			intent.judgment_marked = true
+			_emit_event("intent_judgment_marked", target_actor_id, intent.target_actor_id, "intent=%s action=%s" % [intent.intent_id, intent.action_id])
+			break
+	_emit_event("skill_resolved", "sevrin", target_actor_id, "skill=judgment_mark ap=1")
+	return true
+
+
 func end_player_turn() -> bool:
 	if phase != BattlePhase.PLAYER:
 		return false
