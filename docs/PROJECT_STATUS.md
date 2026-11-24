@@ -96,3 +96,10 @@ The main scene now opens an 8×8 tactical board with Sevrin, two Melee Vanguard 
 - Corrected encounter validation so obstacle and enemy coordinates are checked against the controller's configured `grid_size`, rather than calling the bounds helper without its required dimensions.
 - Added regression scenarios using a 6×6 configured board: valid in-bounds setup is accepted, while an enemy or obstacle at x=6 is rejected.
 - Controller and test files were re-fetched after the commits to verify the exact changes. This remains source-level review only; Godot import, parsing, and test execution are still pending.
+
+
+## First Windows Godot import feedback — occupied Dictionary type
+
+- A tester opened the project with Godot 4.7.2 stable on Windows and reported a parser error in `scripts/ui/battle_view.gd:183`: Godot could not infer the type of `occupied`.
+- Confirmed that `BattleController.get_occupied_cells()` returns `Dictionary`; changed the local declaration to explicitly type `occupied: Dictionary`.
+- The fix was committed to `prototype/0.1` and re-fetched for verification. The project has not yet been re-imported or run after this fix; further parser errors may appear and should be handled from the tester's next screenshot.
