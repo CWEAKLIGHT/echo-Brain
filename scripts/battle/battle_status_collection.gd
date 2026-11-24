@@ -113,6 +113,27 @@ func expire_boundary(target_actor_id: String, boundary: StringName) -> int:
 	return expired_ids.size()
 
 
+func expire_all_boundary(boundary: StringName) -> int:
+	if boundary == &"":
+		return 0
+	var target_ids: Array[String] = []
+	for target_id in _statuses_by_actor.keys():
+		target_ids.append(String(target_id))
+	var removed_count: int = 0
+	for target_id in target_ids:
+		removed_count += expire_boundary(target_id, boundary)
+	return removed_count
+
+
+func clear_all() -> int:
+	var removed_count: int = 0
+	for actor_statuses in _statuses_by_actor.values():
+		if actor_statuses is Dictionary:
+			removed_count += actor_statuses.size()
+	_statuses_by_actor.clear()
+	return removed_count
+
+
 func remove_status(target_actor_id: String, status_id: StringName) -> bool:
 	var actor_statuses: Dictionary = _get_actor_statuses(target_actor_id)
 	if not actor_statuses.has(status_id):
