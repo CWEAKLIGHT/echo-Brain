@@ -156,3 +156,13 @@ The main scene now opens an 8×8 tactical board with Sevrin, two Melee Vanguard 
 - Documented the status API and planned skill-to-status mapping in `docs/battle_status_system_zh-CN.md`.
 - The status collection is deliberately not wired into BattleController yet. No skill effect or damage pipeline behavior changes in this milestone.
 - Files were re-fetched after edits for source-level review. Godot 4.7.2 import and test execution remain outstanding; do not claim the test harness passed until run in-engine.
+
+
+## Battle status lifecycle integration — 2026-11-24
+
+- Integrated `BattleStatusCollection` with `BattleController` phase boundaries: `player_phase_start` expires before new player intents are generated; `enemy_phase_end` expires after enemy actions and before the next player turn.
+- Actor defeat clears that actor's statuses. Battle completion and encounter restart clear the collection.
+- Added global boundary expiry and whole-collection cleanup APIs.
+- Extended controller tests for enemy-phase-end expiry and defeated-actor status cleanup.
+- Status effects are still not applied to damage or enemy intent behavior; skill casting and effect execution remain future work.
+- Source files were re-fetched for review. Godot 4.7.2 import/runtime tests remain unexecuted.
