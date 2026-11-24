@@ -111,3 +111,12 @@ The main scene now opens an 8×8 tactical board with Sevrin, two Melee Vanguard 
 - Re-scanned all tracked GDScript files in the current prototype tree for inferred declarations involving method calls. Remaining matches use concrete built-in constructors/helpers or functions with explicit return types; no additional same-pattern untyped getter call was found in this scan.
 - Reviewed the main scene resource path and `project.godot` main-scene setting; both point to the tracked `scenes/main/main.tscn` and `scripts/ui/battle_view.gd` resources.
 - These are source-level checks only. Godot editor import, parser validation, runtime behavior, and test-suite execution remain unverified until the tester reimports the latest ZIP and runs the project.
+
+## Static audit follow-up — Godot 4.7.2 Windows feedback
+
+- Re-fetched the project configuration, main scene, battle view, battle controller, grid rules, AP budget, intent model, actor model, and both test harnesses from `prototype/0.1`.
+- Confirmed `project.godot` points to `res://scenes/main/main.tscn`, and that scene references the tracked `res://scripts/ui/battle_view.gd` script.
+- Confirmed the earlier `occupied` inference issue is addressed by an explicit `Dictionary` declaration at the UI call site and an explicit `-> Dictionary` return type on `get_occupied_cells()`.
+- Reviewed remaining inferred local declarations (`:=`) across the tracked GDScript files. Calls used for inferred values now have declared return types; other matches derive from typed parameters, built-in constructors, literals, or built-in integer helpers.
+- Found and corrected stale README text that still described the repository as an unimplemented skeleton. README now describes the current playable battle slice, Windows import/run steps, test-harness commands, and the still-unverified runtime status.
+- Static review did not reveal another confirmed parser error. This is not equivalent to Godot parsing or execution: only a Godot 4.7.2 import and actual test run can establish that. The tester should re-download the latest ZIP before retrying so the fixes and README are included.
