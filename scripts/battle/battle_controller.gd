@@ -80,7 +80,7 @@ func start_encounter(
 
 
 func get_occupied_cells(exclude_actor_id: String = "") -> Dictionary:
-	var occupied := {}
+	var occupied: Dictionary = {}
 	for actor_id in actors:
 		var actor = actors[actor_id]
 		if actor_id != exclude_actor_id and actor.is_alive():
