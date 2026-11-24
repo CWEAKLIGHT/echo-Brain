@@ -146,3 +146,13 @@ The main scene now opens an 8×8 tactical board with Sevrin, two Melee Vanguard 
 - Added an Oathkeeper skill catalog containing the five designed skills as data; this does not yet execute skills or change the existing battle loop.
 - Added a dedicated skill-definition test harness covering catalog size/order, validation, AP costs, targeting/range, mark requirements, and invalid zero-AP data. Corrected the harness to aggregate failures reliably rather than passing an integer counter by value.
 - Re-fetched the new scripts and test file after writing. This remains source-level verification only. Godot 4.7.2 import and execution are still required; do not mark the new harness as passed until it runs in-engine.
+
+
+## Battle status foundation — 2026-11-24
+
+- Added typed `BattleStatus` runtime data and `BattleStatusCollection` lifecycle management as independent infrastructure.
+- Supports replace/refresh/add stacking policies, capped stacks, unlimited or finite trigger counts, explicit trigger consumption, phase-boundary expiry, explicit removal, and actor-wide cleanup.
+- Added `tests/test_battle_status.gd` for creation, lookup, trigger consumption, expiry, stack policies, refresh semantics, invalid input, and cleanup.
+- Documented the status API and planned skill-to-status mapping in `docs/battle_status_system_zh-CN.md`.
+- The status collection is deliberately not wired into BattleController yet. No skill effect or damage pipeline behavior changes in this milestone.
+- Files were re-fetched after edits for source-level review. Godot 4.7.2 import and test execution remain outstanding; do not claim the test harness passed until run in-engine.
