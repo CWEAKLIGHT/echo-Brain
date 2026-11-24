@@ -165,7 +165,7 @@ func _draw_target_hints() -> void:
 			continue
 		if skill["id"] in ["judgment_mark", "oath_severance"] and not GridRulesScript.has_clear_orthogonal_line(player.cell, actor.cell, controller.blocked_cells, controller.get_occupied_cells()):
 			continue
-		if skill["id"] == "oath_severance" and not controller.statuses.has_status(actor_id, &"judgment_mark"): 
+		if skill["id"] == "oath_severance" and not controller.statuses.has_status(actor_id, &"judgment_mark"):
 			continue
 		draw_arc(_cell_center(actor.cell), 31.0, 0.0, TAU, 48, Color(0.95, 0.85, 0.55, 0.55), 2.0)
 
@@ -265,6 +265,7 @@ func _cell_center(cell: Vector2i) -> Vector2:
 	return _cell_rect(cell).position + Vector2(CELL_SIZE * 0.5, CELL_SIZE * 0.5)
 
 
+func _input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch and event.pressed:
 		_handle_tap(event.position)
 	elif event is InputEventMouseButton and event.pressed:
