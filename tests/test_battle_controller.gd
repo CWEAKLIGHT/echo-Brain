@@ -30,7 +30,7 @@ func _run() -> void:
 	var evade_path: Array[Vector2i] = [Vector2i(1, 2)]
 	_check(charge_battle.request_player_move(evade_path), "player can move away from marked cell")
 	_check(charge_battle.end_player_turn(), "player can end turn")
-	_check(charge_battle.get_actor("sevrin").health == 10, "tile-locked strike does not follow a moved actor")
+	_check(charge_battle.get_actor("sevrin").health == 12000, "tile-locked strike does not follow a moved actor")
 	_check(charge_intent.state == IntentScript.IntentState.CANCELED, "empty marked cell cancels tile-locked strike")
 	charge_battle.queue_free()
 
@@ -63,12 +63,12 @@ func _run() -> void:
 	_check(marksman_battle.start_encounter(Vector2i(1, 1), [Vector2i(5, 1)], [], marksman_types), "marksman encounter starts with explicit archetype")
 	var shot_intent = marksman_battle.intents[0]
 	_check(marksman_battle.get_actor("marksman_00").archetype == "marksman", "enemy archetype is stored on actor")
-	_check(marksman_battle.get_actor("marksman_00").max_health == 4, "marksman uses provisional four health")
+	_check(marksman_battle.get_actor("marksman_00").max_health == 2000, "marksman uses provisional four health")
 	_check(shot_intent.action_id == "aimed_shot", "aligned target in range produces aimed shot")
 	_check(shot_intent.target_mode == IntentScript.TargetMode.TILE_LOCKED, "aimed shot captures tile lock")
-	_check(shot_intent.target_cell == Vector2i(1, 1) and shot_intent.damage == 2, "aimed shot captures marked cell and damage")
+	_check(shot_intent.target_cell == Vector2i(1, 1) and shot_intent.damage == 1200, "aimed shot captures marked cell and damage")
 	_check(marksman_battle.end_player_turn(), "aimed shot resolves during enemy phase")
-	_check(marksman_battle.get_actor("sevrin").health == 8, "aimed shot deals captured two damage")
+	_check(marksman_battle.get_actor("sevrin").health == 11273, "aimed shot deals captured two damage")
 	_check(shot_intent.state == IntentScript.IntentState.RESOLVED, "aimed shot intent resolves")
 	marksman_battle.queue_free()
 
@@ -105,7 +105,7 @@ func _run() -> void:
 	_check(mixed_battle.intents[0].source_actor_id == "vanguard_00" and mixed_battle.intents[1].source_actor_id == "marksman_01", "mixed execution order retains explicit archetype identities")
 	var mixed_intents = mixed_battle.intents
 	_check(mixed_battle.end_player_turn(), "mixed enemy phase resolves")
-	_check(mixed_battle.get_actor("sevrin").health == 7, "mixed phase applies melee and ranged damage in order")
+	_check(mixed_battle.get_actor("sevrin").health == 10595, "mixed phase applies melee and ranged damage in order")
 	_check(mixed_intents[0].state == IntentScript.IntentState.RESOLVED and mixed_intents[1].state == IntentScript.IntentState.RESOLVED, "both mixed intents resolve")
 	mixed_battle.queue_free()
 
@@ -121,7 +121,7 @@ func _run() -> void:
 	_check(all_archetypes_battle.intents[1].affected_cells.has(Vector2i(1, 3)) and all_archetypes_battle.intents[2].target_cell == Vector2i(1, 3), "mixed roster telegraphs retain their captured area and tile")
 	var all_archetypes_intents = all_archetypes_battle.intents
 	_check(all_archetypes_battle.end_player_turn(), "all-archetype enemy phase resolves")
-	_check(all_archetypes_battle.get_actor("sevrin").health == 6, "mixed roster resolves Vanguard, area, and ranged damage in displayed order")
+	_check(all_archetypes_battle.get_actor("sevrin").health == 10082, "mixed roster resolves Vanguard, area, and ranged damage in displayed order")
 	_check(all_archetypes_intents.all(func(intent): return intent.state == IntentScript.IntentState.RESOLVED), "all three mixed-roster intents resolve exactly once")
 	all_archetypes_battle.queue_free()
 
@@ -138,12 +138,12 @@ func _run() -> void:
 	var area_types: Array[String] = ["area_controller"]
 	_check(area_battle.start_encounter(Vector2i(1, 1), [Vector2i(4, 1)], [], area_types), "area controller encounter starts")
 	var area_intent = area_battle.intents[0]
-	_check(area_battle.get_actor("area_controller_00").max_health == 5, "area controller uses provisional five health")
+	_check(area_battle.get_actor("area_controller_00").max_health == 2600, "area controller uses provisional five health")
 	_check(area_intent.action_id == "ground_pulse", "area controller selects ground pulse in range")
 	_check(area_intent.target_mode == IntentScript.TargetMode.AREA_LOCKED, "ground pulse captures area lock")
 	_check(area_intent.affected_cells.size() == 5 and area_intent.affected_cells.has(Vector2i(1, 1)), "ground pulse captures fixed orthogonal cross footprint")
 	_check(area_battle.end_player_turn(), "ground pulse resolves during enemy phase")
-	_check(area_battle.get_actor("sevrin").health == 9, "ground pulse deals one damage inside marked area")
+	_check(area_battle.get_actor("sevrin").health == 11487, "ground pulse deals one damage inside marked area")
 	_check(area_intent.state == IntentScript.IntentState.RESOLVED, "ground pulse intent resolves")
 	area_battle.queue_free()
 
@@ -154,7 +154,7 @@ func _run() -> void:
 	var area_evade_path: Array[Vector2i] = [Vector2i(1, 2), Vector2i(2, 2)]
 	_check(evaded_area_battle.request_player_move(area_evade_path), "player can move outside the marked cross area")
 	_check(evaded_area_battle.end_player_turn(), "evaded ground pulse phase resolves")
-	_check(evaded_area_battle.get_actor("sevrin").health == 10, "ground pulse misses player outside captured area")
+	_check(evaded_area_battle.get_actor("sevrin").health == 12000, "ground pulse misses player outside captured area")
 	_check(evaded_area_intent.state == IntentScript.IntentState.CANCELED and evaded_area_intent.cancel_reason == "marked_area_empty", "empty ground pulse area cancels explicitly")
 	evaded_area_battle.queue_free()
 
@@ -173,7 +173,7 @@ func _run() -> void:
 	var retreat_path: Array[Vector2i] = [Vector2i(1, 2), Vector2i(1, 3)]
 	_check(actor_lock_battle.request_player_move(retreat_path), "player can retreat two cells after telegraph")
 	_check(actor_lock_battle.end_player_turn(), "actor-lock enemy phase resolves")
-	_check(actor_lock_battle.get_actor("sevrin").health == 9, "actor-locked attack tracks target after it moves")
+	_check(actor_lock_battle.get_actor("sevrin").health == 11322, "actor-locked attack tracks target after it moves")
 	actor_lock_battle.queue_free()
 
 	var terminal_battle = ControllerScript.new()
