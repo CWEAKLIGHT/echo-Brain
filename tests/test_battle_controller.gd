@@ -139,7 +139,8 @@ func _run() -> void:
 
 	var marked_area_battle = ControllerScript.new()
 	root.add_child(marked_area_battle)
-	_check(marked_area_battle.start_encounter(Vector2i(1, 1), [Vector2i(4, 1)], [], area_types), "Judgment Mark area-attack encounter starts")
+	var marked_area_types: Array[String] = ["area_controller"]
+	_check(marked_area_battle.start_encounter(Vector2i(1, 1), [Vector2i(4, 1)], [], marked_area_types), "Judgment Mark area-attack encounter starts")
 	_check(marked_area_battle.request_judgment_mark("area_controller_00"), "Judgment Mark can target an area attacker")
 	_check(marked_area_battle.intents[0].judgment_marked and marked_area_battle.intents[0].affected_cells.size() == 5, "marked area intent keeps its original five-cell footprint")
 	_check(marked_area_battle.end_player_turn(), "marked area attack resolves")
