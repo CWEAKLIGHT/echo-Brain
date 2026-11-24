@@ -15,7 +15,7 @@ enum BattlePhase { PLAYER, ENEMY, FINISHED }
 @export var player_ap: int = 3
 
 var phase: BattlePhase = BattlePhase.FINISHED
-var ap: RefCounted
+var ap
 var actors: Dictionary = {}
 var blocked_cells: Dictionary = {}
 var intents: Array = []
@@ -73,7 +73,7 @@ func get_occupied_cells(exclude_actor_id: String = "") -> Dictionary:
 	return occupied
 
 
-func get_actor(actor_id: String) -> RefCounted:
+func get_actor(actor_id: String):
 	return actors.get(actor_id)
 
 
@@ -224,7 +224,7 @@ func _resolve_enemy_phase() -> void:
 		_begin_player_turn()
 
 
-func _resolve_actor_locked_attack(intent: RefCounted) -> void:
+func _resolve_actor_locked_attack(intent) -> void:
 	if not actors.has(intent.target_actor_id) or not actors[intent.target_actor_id].is_alive():
 		intent.cancel("actor_target_defeated")
 		return
@@ -238,7 +238,7 @@ func _resolve_actor_locked_attack(intent: RefCounted) -> void:
 	_emit_event("enemy_action_resolved", intent.source_actor_id, intent.target_actor_id, intent.action_id)
 
 
-func _resolve_tile_locked_attack(intent: RefCounted) -> void:
+func _resolve_tile_locked_attack(intent) -> void:
 	var target_id := ""
 	for actor_id in actors:
 		var candidate = actors[actor_id]
@@ -257,7 +257,7 @@ func _resolve_tile_locked_attack(intent: RefCounted) -> void:
 	_emit_event("enemy_action_resolved", intent.source_actor_id, target_id, intent.action_id)
 
 
-func _resolve_pursuit(intent: RefCounted) -> void:
+func _resolve_pursuit(intent) -> void:
 	var source = actors[intent.source_actor_id]
 	var path: Array = intent.affected_cells
 	if path.is_empty() or path.size() > 2:
