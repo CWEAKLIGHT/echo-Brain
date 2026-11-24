@@ -10,7 +10,7 @@ func _initialize() -> void:
 
 func _run() -> void:
 	var failures: Array[String] = []
-	var statuses = StatusCollectionScript.new()
+	var statuses: BattleStatusCollection = StatusCollectionScript.new()
 
 	_check(statuses.apply_status(&"oathguard", "sevrin", "sevrin", 1, 1, 1, &"enemy_phase_end"), "one-trigger defensive status can be applied", failures)
 	_check(statuses.has_status("sevrin", &"oathguard"), "applied status can be queried", failures)
