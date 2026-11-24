@@ -148,9 +148,9 @@ func _generate_enemy_intents() -> Array:
 		elif distance == 1:
 			intent = BattleIntentScript.new("intent_%d_%s" % [turn_number, actor_id], actor_id, "basic_melee", BattleIntentScript.TargetMode.ACTOR_LOCKED, "sevrin", target.cell, [target.cell], 1, 1)
 		else:
-			var next_cell: Vector2i = _next_pursuit_step(enemy.cell, target.cell, actor_id)
-			if next_cell != enemy.cell:
-				intent = BattleIntentScript.new("intent_%d_%s" % [turn_number, actor_id], actor_id, "pursuit", BattleIntentScript.TargetMode.NONE, "", next_cell, [next_cell], 0, 2)
+			var pursuit_path: Array[Vector2i] = _next_pursuit_path(enemy.cell, target.cell, actor_id, 2)
+			if not pursuit_path.is_empty():
+				intent = BattleIntentScript.new("intent_%d_%s" % [turn_number, actor_id], actor_id, "pursuit", BattleIntentScript.TargetMode.NONE, "", pursuit_path[pursuit_path.size() - 1], pursuit_path, 0, 2)
 		if intent != null:
 			generated.append(intent)
 	generated.sort_custom(func(a, b):
@@ -167,7 +167,7 @@ func _generate_enemy_intents() -> Array:
 	return generated
 
 
-func _next_pursuit_step(start: Vector2i, goal: Vector2i, actor_id: String) -> Vector2i:
+func _next_pursuit_path(start: Vector2i, goal: Vector2i, actor_id: String, max_steps: int) -> Array[Vector2i]:
 	var queue: Array[Vector2i] = [start]
 	var came_from := {start: start}
 	var directions: Array[Vector2i] = [Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT]
@@ -187,14 +187,18 @@ func _next_pursuit_step(start: Vector2i, goal: Vector2i, actor_id: String) -> Ve
 			came_from[next] = current
 			queue.append(next)
 	if not found:
-		return start
+		return []
+	var reversed_path: Array[Vector2i] = []
 	var cursor := goal
-	while came_from[cursor] != start:
+	while cursor != start:
+		reversed_path.push_front(cursor)
 		cursor = came_from[cursor]
-	var first_step: Vector2i = cursor
-	if GridRulesScript.manhattan_distance(start, first_step) != 1:
-		return start
-	return first_step
+	if reversed_path.is_empty():
+		return []
+	var result: Array[Vector2i] = []
+	for index in range(mini(max_steps, reversed_path.size())):
+		result.append(reversed_path[index])
+	return result
 
 
 func _resolve_enemy_phase() -> void:
@@ -255,17 +259,23 @@ func _resolve_tile_locked_attack(intent: RefCounted) -> void:
 
 func _resolve_pursuit(intent: RefCounted) -> void:
 	var source = actors[intent.source_actor_id]
-	var destination: Vector2i = intent.target_cell
-	if not GridRulesScript.is_inside_bounds(destination, grid_size):
-		intent.cancel("destination_out_of_bounds")
+	var path: Array = intent.affected_cells
+	if path.is_empty() or path.size() > 2:
+		intent.cancel("invalid_pursuit_path")
 		return
-	if blocked_cells.has(destination) or get_occupied_cells(intent.source_actor_id).has(destination):
-		intent.cancel("destination_blocked")
-		return
-	if GridRulesScript.manhattan_distance(source.cell, destination) != 1:
-		intent.cancel("destination_not_adjacent")
-		return
-	source.cell = destination
+	var cursor: Vector2i = source.cell
+	for destination in path:
+		if not GridRulesScript.is_inside_bounds(destination, grid_size):
+			intent.cancel("destination_out_of_bounds")
+			return
+		if blocked_cells.has(destination) or get_occupied_cells(intent.source_actor_id).has(destination):
+			intent.cancel("destination_blocked")
+			return
+		if GridRulesScript.manhattan_distance(cursor, destination) != 1:
+			intent.cancel("destination_not_adjacent")
+			return
+		cursor = destination
+	source.cell = cursor
 	intent.mark_resolved()
 	_emit_event("enemy_action_resolved", intent.source_actor_id, "", "pursuit")
 
