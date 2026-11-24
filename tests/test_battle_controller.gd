@@ -132,6 +132,13 @@ func _run() -> void:
 	_check(evaded_area_intent.state == IntentScript.IntentState.CANCELED and evaded_area_intent.cancel_reason == "marked_area_empty", "empty ground pulse area cancels explicitly")
 	evaded_area_battle.queue_free()
 
+	var edge_area_battle = ControllerScript.new()
+	root.add_child(edge_area_battle)
+	_check(edge_area_battle.start_encounter(Vector2i(0, 0), [Vector2i(2, 0)], [], area_types), "edge area controller encounter starts")
+	_check(edge_area_battle.intents[0].affected_cells.size() == 3, "ground pulse clips cells beyond the map boundary")
+	_check(edge_area_battle.intents[0].affected_cells.all(func(cell): return cell.x >= 0 and cell.y >= 0), "clipped ground pulse contains no negative coordinates")
+	edge_area_battle.queue_free()
+
 	var actor_lock_battle = ControllerScript.new()
 	root.add_child(actor_lock_battle)
 	_check(actor_lock_battle.start_encounter(Vector2i(1, 1), [Vector2i(2, 1)]), "actor-lock encounter starts")
