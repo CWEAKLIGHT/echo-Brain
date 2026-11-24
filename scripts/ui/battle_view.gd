@@ -18,8 +18,9 @@ func _ready() -> void:
 	controller.battle_finished.connect(_on_battle_finished)
 	controller.start_encounter(
 		Vector2i(1, 3),
-		[Vector2i(5, 3), Vector2i(6, 6)],
-		[Vector2i(3, 1), Vector2i(3, 2)]
+		[Vector2i(5, 3), Vector2i(6, 6), Vector2i(1, 0)],
+		[Vector2i(3, 1), Vector2i(3, 2)],
+		["vanguard", "area_controller", "marksman"]
 	)
 	queue_redraw()
 
