@@ -380,7 +380,7 @@ The Ranged Marksman creates a distant, readable single-cell threat. It teaches t
 
 ### Implementation boundary
 
-The current encounter factory creates Vanguard-only test encounters. Marksman support must be introduced through an explicit enemy-archetype field or typed encounter definition; do not infer enemy type from array order or silently change existing Vanguard fixtures. The archetype should be captured on the actor at construction and used by both intent generation and UI presentation.
+Encounter initialization now accepts an optional archetype array parallel to the enemy-cell array. An omitted array preserves the existing all-Vanguard fixtures. Supported values are explicitly validated (`vanguard`, `marksman`); unknown values or a mismatched array length reject the entire setup before live state is mutated. The actor stores its archetype, and both intent generation and UI presentation read that field. Enemy IDs retain the archetype prefix and original encounter index.
 
 
 ## 11. Failure handling
