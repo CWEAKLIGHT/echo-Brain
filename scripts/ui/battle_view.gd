@@ -7,7 +7,7 @@ const BOARD_ORIGIN := Vector2(384.0, 72.0)
 const BOARD_SIZE := 8
 const END_TURN_RECT := Rect2(1010.0, 620.0, 210.0, 64.0)
 
-var controller
+var controller: BattleController
 var status_message: String = "Tap a cell to move. Tap an adjacent enemy to attack."
 
 
