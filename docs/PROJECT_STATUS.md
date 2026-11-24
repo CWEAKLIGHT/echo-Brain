@@ -69,3 +69,5 @@ The main scene now opens an 8×8 tactical board with Sevrin, two Melee Vanguard 
 - Battle UI intent rendering and enemy-order labels now use the named `IntentState` enum rather than numeric state literals; active, resolved, and canceled states are distinguished.
 - Added controller scenarios verifying that an invalid encounter setup is rejected without mutating the currently active encounter.
 - This is a source-level review and test-harness update only. Godot 4.x import, script parsing, headless execution, Android export, and device behavior remain unverified because no Godot runtime is available in the current environment.
+
+- Encounter validation now also rejects an empty enemy roster, preventing a nominally started encounter with no possible victory condition. A regression scenario covers this rejection and verifies the prior encounter remains intact.
