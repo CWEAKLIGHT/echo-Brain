@@ -86,3 +86,21 @@ godot --headless --path . --script res://tests/test_battle_controller.gd
 ## 当前验证能力边界
 
 当前远程 GitHub 编辑环境没有可确认的 Godot 4.7.2 引擎执行能力。因此，远程开发阶段可做类型/调用/资源路径静态审查和测试用例编写；不能声称已完成 Godot 导入、解析或运行测试。每次向用户报告时必须明确这一差别。
+
+## Windows 桌面技能 UI 集成验证
+
+在 Windows Godot 4.7.2 Standard 中导入项目后，先运行：
+
+```bash
+godot --headless --path . --script res://tests/test_battle_view_skills.gd
+```
+
+该测试通过主场景实例化战斗界面，检查：
+- 数字键 2 能通过 UI 输入触发誓盾架势并正确消耗 AP。
+- 鼠标技能按钮能施放守望壁垒与回响反击。
+- 裁决印记可通过技能栏选择、战场点击确认。
+- 誓约裁断可通过技能栏选择、战场点击确认，并验证印记消耗、伤害与意图打断。
+- 技能 UI 的行动点消耗与控制器规则一致。
+
+随后按 F5 运行主场景，手动确认窗口尺寸、技能按钮可见性、鼠标目标选择、Esc/右键取消、数字键 1–6、Enter/空格结束回合。Headless 测试不验证实际窗口绘制和输入焦点。
+
