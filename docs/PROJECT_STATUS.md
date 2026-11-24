@@ -187,3 +187,6 @@ The main scene now opens an 8×8 tactical board with Sevrin, two Melee Vanguard 
 - Wait/pursuit intents do not consume the mark; it expires at the end of that enemy phase. Canceled or empty-target attacks do not apply Exposed.
 - Added controller regression cases for marked aimed shot, charged strike/Exposed, and pursuit expiry. Updated battle status documentation.
 - Source files were fetched again for static review. Godot 4.7.2 import and runtime tests have not yet been executed.
+
+- Added BattleController.request_oath_severance: validates a marked living enemy at orthogonal range 1–2 with clear line and 2 AP; consumes the mark, cancels its active intent with reason oath_severance, then applies 1.4× physical damage.
+- Added regression coverage for rejecting unmarked targets without AP loss, the combined 3-AP mark/severance sequence, exact post-defense damage, and prevention of the canceled intent during that enemy phase.
