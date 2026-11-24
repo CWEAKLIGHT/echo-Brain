@@ -9,7 +9,7 @@ func _initialize() -> void:
 
 
 func _run() -> void:
-	var failures: int = 0
+	var failures: Array[String] = []
 	var skills: Array[SkillDefinition] = CatalogScript.create_prototype_skills()
 	_check(skills.size() == 5, "five active Oathkeeper skills are defined", failures)
 	var expected_ids: Array[StringName] = [
@@ -35,12 +35,13 @@ func _run() -> void:
 	invalid_skill.effect_id = &"test"
 	_check(not invalid_skill.is_valid(), "zero-AP skill definition is rejected", failures)
 
-	print("Skill definition test run complete. Failures: ", failures)
-	quit(1 if failures > 0 else 0)
+	print("Skill definition test run complete. Failures: ", failures.size())
+	quit(1 if not failures.is_empty() else 0)
 
 
-func _check(condition: bool, label: String, failures: int) -> void:
+func _check(condition: bool, label: String, failures: Array[String]) -> void:
 	if condition:
 		print("PASS: ", label)
 	else:
+		failures.append(label)
 		push_error("FAIL: " + label)
