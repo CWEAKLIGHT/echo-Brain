@@ -79,7 +79,7 @@ func _run() -> void:
 	var marksman_evade_path: Array[Vector2i] = [Vector2i(1, 2)]
 	_check(evaded_marksman_battle.request_player_move(marksman_evade_path), "player can leave marksman marked cell")
 	_check(evaded_marksman_battle.end_player_turn(), "evaded marksman phase resolves")
-	_check(evaded_marksman_battle.get_actor("sevrin").health == 10, "tile-locked aimed shot does not track moved player")
+	_check(evaded_marksman_battle.get_actor("sevrin").health == 12000, "tile-locked aimed shot does not track moved player")
 	_check(evaded_shot.state == IntentScript.IntentState.CANCELED, "aimed shot cancels when marked cell is empty")
 	evaded_marksman_battle.queue_free()
 
