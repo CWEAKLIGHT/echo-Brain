@@ -62,7 +62,7 @@ func _draw_actors() -> void:
 		var outline := Color("#e7d7ae") if actor.team == "player" else Color("#d58b78")
 		draw_circle(center, 22.0, body_color)
 		draw_arc(center, 22.0, 0.0, TAU, 48, outline, 3.0)
-		var glyph := "S" if actor.team == "player" else ("M" if actor.archetype == "marksman" else "V")
+		var glyph := "S" if actor.team == "player" else ("M" if actor.archetype == "marksman" else ("C" if actor.archetype == "area_controller" else "V"))
 		draw_string(ThemeDB.fallback_font, center + Vector2(-7.0, 7.0), glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#17191d"))
 
 
@@ -71,6 +71,14 @@ func _draw_telegraphs() -> void:
 		if intent.state != IntentScript.IntentState.ACTIVE:
 			continue
 		match intent.action_id:
+			"ground_pulse":
+				for area_cell in intent.affected_cells:
+					var area_rect := _cell_rect(area_cell).grow(-5.0)
+					draw_rect(area_rect, Color(0.48, 0.35, 0.72, 0.24), true)
+					draw_rect(area_rect, Color("#b49adf"), false, 3.0)
+				var center_rect := _cell_rect(intent.target_cell).grow(-9.0)
+				draw_string(ThemeDB.fallback_font, center_rect.position + Vector2(13.0, 35.0), "+", HORIZONTAL_ALIGNMENT_LEFT, -1, 28, Color("#eee4ff"))
+
 			"aimed_shot":
 				var shot_rect := _cell_rect(intent.target_cell).grow(-4.0)
 				draw_rect(shot_rect, Color(0.20, 0.55, 0.72, 0.22), true)
