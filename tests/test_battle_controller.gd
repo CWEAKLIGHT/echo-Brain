@@ -22,6 +22,8 @@ func _run() -> void:
 	var charge_battle = ControllerScript.new()
 	root.add_child(charge_battle)
 	_check(charge_battle.start_encounter(Vector2i(1, 1), [Vector2i(3, 1)]), "encounter starts with valid positions")
+	_check(charge_battle.get_actor("sevrin").max_health == 12000 and charge_battle.get_actor("sevrin").attack == 2000, "Oathkeeper receives the scaled base health and attack")
+	_check(charge_battle.get_actor("sevrin").defense == 650 and charge_battle.get_actor("sevrin").magic_resistance == 500, "Oathkeeper receives defense and magic resistance")
 	_check(charge_battle.intents.size() == 1, "one eligible enemy produces one intent")
 	var charge_intent = charge_battle.intents[0]
 	_check(charge_intent.action_id == "charged_strike", "distance-two aligned enemy selects charged strike")
