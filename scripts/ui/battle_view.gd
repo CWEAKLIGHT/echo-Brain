@@ -94,6 +94,14 @@ func _draw_hud() -> void:
 	if sevrin != null:
 		draw_string(font, Vector2(48, 263), "HP  %d / %d" % [sevrin.health, sevrin.max_health], HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("#b9b7ad"))
 	draw_string(font, Vector2(48, 330), status_message, HORIZONTAL_ALIGNMENT_LEFT, 360, 15, Color("#aaa79e"))
+	draw_string(font, Vector2(48, 425), "ENEMY ORDER", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#c5a45c"))
+	var order_y := 455.0
+	for index in range(controller.intents.size()):
+		var intent = controller.intents[index]
+		var action_label: String = intent.action_id.replace("_", " ").to_upper()
+		var state_label: String = "  [CANCELED]" if intent.state == 2 else ""
+		draw_string(font, Vector2(48, order_y), "%d. %s — %s%s" % [index + 1, intent.source_actor_id, action_label, state_label], HORIZONTAL_ALIGNMENT_LEFT, 315, 13, Color("#c7c2b6"))
+		order_y += 24.0
 	draw_rect(END_TURN_RECT, Color("#4b4030"), true)
 	draw_rect(END_TURN_RECT, Color("#c4a66c"), false, 2.0)
 	draw_string(font, END_TURN_RECT.position + Vector2(35.0, 40.0), "END TURN", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#f0e5d0"))
