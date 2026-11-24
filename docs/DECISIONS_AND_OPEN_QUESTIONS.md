@@ -21,6 +21,7 @@ Use these labels consistently:
 - Telegraph targeting uses a mixed model: each action may lock to an actor, a grid cell, or an area according to its design; the telegraph must communicate the selected mode.
 - Actor-locked attacks continue tracking their designated actor; tile-locked attacks resolve at the originally marked cell; area-locked attacks resolve in the originally marked area.
 - If an actor-locked action's designated target is defeated before execution, that action is canceled, does not retarget another actor, and does not refund or compensate player AP; the enemy's action slot is considered resolved.
+- A successful control/interruption immediately cancels the affected enemy's current telegraph; a failed control leaves that telegraph unchanged. The effect does not alter other enemies' telegraphs.
 - Enemy execution order is fixed and visibly communicated.
 - An enemy's telegraph is canceled immediately when that enemy dies.
 - Prototype companion actions are player-commanded, then automatically executed; the companion has one independent support action per player turn.
@@ -35,7 +36,6 @@ One playable Oathkeeper (Sevrin), one temporary Hunter companion, three ordinary
 
 - Which targeting mode (actor-locked, tile-locked, or area-locked) should each individual Prototype 0.1 enemy action use?
 - Do tile-locked or area-locked actions have additional range/line-of-sight invalidation conditions after telegraph generation?
-- How do successful and failed control/interruption effects change a telegraph?
 - What is the exact fixed-order sorting rule for enemy execution?
 - If an earlier enemy action invalidates a later enemy's planned action, what is the later enemy's fallback?
 - Can terrain changes alter an existing telegraph, and if so, under what explicit rules?
