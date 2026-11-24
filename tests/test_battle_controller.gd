@@ -83,6 +83,19 @@ func _run() -> void:
 	_check(out_of_range_marksman_battle.intents[0].action_id == "wait", "target inside minimum range produces wait intent")
 	out_of_range_marksman_battle.queue_free()
 
+	var mixed_battle = ControllerScript.new()
+	root.add_child(mixed_battle)
+	var mixed_types: Array[String] = ["vanguard", "marksman"]
+	_check(mixed_battle.start_encounter(Vector2i(1, 1), [Vector2i(2, 1), Vector2i(5, 1)], [], mixed_types), "mixed vanguard and marksman encounter starts")
+	_check(mixed_battle.intents.size() == 2, "mixed encounter creates one intent per living enemy")
+	_check(mixed_battle.intents[0].action_id == "basic_melee", "vanguard melee is ordered before ranged shot")
+	_check(mixed_battle.intents[1].action_id == "aimed_shot", "marksman shot follows vanguard melee in visible order")
+	_check(mixed_battle.intents[0].source_actor_id == "vanguard_00" and mixed_battle.intents[1].source_actor_id == "marksman_01", "mixed execution order retains explicit archetype identities")
+	_check(mixed_battle.end_player_turn(), "mixed enemy phase resolves")
+	_check(mixed_battle.get_actor("sevrin").health == 7, "mixed phase applies melee and ranged damage in order")
+	_check(mixed_battle.intents[0].state == IntentScript.IntentState.RESOLVED and mixed_battle.intents[1].state == IntentScript.IntentState.RESOLVED, "both mixed intents resolve")
+	mixed_battle.queue_free()
+
 	var actor_lock_battle = ControllerScript.new()
 	root.add_child(actor_lock_battle)
 	_check(actor_lock_battle.start_encounter(Vector2i(1, 1), [Vector2i(2, 1)]), "actor-lock encounter starts")
