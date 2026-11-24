@@ -14,6 +14,7 @@ var target_actor_id: String
 var target_cell: Vector2i
 var affected_cells: Array[Vector2i]
 var damage: int
+var damage_type: String = "physical"
 var execution_priority: int
 var state: IntentState = IntentState.ACTIVE
 var cancel_reason: String = ""
@@ -28,7 +29,8 @@ func _init(
 	p_target_cell: Vector2i = Vector2i.ZERO,
 	p_affected_cells: Array[Vector2i] = [],
 	p_damage: int = 0,
-	p_execution_priority: int = 0
+	p_execution_priority: int = 0,
+	p_damage_type: String = "physical"
 ) -> void:
 	intent_id = p_intent_id
 	source_actor_id = p_source_actor_id
@@ -39,6 +41,7 @@ func _init(
 	affected_cells = p_affected_cells.duplicate()
 	damage = maxi(0, p_damage)
 	execution_priority = p_execution_priority
+	damage_type = p_damage_type
 
 
 func cancel(reason: String) -> bool:
