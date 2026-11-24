@@ -78,3 +78,5 @@ The main scene now opens an 8×8 tactical board with Sevrin, two Melee Vanguard 
 
 - Implemented explicit enemy archetypes on runtime actors and optional, validated encounter archetype input. Existing encounters without an archetype list remain Vanguard encounters; unknown types and mismatched lists are rejected before state mutation.
 - Implemented the provisional Ranged Marksman aimed shot: orthogonal line-of-fire at range 3–6, tile-locked single-cell target, 2 damage, execution-time range/line revalidation, and wait intent when no legal shot exists. Added controller scenarios for a valid shot, blocked lane, and minimum-range failure. These tests are committed but not run in Godot 4.x.
+
+- Mixed-enemy review found and corrected a priority mismatch: Marksman aimed shots now use execution priority 2, after Vanguard charged strikes (0) and basic melee (1). Added mixed-roster coverage verifying the visible order and actual damage resolution, plus rejection tests for unknown/mismatched archetype input. Test harness remains unexecuted pending Godot 4.x runtime access.
