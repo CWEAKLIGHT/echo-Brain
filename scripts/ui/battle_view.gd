@@ -27,8 +27,8 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, Vector2(1280.0, 720.0)), Color("#17191d"), true)
 	_draw_header()
 	_draw_board()
-	_draw_actors()
 	_draw_telegraphs()
+	_draw_actors()
 	_draw_hud()
 
 
