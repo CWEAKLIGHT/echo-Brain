@@ -81,3 +81,7 @@ The main scene now opens an 8×8 tactical board with Sevrin, two Melee Vanguard 
 
 - Mixed-enemy review found and corrected a priority mismatch: Marksman aimed shots now use execution priority 2, after Vanguard charged strikes (0) and basic melee (1). Added mixed-roster coverage verifying the visible order and actual damage resolution, plus rejection tests for unknown/mismatched archetype input. Test harness remains unexecuted pending Godot 4.x runtime access.
 - Added a Marksman tile-lock evasion regression scenario: moving Sevrin off the marked cell cancels the aimed shot without damage. This is source-level test coverage only; no Godot test execution has occurred.
+
+- Implemented the provisional Area Controller archetype: explicit `area_controller` encounter type, five-health provisional profile, range-2–4 fixed orthogonal-cross `ground_pulse`, area-locked one-damage resolution, and explicit cancellation when the captured area is empty. Added a distinct `C` actor marker and cross-cell telegraph rendering.
+- Added controller scenarios for area-lock metadata, damage to a player remaining in the footprint, and evasion by moving outside the captured area. Added the provisional behavior and acceptance criteria to the enemy specification.
+- Source-level implementation and test authoring only. Godot 4.x parsing and execution remain unverified because the runtime is unavailable in this environment.
