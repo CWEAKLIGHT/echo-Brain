@@ -137,6 +137,16 @@ func _run() -> void:
 	_check(not marked_pursuit_battle.statuses.has_status("vanguard_00", &"judgment_mark"), "unused mark expires after one enemy phase")
 	marked_pursuit_battle.queue_free()
 
+	var marked_area_battle = ControllerScript.new()
+	root.add_child(marked_area_battle)
+	_check(marked_area_battle.start_encounter(Vector2i(1, 1), [Vector2i(4, 1)], [], area_types), "Judgment Mark area-attack encounter starts")
+	_check(marked_area_battle.request_judgment_mark("area_controller_00"), "Judgment Mark can target an area attacker")
+	_check(marked_area_battle.intents[0].judgment_marked and marked_area_battle.intents[0].affected_cells.size() == 5, "marked area intent keeps its original five-cell footprint")
+	_check(marked_area_battle.end_player_turn(), "marked area attack resolves")
+	_check(marked_area_battle.get_actor("sevrin").health == 11487, "marked area attack retains its original damage")
+	_check(marked_area_battle.statuses.has_status("area_controller_00", &"exposed"), "marked area attack applies Exposed to its source")
+	marked_area_battle.queue_free()
+
 	var evaded_marksman_battle = ControllerScript.new()
 	root.add_child(evaded_marksman_battle)
 	_check(evaded_marksman_battle.start_encounter(Vector2i(1, 1), [Vector2i(5, 1)], [], marksman_types), "evadable marksman encounter starts")
