@@ -8,6 +8,7 @@ const GridRulesScript = preload("res://scripts/battle/grid_rules.gd")
 const APBudgetScript = preload("res://scripts/battle/ap_budget.gd")
 const BattleActorScript = preload("res://scripts/actors/battle_actor.gd")
 const BattleIntentScript = preload("res://scripts/battle/battle_intent.gd")
+const CombatMathScript = preload("res://scripts/battle/combat_math.gd")
 
 enum BattlePhase { PLAYER, ENEMY, FINISHED }
 
@@ -69,13 +70,16 @@ func start_encounter(
 	event_sequence = 0
 	turn_number = 0
 	battle_result = ""
-	actors["sevrin"] = BattleActorScript.new("sevrin", "player", player_cell, 10)
+	actors["sevrin"] = BattleActorScript.new("sevrin", "player", player_cell, 12000, "oathkeeper", 1800, 650, 500)
 	for index in range(enemy_cells.size()):
 		var cell: Vector2i = enemy_cells[index]
 		var archetype := "vanguard" if enemy_archetypes.is_empty() else enemy_archetypes[index]
 		var enemy_id := "%s_%02d" % [archetype, index]
-		var enemy_health := 4 if archetype == "marksman" else (5 if archetype == "area_controller" else 6)
-		actors[enemy_id] = BattleActorScript.new(enemy_id, "enemy", cell, enemy_health, archetype)
+		var enemy_health := 2000 if archetype == "marksman" else (2600 if archetype == "area_controller" else 3200)
+		var enemy_attack := 900 if archetype == "marksman" else (1100 if archetype == "area_controller" else 1200)
+		var enemy_defense := 350 if archetype == "marksman" else (450 if archetype == "area_controller" else 700)
+		var enemy_magic_resistance := 250 if archetype == "marksman" else (650 if archetype == "area_controller" else 350)
+		actors[enemy_id] = BattleActorScript.new(enemy_id, "enemy", cell, enemy_health, archetype, enemy_attack, enemy_defense, enemy_magic_resistance)
 
 	phase = BattlePhase.PLAYER
 	_begin_player_turn()
@@ -112,7 +116,7 @@ func request_player_move(path: Array[Vector2i]) -> bool:
 	return true
 
 
-func request_player_attack(target_actor_id: String, damage: int = 2) -> bool:
+func request_player_attack(target_actor_id: String, damage_multiplier: float = 1.0) -> bool:
 	if phase != BattlePhase.PLAYER or not actors.has("sevrin") or not actors.has(target_actor_id):
 		return false
 	var player = actors["sevrin"]
@@ -121,12 +125,13 @@ func request_player_attack(target_actor_id: String, damage: int = 2) -> bool:
 		return false
 	if GridRulesScript.manhattan_distance(player.cell, target.cell) != 1:
 		return false
-	if damage <= 0 or not ap.can_spend(1):
+	if damage_multiplier <= 0.0 or not ap.can_spend(1):
 		return false
 	if not ap.spend(1):
 		return false
-	_apply_damage(target_actor_id, damage, "sevrin", "player_attack")
-	_emit_event("attack_resolved", "sevrin", target_actor_id, "damage=%d" % damage)
+	var damage: int = CombatMathScript.calculate_raw_damage(player.attack, damage_multiplier)
+	_apply_damage(target_actor_id, damage, "sevrin", "player_attack", "physical")
+	_emit_event("attack_resolved", "sevrin", target_actor_id, "倍率=%.2f 伤害=%d" % [damage_multiplier, damage])
 	_check_battle_end()
 	return true
 
@@ -181,7 +186,7 @@ func _generate_vanguard_intent(enemy, target, occupied: Dictionary):
 	if distance == 2 and GridRulesScript.has_clear_orthogonal_line(enemy.cell, target.cell, blocked_cells, occupied):
 		return BattleIntentScript.new("intent_%d_%s" % [turn_number, enemy.actor_id], enemy.actor_id, "charged_strike", BattleIntentScript.TargetMode.TILE_LOCKED, "", target.cell, [target.cell], 2, 0)
 	if distance == 1:
-		return BattleIntentScript.new("intent_%d_%s" % [turn_number, enemy.actor_id], enemy.actor_id, "basic_melee", BattleIntentScript.TargetMode.ACTOR_LOCKED, "sevrin", target.cell, [target.cell], 1, 1)
+		return BattleIntentScript.new("intent_%d_%s" % [turn_number, enemy.actor_id], enemy.actor_id, "basic_melee", BattleIntentScript.TargetMode.ACTOR_LOCKED, "sevrin", target.cell, [target.cell], CombatMathScript.calculate_raw_damage(enemy.attack, 0.8), 1)
 	var pursuit_path: Array[Vector2i] = _next_pursuit_path(enemy.cell, target.cell, enemy.actor_id, 2)
 	if not pursuit_path.is_empty():
 		return BattleIntentScript.new("intent_%d_%s" % [turn_number, enemy.actor_id], enemy.actor_id, "pursuit", BattleIntentScript.TargetMode.NONE, "", pursuit_path[pursuit_path.size() - 1], pursuit_path, 0, 2)
@@ -194,7 +199,7 @@ func _generate_marksman_intent(enemy, target, occupied: Dictionary):
 	var legal_range: bool = distance >= 3 and distance <= 6
 	var clear_line: bool = GridRulesScript.has_clear_orthogonal_line(enemy.cell, target.cell, blocked_cells, occupied)
 	if aligned and legal_range and clear_line:
-		return BattleIntentScript.new("intent_%d_%s" % [turn_number, enemy.actor_id], enemy.actor_id, "aimed_shot", BattleIntentScript.TargetMode.TILE_LOCKED, "", target.cell, [target.cell], 2, 2)
+		return BattleIntentScript.new("intent_%d_%s" % [turn_number, enemy.actor_id], enemy.actor_id, "aimed_shot", BattleIntentScript.TargetMode.TILE_LOCKED, "", target.cell, [target.cell], CombatMathScript.calculate_raw_damage(enemy.attack, 1.0), 2)
 	return BattleIntentScript.new("intent_%d_%s" % [turn_number, enemy.actor_id], enemy.actor_id, "wait", BattleIntentScript.TargetMode.NONE, "", enemy.cell, [], 0, 3)
 
 
@@ -208,7 +213,7 @@ func _generate_area_controller_intent(enemy, target):
 		var cell: Vector2i = target.cell + offset
 		if GridRulesScript.is_inside_bounds(cell, grid_size):
 			affected.append(cell)
-	return BattleIntentScript.new("intent_%d_%s" % [turn_number, enemy.actor_id], enemy.actor_id, "ground_pulse", BattleIntentScript.TargetMode.AREA_LOCKED, "", target.cell, affected, 1, 1)
+	return BattleIntentScript.new("intent_%d_%s" % [turn_number, enemy.actor_id], enemy.actor_id, "ground_pulse", BattleIntentScript.TargetMode.AREA_LOCKED, "", target.cell, affected, CombatMathScript.calculate_raw_damage(enemy.attack, 0.7), 1, "magical")
 
 func _next_pursuit_path(start: Vector2i, goal: Vector2i, actor_id: String, max_steps: int) -> Array[Vector2i]:
 	var queue: Array[Vector2i] = [start]
@@ -278,7 +283,7 @@ func _resolve_actor_locked_attack(intent) -> void:
 	if not actors.has(intent.target_actor_id) or not actors[intent.target_actor_id].is_alive():
 		intent.cancel("actor_target_defeated")
 		return
-	_apply_damage(intent.target_actor_id, intent.damage, intent.source_actor_id, intent.action_id)
+	_apply_damage(intent.target_actor_id, intent.damage, intent.source_actor_id, intent.action_id, intent.damage_type)
 	intent.mark_resolved()
 	_emit_event("enemy_action_resolved", intent.source_actor_id, intent.target_actor_id, intent.action_id)
 
@@ -301,7 +306,7 @@ func _resolve_tile_locked_attack(intent) -> void:
 	if not GridRulesScript.has_clear_orthogonal_line(source.cell, intent.target_cell, blocked_cells, get_occupied_cells(intent.source_actor_id)):
 		intent.cancel("marked_cell_line_blocked")
 		return
-	_apply_damage(target_id, intent.damage, intent.source_actor_id, intent.action_id)
+	_apply_damage(target_id, intent.damage, intent.source_actor_id, intent.action_id, intent.damage_type)
 	intent.mark_resolved()
 	_emit_event("enemy_action_resolved", intent.source_actor_id, target_id, intent.action_id)
 
@@ -312,7 +317,7 @@ func _resolve_area_attack(intent) -> void:
 		var target = actors[actor_id]
 		if target.team != "player" or not target.is_alive() or not intent.affected_cells.has(target.cell):
 			continue
-		_apply_damage(actor_id, intent.damage, intent.source_actor_id, intent.action_id)
+		_apply_damage(actor_id, intent.damage, intent.source_actor_id, intent.action_id, intent.damage_type)
 		hit_any = true
 	if not hit_any:
 		intent.cancel("marked_area_empty")
@@ -343,10 +348,10 @@ func _resolve_pursuit(intent) -> void:
 	_emit_event("enemy_action_resolved", intent.source_actor_id, "", "pursuit")
 
 
-func _apply_damage(target_actor_id: String, amount: int, source_actor_id: String, action_id: String) -> void:
+func _apply_damage(target_actor_id: String, amount: int, source_actor_id: String, action_id: String, damage_type: String = "physical") -> void:
 	var target = actors[target_actor_id]
-	var applied: int = target.apply_damage(amount)
-	_emit_event("damage_applied", source_actor_id, target_actor_id, "action=%s damage=%d health=%d" % [action_id, applied, target.health])
+	var applied: int = target.apply_damage(amount, damage_type)
+	_emit_event("damage_applied", source_actor_id, target_actor_id, "action=%s type=%s raw=%d applied=%d health=%d" % [action_id, damage_type, amount, applied, target.health])
 	if target.is_defeated and target.team == "enemy":
 		for intent in intents:
 			if intent.source_actor_id == target_actor_id:
