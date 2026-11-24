@@ -125,6 +125,10 @@ func _run() -> void:
 	var original_enemy_cell: Vector2i = validation_battle.get_actor("vanguard_00").cell
 	_check(not validation_battle.start_encounter(Vector2i(2, 2), [Vector2i(4, 4), Vector2i(4, 4)]), "duplicate enemy positions are rejected")
 	_check(not validation_battle.start_encounter(Vector2i(2, 2), []), "empty enemy roster is rejected")
+	var unknown_types: Array[String] = ["sorcerer"]
+	_check(not validation_battle.start_encounter(Vector2i(2, 2), [Vector2i(4, 4)], [], unknown_types), "unknown enemy archetype is rejected")
+	var mismatched_types: Array[String] = ["vanguard", "marksman"]
+	_check(not validation_battle.start_encounter(Vector2i(2, 2), [Vector2i(4, 4)], [], mismatched_types), "mismatched archetype list is rejected")
 	_check(validation_battle.get_actor("sevrin").cell == original_player_cell, "invalid setup preserves existing player state")
 	_check(validation_battle.get_actor("vanguard_00").cell == original_enemy_cell, "invalid setup preserves existing enemy state")
 	_check(validation_battle.blocked_cells.has(Vector2i(3, 3)), "invalid setup preserves existing blockers")
