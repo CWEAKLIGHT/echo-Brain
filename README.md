@@ -23,6 +23,10 @@ The project does not require the .NET build of Godot. The first desktop run does
 
 ## Current Prototype 0.1 battle slice
 
+- In-game interface and player-facing combat text use Simplified Chinese by default.
+- Thousand-scale combat attributes: HP, attack, defense, and magic resistance for every unit.
+- Shared attack-multiplier and physical/magical mitigation formulas are documented in `docs/combat_stats_zh-CN.md`.
+
 - One playable character: Sevrin, the Oathkeeper.
 - An 8×8 orthogonal grid battlefield.
 - Three ordinary enemy archetypes: Vanguard, Marksman, and Area Controller.
