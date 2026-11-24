@@ -324,6 +324,65 @@ The selected intent and all target parameters are captured when the telegraph is
 Health and damage are deliberately conservative starting values for the first playable encounter. They must be tested against the Oathkeeper's finalized health, armor, defensive skills, and the other two enemy types before being treated as balanced.
 
 
+
+## 10.2 Ranged Marksman — provisional implementation specification
+
+> Status: Prototype implementation choice, not a separately owner-approved balance rule. This section establishes a deliberately small first implementation for review and playtesting; it does not expand Prototype 0.1 scope.
+
+### Role and learning objective
+
+The Ranged Marksman creates a distant, readable single-cell threat. It teaches the player to use cover and break a firing lane rather than treating distance alone as safety.
+
+### Runtime profile (provisional tuning values)
+
+| Property | Initial value | Notes |
+|---|---:|---|
+| Health | 4 | Provisional; lower durability than the Vanguard |
+| Attack damage | 2 | Provisional |
+| Attack range | Manhattan distance 3–6 | Straight orthogonal line only |
+| Targeting mode | Tile-locked | Fires at the captured cell, not a tracking actor |
+| Footprint | One cell | No splash damage |
+| Execution priority | 1 | After the Vanguard's charged strike and basic melee |
+
+### Action — Aimed shot
+
+- Legal only when the player is 3–6 Manhattan cells away on the same row or column and the complete firing lane is clear.
+- A wall, obstacle, or intervening occupied cell blocks the shot.
+- Capture the player's current cell as the single affected cell. The intent records action ID `aimed_shot`, target mode `TILE_LOCKED`, and damage 2.
+- Telegraph the exact marked cell and a distinct ranged-shot marker; show the expected 2 damage.
+- At execution, resolve only against a living player-controlled actor occupying the captured cell. If the cell is empty, cancel with `marked_cell_empty`; never follow the actor or retarget.
+- Revalidate the original firing lane at execution. If a new blocker makes that lane illegal, cancel with `marked_cell_line_blocked`.
+- The Marksman does not move as part of this action.
+
+### No-shot fallback
+
+- If range, alignment, or line-of-fire requirements are not met at planning time, create an explicit `wait` intent.
+- If a previously valid shot becomes illegal after telegraph generation, cancel the shot. Do not convert it into a wait, pursuit, or another attack.
+- This first implementation intentionally omits repositioning and multi-cell shots to keep the telegraph/execution contract testable.
+
+### Player counterplay
+
+- Move out of the marked cell before the enemy phase.
+- Break the firing lane with an obstacle or another unit where the rules permit.
+- Defeat or interrupt the Marksman before its execution slot.
+- Avoid assuming diagonal alignment creates a valid shot.
+
+### Acceptance tests
+
+1. A player 3–6 cells away on a clear orthogonal line produces an aimed-shot intent.
+2. The intent is tile-locked and captures the player's original cell and 2 damage.
+3. A player outside the range, on a diagonal, or behind a blocker does not produce an aimed shot.
+4. Moving away from the marked cell makes the shot cancel without damage.
+5. Moving to a different cell does not cause the shot to track the player.
+6. A blocker introduced into the firing lane before resolution cancels the shot.
+7. A blocked or out-of-range Marksman receives a visible wait intent.
+8. Repeated planning with the same board state produces the same intent.
+
+### Implementation boundary
+
+The current encounter factory creates Vanguard-only test encounters. Marksman support must be introduced through an explicit enemy-archetype field or typed encounter definition; do not infer enemy type from array order or silently change existing Vanguard fixtures. The archetype should be captured on the actor at construction and used by both intent generation and UI presentation.
+
+
 ## 11. Failure handling
 
 - If an intent cannot be created, record a planning failure with a reason.
