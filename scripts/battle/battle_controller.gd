@@ -70,13 +70,13 @@ func start_encounter(
 	event_sequence = 0
 	turn_number = 0
 	battle_result = ""
-	actors["sevrin"] = BattleActorScript.new("sevrin", "player", player_cell, 12000, "oathkeeper", 1800, 650, 500)
+	actors["sevrin"] = BattleActorScript.new("sevrin", "player", player_cell, 12000, "oathkeeper", 2000, 650, 500)
 	for index in range(enemy_cells.size()):
 		var cell: Vector2i = enemy_cells[index]
 		var archetype := "vanguard" if enemy_archetypes.is_empty() else enemy_archetypes[index]
 		var enemy_id := "%s_%02d" % [archetype, index]
 		var enemy_health := 2000 if archetype == "marksman" else (2600 if archetype == "area_controller" else 3200)
-		var enemy_attack := 900 if archetype == "marksman" else (1100 if archetype == "area_controller" else 1200)
+		var enemy_attack := 1200 if archetype == "marksman" else (1100 if archetype == "area_controller" else 1400)
 		var enemy_defense := 350 if archetype == "marksman" else (450 if archetype == "area_controller" else 700)
 		var enemy_magic_resistance := 250 if archetype == "marksman" else (650 if archetype == "area_controller" else 350)
 		actors[enemy_id] = BattleActorScript.new(enemy_id, "enemy", cell, enemy_health, archetype, enemy_attack, enemy_defense, enemy_magic_resistance)
