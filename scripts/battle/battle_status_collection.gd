@@ -42,7 +42,7 @@ func apply_status(
 		_statuses_by_actor[target_actor_id] = actor_statuses
 		return true
 
-	var current: BattleStatus = existing
+	var current: BattleStatus = existing as BattleStatus
 	match stack_policy:
 		BattleStatusScript.STACK_REPLACE:
 			current.stacks = mini(stacks, max_stacks)
@@ -84,7 +84,7 @@ func consume_trigger(target_actor_id: String, status_id: StringName) -> bool:
 	var value = actor_statuses.get(status_id)
 	if value == null:
 		return false
-	var status: BattleStatus = value
+	var status: BattleStatus = value as BattleStatus
 	if status.remaining_triggers == 0:
 		return false
 	if status.remaining_triggers > 0:
@@ -101,7 +101,7 @@ func expire_boundary(target_actor_id: String, boundary: StringName) -> int:
 	var actor_statuses: Dictionary = _get_actor_statuses(target_actor_id)
 	var expired_ids: Array[StringName] = []
 	for key in actor_statuses.keys():
-		var status: BattleStatus = actor_statuses[key]
+		var status: BattleStatus = actor_statuses[key] as BattleStatus
 		if status.expiry_boundary == boundary:
 			expired_ids.append(status.status_id)
 	for status_id in expired_ids:
@@ -138,8 +138,10 @@ func get_status_count(target_actor_id: String) -> int:
 
 
 func _get_actor_statuses(actor_id: String) -> Dictionary:
-	var value = _statuses_by_actor.get(actor_id, {})
-	return value
+	var value: Variant = _statuses_by_actor.get(actor_id, {})
+	if value is Dictionary:
+		return value
+	return {}
 
 
 func _refresh_trigger_count(current_count: int, new_count: int) -> int:
