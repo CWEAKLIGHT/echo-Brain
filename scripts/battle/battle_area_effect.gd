@@ -44,11 +44,12 @@ func is_valid() -> bool:
 		return false
 	if affected_cells.is_empty() or magnitude < 0:
 		return false
+	if target_relation != TARGET_ANY and target_relation != TARGET_SAME_TEAM and target_relation != TARGET_OTHER_TEAM:
+		return false
 	if target_relation == TARGET_SAME_TEAM or target_relation == TARGET_OTHER_TEAM:
 		if source_team.is_empty():
 			return false
-	if expiry_boundary == &"":
-		return false
+	# An empty boundary represents an intentionally persistent battlefield effect.
 	return true
 
 
