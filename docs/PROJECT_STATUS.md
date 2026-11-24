@@ -71,3 +71,5 @@ The main scene now opens an 8×8 tactical board with Sevrin, two Melee Vanguard 
 - This is a source-level review and test-harness update only. Godot 4.x import, script parsing, headless execution, Android export, and device behavior remain unverified because no Godot runtime is available in the current environment.
 
 - Encounter validation now also rejects an empty enemy roster, preventing a nominally started encounter with no possible victory condition. A regression scenario covers this rejection and verifies the prior encounter remains intact.
+
+- Enemies that have no legal pursuit route now receive an explicit, visible `wait` intent instead of silently disappearing from the execution order. The wait intent resolves without movement or damage; a controller scenario covers a fully blocked enemy.
