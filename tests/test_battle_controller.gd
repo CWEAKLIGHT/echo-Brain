@@ -112,6 +112,22 @@ func _run() -> void:
 	_check(not marked_charge_battle.statuses.has_status("vanguard_00", &"exposed"), "Exposed expires at player-phase end")
 	marked_charge_battle.queue_free()
 
+	var severance_battle = ControllerScript.new()
+	root.add_child(severance_battle)
+	_check(severance_battle.start_encounter(Vector2i(1, 1), [Vector2i(3, 1)]), "Oath Severance encounter starts")
+	var severance_intent = severance_battle.intents[0]
+	_check(not severance_battle.request_oath_severance("vanguard_00"), "Oath Severance rejects an unmarked target")
+	_check(severance_battle.ap.current == 3, "rejected Oath Severance does not spend AP")
+	_check(severance_battle.request_judgment_mark("vanguard_00"), "Oath Severance target can first be marked")
+	_check(severance_battle.request_oath_severance("vanguard_00"), "Oath Severance accepts a marked enemy within two cells")
+	_check(severance_battle.ap.current == 0, "Judgment Mark plus Oath Severance spends exactly three AP")
+	_check(not severance_battle.statuses.has_status("vanguard_00", &"judgment_mark"), "Oath Severance consumes Judgment Mark before damage")
+	_check(severance_intent.state == IntentScript.IntentState.CANCELED and severance_intent.cancel_reason == "oath_severance", "Oath Severance cancels the enemy's current visible intent")
+	_check(severance_battle.get_actor("vanguard_00").health == 1553, "Oath Severance deals 1.4 times physical damage after defense")
+	_check(severance_battle.end_player_turn(), "Oath Severance enemy phase completes")
+	_check(severance_battle.get_actor("sevrin").health == 12000, "severed enemy intent does not execute during this enemy phase")
+	severance_battle.queue_free()
+
 	var marked_pursuit_battle = ControllerScript.new()
 	root.add_child(marked_pursuit_battle)
 	_check(marked_pursuit_battle.start_encounter(Vector2i(1, 1), [Vector2i(4, 1)]), "Judgment Mark pursuit encounter starts")
