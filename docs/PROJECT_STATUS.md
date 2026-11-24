@@ -184,9 +184,12 @@ The main scene now opens an 8×8 tactical board with Sevrin, two Melee Vanguard 
 - Single-target attacks (basic melee and aimed shot) reduce raw damage by 25% before resistance, then consume the mark on execution.
 - Charged tile attacks and area attacks preserve their original damage and telegraph footprint; successful execution consumes the mark and applies exposed to the attacker.
 - exposed reduces physical defense and magic resistance by 200 through the following player phase and expires when that player phase ends.
-- Wait/pursuit intents do not consume the mark; it expires at the end of that enemy phase. Canceled or empty-target attacks do not apply Exposed.
+- Wait/pursuit intents do not consume the mark; an unused mark is deferred at the first enemy-phase boundary and expires after the following enemy phase if no attack executes. Canceled or empty-target attacks do not apply Exposed.
 - Added controller regression cases for marked aimed shot, charged strike/Exposed, and pursuit expiry. Updated battle status documentation.
 - Source files were fetched again for static review. Godot 4.7.2 import and runtime tests have not yet been executed.
 
 - Added BattleController.request_oath_severance: validates a marked living enemy at orthogonal range 1–2 with clear line and 2 AP; consumes the mark, cancels its active intent with reason oath_severance, then applies 1.4× physical damage.
 - Added regression coverage for rejecting unmarked targets without AP loss, the combined 3-AP mark/severance sequence, exact post-defense damage, and prevention of the canceled intent during that enemy phase.
+
+- Added BattleStatusCollection.defer_status_boundary and regression coverage to preserve an unused Judgment Mark through one enemy phase, allowing it to attach to the target's next attack intent.
+- Added an area-attack mark regression case confirming the captured footprint and damage remain unchanged while Exposed is applied to the attacker.
