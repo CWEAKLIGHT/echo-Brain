@@ -44,5 +44,27 @@ func _run() -> void:
 	_check(pursuit_battle.get_actor("vanguard_00").cell == Vector2i(2, 1), "pursuit moves two cells toward target")
 	pursuit_battle.queue_free()
 
+
+	var actor_lock_battle = ControllerScript.new()
+	root.add_child(actor_lock_battle)
+	_check(actor_lock_battle.start_encounter(Vector2i(1, 1), [Vector2i(2, 1)]), "actor-lock encounter starts")
+	var actor_intent = actor_lock_battle.intents[0]
+	_check(actor_intent.target_mode == IntentScript.TargetMode.ACTOR_LOCKED, "adjacent basic attack captures actor lock")
+	var retreat_path: Array[Vector2i] = [Vector2i(1, 2), Vector2i(1, 3)]
+	_check(actor_lock_battle.request_player_move(retreat_path), "player can retreat two cells after telegraph")
+	_check(actor_lock_battle.end_player_turn(), "actor-lock enemy phase resolves")
+	_check(actor_lock_battle.get_actor("sevrin").health == 9, "actor-locked attack tracks target after it moves")
+	actor_lock_battle.queue_free()
+
+	var terminal_battle = ControllerScript.new()
+	root.add_child(terminal_battle)
+	_check(terminal_battle.start_encounter(Vector2i(2, 2), [Vector2i(2, 1), Vector2i(1, 2)]), "terminal-order encounter starts")
+	terminal_battle.get_actor("sevrin").health = 1
+	_check(terminal_battle.end_player_turn(), "terminal encounter enters enemy phase")
+	_check(terminal_battle.phase == ControllerScript.BattlePhase.FINISHED, "player defeat ends battle immediately")
+	_check(terminal_battle.battle_result == "defeat", "terminal result is defeat")
+	_check(terminal_battle.intents[1].state == IntentScript.IntentState.CANCELED, "remaining enemy intent is canceled after terminal result")
+	terminal_battle.queue_free()
+
 	print("Battle controller test run complete. Failures: ", failures)
 	quit(1 if failures > 0 else 0)
