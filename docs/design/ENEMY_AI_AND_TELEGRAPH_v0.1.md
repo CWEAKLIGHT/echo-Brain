@@ -227,12 +227,12 @@ Each Prototype 0.1 enemy must be documented with:
 - Invalid-target behavior
 - Test cases
 
-Enemy archetype proposals for discussion only:
-1. **Vanguard / melee pressure:** threatens a nearby actor or adjacent cells; teaches spacing and movement.
-2. **Marksman / line or ranged threat:** threatens a clearly marked line, lane, or target; teaches line-of-fire and repositioning.
-3. **Disruptor / area control:** threatens a small area or applies a disclosed control effect; teaches area denial and timing.
+**Confirmed Prototype 0.1 enemy role roster (three ordinary enemies):**
+1. **Melee Vanguard:** creates close-range pressure and tests spacing, movement, and defensive responses.
+2. **Ranged Marksman:** creates long-range threats and tests positioning, line-of-fire, and ranged telegraph responses.
+3. **Area Controller:** creates area threats and tests area denial, repositioning, and timing.
 
-These are role proposals, not confirmed enemy identities, art, stats, or final actions.
+Only these three battlefield roles are confirmed at this stage. Names, visual designs, base stats, exact actions, targeting-mode assignments, priorities, and numerical values remain to be specified; the role descriptions do not approve any particular attack.
 
 ## 11. Failure handling
 
