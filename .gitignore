@@ -1,0 +1,23 @@
+# Godot 4 generated files
+.godot/
+
+# Imported assets and editor cache
+.import/
+
+# Exported builds
+/build/
+/dist/
+*.apk
+*.aab
+*.pck
+
+# IDE and operating-system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Temporary and backup files
+*.tmp
+*.bak
+*~
