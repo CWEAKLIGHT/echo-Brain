@@ -66,5 +66,17 @@ func _run() -> void:
 	_check(terminal_battle.intents[1].state == IntentScript.IntentState.CANCELED, "remaining enemy intent is canceled after terminal result")
 	terminal_battle.queue_free()
 
+
+	var validation_battle = ControllerScript.new()
+	root.add_child(validation_battle)
+	_check(validation_battle.start_encounter(Vector2i(1, 1), [Vector2i(5, 5)], [Vector2i(3, 3)]), "validation encounter starts")
+	var original_player_cell: Vector2i = validation_battle.get_actor("sevrin").cell
+	var original_enemy_cell: Vector2i = validation_battle.get_actor("vanguard_00").cell
+	_check(not validation_battle.start_encounter(Vector2i(2, 2), [Vector2i(4, 4), Vector2i(4, 4)]), "duplicate enemy positions are rejected")
+	_check(validation_battle.get_actor("sevrin").cell == original_player_cell, "invalid setup preserves existing player state")
+	_check(validation_battle.get_actor("vanguard_00").cell == original_enemy_cell, "invalid setup preserves existing enemy state")
+	_check(validation_battle.blocked_cells.has(Vector2i(3, 3)), "invalid setup preserves existing blockers")
+	validation_battle.queue_free()
+
 	print("Battle controller test run complete. Failures: ", failures)
 	quit(1 if failures > 0 else 0)
