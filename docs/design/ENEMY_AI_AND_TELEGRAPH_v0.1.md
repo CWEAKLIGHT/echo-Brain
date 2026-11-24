@@ -261,7 +261,7 @@ The Melee Vanguard is the introductory pressure enemy. It teaches the player to 
 - Select the living player-controlled actor with the shortest Manhattan distance; ties resolve by stable actor ID.
 - Find a shortest legal path toward that actor, using a deterministic neighbor order: up, right, down, left.
 - Move up to two cells along that path, stopping before an occupied or blocked cell.
-- If no legal step reduces distance, wait.
+- If no legal step reduces distance, create an explicit `wait` intent. The wait occupies the enemy's visible execution-order slot and resolves without movement or damage.
 - Pursuit is not an attack and creates no damage telegraph. The enemy's movement intent and destination should still be inspectable in the execution-order panel.
 - Movement never crosses diagonal edges, walls, obstacles, or occupied cells.
 
