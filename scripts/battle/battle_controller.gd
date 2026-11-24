@@ -191,7 +191,7 @@ func _generate_marksman_intent(enemy, target, occupied: Dictionary):
 	var legal_range: bool = distance >= 3 and distance <= 6
 	var clear_line: bool = GridRulesScript.has_clear_orthogonal_line(enemy.cell, target.cell, blocked_cells, occupied)
 	if aligned and legal_range and clear_line:
-		return BattleIntentScript.new("intent_%d_%s" % [turn_number, enemy.actor_id], enemy.actor_id, "aimed_shot", BattleIntentScript.TargetMode.TILE_LOCKED, "", target.cell, [target.cell], 2, 1)
+		return BattleIntentScript.new("intent_%d_%s" % [turn_number, enemy.actor_id], enemy.actor_id, "aimed_shot", BattleIntentScript.TargetMode.TILE_LOCKED, "", target.cell, [target.cell], 2, 2)
 	return BattleIntentScript.new("intent_%d_%s" % [turn_number, enemy.actor_id], enemy.actor_id, "wait", BattleIntentScript.TargetMode.NONE, "", enemy.cell, [], 0, 3)
 
 
