@@ -359,8 +359,17 @@ func _resolve_pursuit(intent) -> void:
 
 func _apply_damage(target_actor_id: String, amount: int, source_actor_id: String, action_id: String, damage_type: String = "physical") -> void:
 	var target = actors[target_actor_id]
-	var applied: int = target.apply_damage(amount, damage_type)
-	_emit_event("damage_applied", source_actor_id, target_actor_id, "action=%s type=%s raw=%d applied=%d health=%d" % [action_id, damage_type, amount, applied, target.health])
+	var final_reduction_percent: int = 0
+	var triggered_statuses: Array[StringName] = []
+	if statuses.has_status(target_actor_id, &"oathguard"):
+		final_reduction_percent = 35
+		triggered_statuses.append(&"oathguard")
+	var applied: int = target.apply_damage(amount, damage_type, final_reduction_percent)
+	if applied > 0:
+		for status_id in triggered_statuses:
+			statuses.consume_trigger(target_actor_id, status_id)
+			_emit_event("status_triggered", target_actor_id, source_actor_id, "status=%s reduction=%d%%" % [status_id, final_reduction_percent])
+	_emit_event("damage_applied", source_actor_id, target_actor_id, "action=%s type=%s raw=%d final_reduction=%d%% applied=%d health=%d" % [action_id, damage_type, amount, final_reduction_percent, applied, target.health])
 	if target.is_defeated:
 		var removed_statuses: int = statuses.clear_actor(target_actor_id)
 		if removed_statuses > 0:
