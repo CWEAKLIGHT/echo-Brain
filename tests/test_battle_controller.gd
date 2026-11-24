@@ -77,6 +77,15 @@ func _run() -> void:
 	_check(shot_intent.state == IntentScript.IntentState.RESOLVED, "aimed shot intent resolves")
 	marksman_battle.queue_free()
 
+	var oathguard_battle = ControllerScript.new()
+	root.add_child(oathguard_battle)
+	_check(oathguard_battle.start_encounter(Vector2i(1, 1), [Vector2i(5, 1)], [], marksman_types), "Oathguard damage encounter starts")
+	_check(oathguard_battle.statuses.apply_status(&"oathguard", "sevrin", "sevrin", 1, 1, 1, &"enemy_phase_end"), "Oathguard grants one defensive trigger")
+	_check(oathguard_battle.end_player_turn(), "Oathguard encounter resolves enemy phase")
+	_check(oathguard_battle.get_actor("sevrin").health == 11528, "Oathguard reduces post-resistance aimed shot damage by 35 percent")
+	_check(not oathguard_battle.statuses.has_status("sevrin", &"oathguard"), "Oathguard is consumed after one successful hit")
+	oathguard_battle.queue_free()
+
 	var evaded_marksman_battle = ControllerScript.new()
 	root.add_child(evaded_marksman_battle)
 	_check(evaded_marksman_battle.start_encounter(Vector2i(1, 1), [Vector2i(5, 1)], [], marksman_types), "evadable marksman encounter starts")
