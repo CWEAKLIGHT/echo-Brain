@@ -3,6 +3,7 @@ extends SceneTree
 const GridRulesScript = preload("res://scripts/battle/grid_rules.gd")
 const APBudgetScript = preload("res://scripts/battle/ap_budget.gd")
 const BattleActorScript = preload("res://scripts/actors/battle_actor.gd")
+const CombatMathScript = preload("res://scripts/battle/combat_math.gd")
 
 var failures: int = 0
 
@@ -56,6 +57,12 @@ func _run() -> void:
 	_check(actor.apply_damage(2) == 2 and actor.health == 1 and actor.is_alive(), "damage reduces health deterministically")
 	_check(actor.apply_damage(5) == 1 and actor.health == 0 and actor.is_defeated, "lethal damage clamps health to zero and defeats actor")
 	_check(actor.apply_damage(1) == 0, "defeated actor cannot take additional damage")
+
+	_check(CombatMathScript.calculate_raw_damage(2000, 1.5) == 3000, "skill multiplier scales attack power")
+	_check(CombatMathScript.calculate_damage(3000, 500) == 2000, "resistance reduces raw damage with diminishing returns")
+	var armored_actor = BattleActorScript.new("armored", "enemy", Vector2i(2, 2), 5000, "vanguard", 1200, 1000, 500)
+	_check(armored_actor.apply_damage(2000, "physical") == 1000, "physical damage uses defense")
+	_check(armored_actor.apply_damage(2000, "magical") == 1333, "magical damage uses magic resistance instead of defense")
 
 	print("Core rules test run complete. Failures: ", failures)
 	quit(1 if failures > 0 else 0)
