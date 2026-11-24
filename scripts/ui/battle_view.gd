@@ -2,6 +2,7 @@ extends Node2D
 
 const ControllerScript = preload("res://scripts/battle/battle_controller.gd")
 const IntentScript = preload("res://scripts/battle/battle_intent.gd")
+const GridRulesScript = preload("res://scripts/battle/grid_rules.gd")
 const CELL_SIZE: float = 64.0
 const BOARD_ORIGIN := Vector2(384.0, 72.0)
 const BOARD_SIZE := 8
@@ -12,8 +13,8 @@ const SKILL_FIRST_Y: float = 112.0
 const SKILL_BTN_H: float = 50.0
 const SKILL_BTN_STEP: float = 56.0
 
-## Skill bar order mirrors OathkeeperSkillCatalog.create_prototype_skills().
-## "mode" decides whether the skill fires on press (self) or waits for a target.
+## Prototype skill bar. Self-target skills resolve on press; actor-target skills wait for confirmation.
+## Number keys 1–6 mirror the visible order.
 const SKILL_BAR := [
 	{"id": "attack", "name": "普通攻击", "hint": "相邻敌人 · 物理伤害", "cost": 1, "mode": "actor"},
 	{"id": "oathguard_stance", "name": "誓盾架势", "hint": "自身 · 抵御下一次攻击", "cost": 1, "mode": "self"},
@@ -162,7 +163,9 @@ func _draw_target_hints() -> void:
 		var distance: int = absi(actor.cell.x - player.cell.x) + absi(actor.cell.y - player.cell.y)
 		if distance < range_min or distance > range_max:
 			continue
-		if skill["id"] == "oath_severance" and not controller.statuses.has_status(actor_id, &"judgment_mark"):
+		if skill["id"] in ["judgment_mark", "oath_severance"] and not GridRulesScript.has_clear_orthogonal_line(player.cell, actor.cell, controller.blocked_cells, controller.get_occupied_cells()):
+			continue
+		if skill["id"] == "oath_severance" and not controller.statuses.has_status(actor_id, &"judgment_mark"): 
 			continue
 		draw_arc(_cell_center(actor.cell), 31.0, 0.0, TAU, 48, Color(0.95, 0.85, 0.55, 0.55), 2.0)
 
@@ -223,7 +226,8 @@ func _draw_skill_panel() -> void:
 	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 24.0), "点格子移动，最多两格直线", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
 	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 44.0), "自身技能点一下即生效", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
 	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 64.0), "选中技能后，黄圈标出可打目标", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
-	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 84.0), "紫圈＋「印」= 已被裁决印记标记", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
+	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 84.0), "数字键 1–6 施放/选择技能", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
+	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 104.0), "Esc / 右键取消目标选择", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
 
 
 func _skill_rect(index: int) -> Rect2:
@@ -261,11 +265,35 @@ func _cell_center(cell: Vector2i) -> Vector2:
 	return _cell_rect(cell).position + Vector2(CELL_SIZE * 0.5, CELL_SIZE * 0.5)
 
 
-func _input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch and event.pressed:
 		_handle_tap(event.position)
-	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		_handle_tap(event.position)
+	elif event is InputEventMouseButton and event.pressed:
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			_handle_tap(event.position)
+		elif event.button_index == MOUSE_BUTTON_RIGHT:
+			_cancel_target_selection()
+	elif event is InputEventKey and event.pressed and not event.echo:
+		match event.keycode:
+			KEY_1: _on_skill_pressed(0)
+			KEY_2: _on_skill_pressed(1)
+			KEY_3: _on_skill_pressed(2)
+			KEY_4: _on_skill_pressed(3)
+			KEY_5: _on_skill_pressed(4)
+			KEY_6: _on_skill_pressed(5)
+			KEY_ESCAPE: _cancel_target_selection()
+			KEY_ENTER, KEY_SPACE:
+				if controller.phase == ControllerScript.BattlePhase.PLAYER:
+					controller.end_player_turn()
+					status_message = "敌方已行动，新回合开始。"
+					queue_redraw()
+
+
+func _cancel_target_selection() -> void:
+	if selected_skill == 0:
+		return
+	selected_skill = 0
+	status_message = "已取消目标选择，当前默认普通攻击。"
+	queue_redraw()
 
 
 func _handle_tap(position: Vector2) -> void:
@@ -304,9 +332,11 @@ func _handle_tap(position: Vector2) -> void:
 	queue_redraw()
 
 
-func _on_skill_pressed(index: int) -> void:
+	if index < 0 or index >= SKILL_BAR.size():
+		return
 	var skill: Dictionary = SKILL_BAR[index]
 	if skill["mode"] == "self":
+		selected_skill = 0
 		var cast_ok := false
 		match skill["id"]:
 			"oathguard_stance":
