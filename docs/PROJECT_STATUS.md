@@ -38,7 +38,7 @@ No run economy, chapter progression, Echo contracts, collections, full unlock sy
 - [ ] Import and open in Godot editor
 - [ ] Validate the project on a Godot 4.x installation
 - [ ] Complete D0 design-rule review
-- [x] Begin P0 gameplay implementation (grid/AP/actor primitives and a test harness committed)\n- [ ] Integrate primitives into an authoritative battle controller and playable scene\n- [ ] Run the core test harness in Godot 4.x
+- [x] Begin P0 gameplay implementation (grid/AP/actor primitives and a test harness committed)\n- [x] Add authoritative battle controller and captured enemy intents\n- [x] Add controller scenario test harness\n- [ ] Connect battle controller to a playable scene and UI\n- [ ] Run both headless test harnesses in Godot 4.x
 
 ## Safety and scope constraints
 
@@ -51,3 +51,8 @@ No run economy, chapter progression, Echo contracts, collections, full unlock sy
 ## Latest implementation note
 
 Foundational scripts and a headless test harness have been added on `prototype/0.1`. They have been committed and are awaiting Godot 4.x runtime validation. Do not treat the tests as passed until the project is imported and the harness is executed in Godot.
+
+
+## Latest implementation note
+
+The runtime battle model now supports validated player movement and adjacent attacks, a 3-AP turn budget, captured melee-vanguard intents (actor-locked basic attack, tile-locked charged strike, deterministic pursuit up to two cells), enemy-phase execution, damage/defeat, and victory/defeat termination. Controller scenarios cover key lock and turn behaviors. The code and test harnesses are committed but have not been run in Godot 4.x; treat all runtime behavior as unverified until engine execution.
