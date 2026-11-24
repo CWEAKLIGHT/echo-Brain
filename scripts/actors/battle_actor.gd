@@ -38,10 +38,11 @@ func _init(
 	magic_resistance = maxi(0, p_magic_resistance)
 
 
-func apply_damage(raw_damage: int, damage_type: String = "physical", final_reduction_percent: int = 0) -> int:
+func apply_damage(raw_damage: int, damage_type: String = "physical", final_reduction_percent: int = 0, resistance_penalty: int = 0) -> int:
 	if is_defeated or raw_damage <= 0:
 		return 0
-	var resistance: int = defense if damage_type == "physical" else (magic_resistance if damage_type == "magical" else 0)
+	var base_resistance: int = defense if damage_type == "physical" else (magic_resistance if damage_type == "magical" else 0)
+	var resistance: int = maxi(0, base_resistance - maxi(0, resistance_penalty))
 	var mitigated: int = CombatMathScript.calculate_damage(raw_damage, resistance)
 	var reduction: int = clampi(final_reduction_percent, 0, 100)
 	var final_damage: int = mitigated
