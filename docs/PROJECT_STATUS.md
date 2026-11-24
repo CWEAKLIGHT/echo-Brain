@@ -130,3 +130,11 @@ The main scene now opens an 8×8 tactical board with Sevrin, two Melee Vanguard 
 - Updated the Oathkeeper and three enemy archetypes to thousand-scale baseline values; added 0.7×–1.5× multipliers to current enemy attacks and a 1.0× player basic attack.
 - Added docs/combat_stats_zh-CN.md as the numeric baseline and rules reference, plus regression cases for multipliers and mitigation.
 - Source files and tests were committed and re-fetched. Godot 4.7.2 parsing and runtime test execution have not yet been performed; do not mark the tests as passed until they run in the engine.
+
+
+## Sevrin tactical skill kit design — 2026-11-24
+
+- Authored a five-active-skill design for Sevrin plus the existing basic attack: Oathguard Stance, Watchwall, Judgment Mark, Echo Counter, and Oath Severance (Chinese in-game names are specified in the design document).
+- The kit emphasizes defensive timing, area protection, intent-aware marking, conditional counterattacks, and a high-cost interrupt rather than damage-only buttons.
+- Documented AP costs, target/range rules, duration, status consumption, intent cancellation, combo turns, event/settlement order, edge cases, and initial balance parameters.
+- This is a design specification only. No skill implementation has been committed yet; implementation must follow the documented order with per-step static review and Godot 4.7.2 validation when an engine environment is available.
