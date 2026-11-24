@@ -40,12 +40,12 @@ func expire_boundary(boundary: StringName) -> int:
 
 func get_damage_reductions_for_actor(actor) -> Array[int]:
 	var reductions: Array[int] = []
-	var effect_ids: Array[StringName] = []
+	var effect_ids: Array[String] = []
 	for key in _effects.keys():
-		effect_ids.append(StringName(key))
+		effect_ids.append(String(key))
 	effect_ids.sort()
 	for effect_id in effect_ids:
-		var effect: BattleAreaEffect = _effects[effect_id] as BattleAreaEffect
+		var effect: BattleAreaEffect = _effects[StringName(effect_id)] as BattleAreaEffect
 		if effect.effect_type != BattleAreaEffectScript.EFFECT_DAMAGE_REDUCTION:
 			continue
 		if effect.affects_actor(actor) and effect.magnitude > 0:
