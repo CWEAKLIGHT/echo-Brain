@@ -142,6 +142,9 @@ func request_player_attack(target_actor_id: String, damage_multiplier: float = 1
 func end_player_turn() -> bool:
 	if phase != BattlePhase.PLAYER:
 		return false
+	var expired_statuses: int = statuses.expire_all_boundary(&"player_phase_end")
+	if expired_statuses > 0:
+		_emit_event("statuses_expired", "", "", "boundary=player_phase_end count=%d" % expired_statuses)
 	ap.clear()
 	phase = BattlePhase.ENEMY
 	_emit_event("turn_ended", "sevrin", "", "turn=%d" % turn_number)
@@ -172,6 +175,9 @@ func _generate_enemy_intents() -> Array:
 			continue
 		var intent = _generate_marksman_intent(enemy, target, occupied) if enemy.archetype == "marksman" else (_generate_area_controller_intent(enemy, target) if enemy.archetype == "area_controller" else _generate_vanguard_intent(enemy, target, occupied))
 		if intent != null:
+			if statuses.has_status(enemy.actor_id, &"judgment_mark") and intent.action_id in ["basic_melee", "aimed_shot", "charged_strike", "ground_pulse"]:
+				intent.judgment_marked = true
+				_emit_event("intent_judgment_marked", enemy.actor_id, intent.target_actor_id, "intent=%s action=%s" % [intent.intent_id, intent.action_id])
 			generated.append(intent)
 	generated.sort_custom(func(a, b):
 		if a.execution_priority != b.execution_priority:
@@ -292,7 +298,9 @@ func _resolve_actor_locked_attack(intent) -> void:
 	if not actors.has(intent.target_actor_id) or not actors[intent.target_actor_id].is_alive():
 		intent.cancel("actor_target_defeated")
 		return
-	_apply_damage(intent.target_actor_id, intent.damage, intent.source_actor_id, intent.action_id, intent.damage_type)
+	var damage: int = _get_judgment_adjusted_damage(intent)
+	_apply_damage(intent.target_actor_id, damage, intent.source_actor_id, intent.action_id, intent.damage_type)
+	_resolve_judgment_mark(intent, false)
 	intent.mark_resolved()
 	_emit_event("enemy_action_resolved", intent.source_actor_id, intent.target_actor_id, intent.action_id)
 
@@ -315,7 +323,9 @@ func _resolve_tile_locked_attack(intent) -> void:
 	if not GridRulesScript.has_clear_orthogonal_line(source.cell, intent.target_cell, blocked_cells, get_occupied_cells(intent.source_actor_id)):
 		intent.cancel("marked_cell_line_blocked")
 		return
-	_apply_damage(target_id, intent.damage, intent.source_actor_id, intent.action_id, intent.damage_type)
+	var damage: int = _get_judgment_adjusted_damage(intent)
+	_apply_damage(target_id, damage, intent.source_actor_id, intent.action_id, intent.damage_type)
+	_resolve_judgment_mark(intent, intent.action_id == "charged_strike")
 	intent.mark_resolved()
 	_emit_event("enemy_action_resolved", intent.source_actor_id, target_id, intent.action_id)
 
@@ -331,6 +341,7 @@ func _resolve_area_attack(intent) -> void:
 	if not hit_any:
 		intent.cancel("marked_area_empty")
 		return
+	_resolve_judgment_mark(intent, true)
 	intent.mark_resolved()
 	_emit_event("enemy_action_resolved", intent.source_actor_id, "", intent.action_id)
 
@@ -357,19 +368,38 @@ func _resolve_pursuit(intent) -> void:
 	_emit_event("enemy_action_resolved", intent.source_actor_id, "", "pursuit")
 
 
+func _get_judgment_adjusted_damage(intent) -> int:
+	if intent.judgment_marked and (intent.action_id == "basic_melee" or intent.action_id == "aimed_shot"):
+		return floori(float(intent.damage) * 0.75)
+	return intent.damage
+
+
+func _resolve_judgment_mark(intent, apply_exposed: bool) -> void:
+	if not intent.judgment_marked:
+		return
+	statuses.remove_status(intent.source_actor_id, &"judgment_mark")
+	if apply_exposed and actors.has(intent.source_actor_id) and actors[intent.source_actor_id].is_alive():
+		statuses.apply_status(&"exposed", "sevrin", intent.source_actor_id, 1, 1, -1, &"player_phase_end")
+		_emit_event("status_applied", "sevrin", intent.source_actor_id, "status=exposed defense=-200 magic_resistance=-200")
+	else:
+		_emit_event("status_consumed", "sevrin", intent.source_actor_id, "status=judgment_mark")
+	_emit_event("judgment_mark_resolved", intent.source_actor_id, "", "intent=%s exposed=%s" % [intent.intent_id, str(apply_exposed)])
+
+
 func _apply_damage(target_actor_id: String, amount: int, source_actor_id: String, action_id: String, damage_type: String = "physical") -> void:
 	var target = actors[target_actor_id]
+	var resistance_penalty: int = 200 if statuses.has_status(target_actor_id, &"exposed") else 0
 	var final_reduction_percent: int = 0
 	var triggered_statuses: Array[StringName] = []
 	if statuses.has_status(target_actor_id, &"oathguard"):
 		final_reduction_percent = 35
 		triggered_statuses.append(&"oathguard")
-	var applied: int = target.apply_damage(amount, damage_type, final_reduction_percent)
+	var applied: int = target.apply_damage(amount, damage_type, final_reduction_percent, resistance_penalty)
 	if applied > 0:
 		for status_id in triggered_statuses:
 			statuses.consume_trigger(target_actor_id, status_id)
 			_emit_event("status_triggered", target_actor_id, source_actor_id, "status=%s reduction=%d%%" % [status_id, final_reduction_percent])
-	_emit_event("damage_applied", source_actor_id, target_actor_id, "action=%s type=%s raw=%d final_reduction=%d%% applied=%d health=%d" % [action_id, damage_type, amount, final_reduction_percent, applied, target.health])
+	_emit_event("damage_applied", source_actor_id, target_actor_id, "action=%s type=%s raw=%d resistance_penalty=%d final_reduction=%d%% applied=%d health=%d" % [action_id, damage_type, amount, resistance_penalty, final_reduction_percent, applied, target.health])
 	if target.is_defeated:
 		var removed_statuses: int = statuses.clear_actor(target_actor_id)
 		if removed_statuses > 0:
