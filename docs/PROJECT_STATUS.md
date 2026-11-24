@@ -73,3 +73,5 @@ The main scene now opens an 8×8 tactical board with Sevrin, two Melee Vanguard 
 - Encounter validation now also rejects an empty enemy roster, preventing a nominally started encounter with no possible victory condition. A regression scenario covers this rejection and verifies the prior encounter remains intact.
 
 - Enemies that have no legal pursuit route now receive an explicit, visible `wait` intent instead of silently disappearing from the execution order. The wait intent resolves without movement or damage; a controller scenario covers a fully blocked enemy.
+
+- Added a provisional Ranged Marksman implementation specification: orthogonal line-of-fire, range 3–6, tile-locked single-cell aimed shot, 2 provisional damage, and explicit wait/cancel behavior. This is a design baseline for implementation and playtesting, not a claim that the archetype is implemented or balance-approved.
