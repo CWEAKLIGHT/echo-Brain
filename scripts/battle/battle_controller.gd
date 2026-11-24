@@ -184,7 +184,7 @@ func _generate_enemy_intents() -> Array:
 func _generate_vanguard_intent(enemy, target, occupied: Dictionary):
 	var distance: int = GridRulesScript.manhattan_distance(enemy.cell, target.cell)
 	if distance == 2 and GridRulesScript.has_clear_orthogonal_line(enemy.cell, target.cell, blocked_cells, occupied):
-		return BattleIntentScript.new("intent_%d_%s" % [turn_number, enemy.actor_id], enemy.actor_id, "charged_strike", BattleIntentScript.TargetMode.TILE_LOCKED, "", target.cell, [target.cell], 2, 0)
+		return BattleIntentScript.new("intent_%d_%s" % [turn_number, enemy.actor_id], enemy.actor_id, "charged_strike", BattleIntentScript.TargetMode.TILE_LOCKED, "", target.cell, [target.cell], CombatMathScript.calculate_raw_damage(enemy.attack, 1.5), 0)
 	if distance == 1:
 		return BattleIntentScript.new("intent_%d_%s" % [turn_number, enemy.actor_id], enemy.actor_id, "basic_melee", BattleIntentScript.TargetMode.ACTOR_LOCKED, "sevrin", target.cell, [target.cell], CombatMathScript.calculate_raw_damage(enemy.attack, 0.8), 1)
 	var pursuit_path: Array[Vector2i] = _next_pursuit_path(enemy.cell, target.cell, enemy.actor_id, 2)
