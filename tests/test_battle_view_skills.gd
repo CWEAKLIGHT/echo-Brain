@@ -50,6 +50,12 @@ func _test_target_skill_flow() -> void:
 	_check(marksman != null, "main encounter exposes the expected Marksman target")
 
 	_tap_skill(view, 3)
+	var cancel_event := InputEventMouseButton.new()
+	cancel_event.pressed = true
+	cancel_event.button_index = MOUSE_BUTTON_RIGHT
+	view.call("_input", cancel_event)
+	_check(int(view.get("selected_skill")) == 0, "right mouse cancels target selection before confirmation")
+	_tap_skill(view, 3)
 	_tap_cell(view, Vector2i(1, 0))
 	_check(controller.statuses.has_status("marksman_02", &"judgment_mark"), "Judgment Mark can be selected and confirmed on the battlefield")
 	_check(controller.ap.current == 2, "Judgment Mark spends one AP through the battle view")
