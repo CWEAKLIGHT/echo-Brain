@@ -434,7 +434,7 @@ func _resolve_actor_locked_attack(intent) -> void:
 		intent.cancel("actor_target_defeated")
 		return
 	var damage: int = _get_judgment_adjusted_damage(intent)
-	_apply_damage(intent.target_actor_id, damage, intent.source_actor_id, intent.action_id, intent.damage_type, true)
+	_apply_damage(intent.target_actor_id, damage, intent.source_actor_id, intent.action_id, intent.damage_type, true, intent.intent_id)
 	_resolve_judgment_mark(intent, false)
 	intent.mark_resolved()
 	_emit_event("enemy_action_resolved", intent.source_actor_id, intent.target_actor_id, intent.action_id)
@@ -459,7 +459,7 @@ func _resolve_tile_locked_attack(intent) -> void:
 		intent.cancel("marked_cell_line_blocked")
 		return
 	var damage: int = _get_judgment_adjusted_damage(intent)
-	_apply_damage(target_id, damage, intent.source_actor_id, intent.action_id, intent.damage_type, true)
+	_apply_damage(target_id, damage, intent.source_actor_id, intent.action_id, intent.damage_type, true, intent.intent_id)
 	_resolve_judgment_mark(intent, intent.action_id == "charged_strike")
 	intent.mark_resolved()
 	_emit_event("enemy_action_resolved", intent.source_actor_id, target_id, intent.action_id)
@@ -471,7 +471,7 @@ func _resolve_area_attack(intent) -> void:
 		var target = actors[actor_id]
 		if target.team != "player" or not target.is_alive() or not intent.affected_cells.has(target.cell):
 			continue
-		_apply_damage(actor_id, intent.damage, intent.source_actor_id, intent.action_id, intent.damage_type, true)
+		_apply_damage(actor_id, intent.damage, intent.source_actor_id, intent.action_id, intent.damage_type, true, intent.intent_id)
 		hit_any = true
 	if not hit_any:
 		intent.cancel("marked_area_empty")
@@ -527,7 +527,8 @@ func _apply_damage(
 	source_actor_id: String,
 	action_id: String,
 	damage_type: String = "physical",
-	is_public_intent: bool = false
+	is_public_intent: bool = false,
+	resolving_intent_id: String = ""
 ) -> void:
 	var target = actors[target_actor_id]
 	var resistance_penalty: int = 200 if statuses.has_status(target_actor_id, &"exposed") else 0
@@ -552,14 +553,14 @@ func _apply_damage(
 			_emit_event("statuses_cleared", target_actor_id, "", "reason=actor_defeated count=%d" % removed_statuses)
 	if target.is_defeated and target.team == "enemy":
 		for intent in intents:
-			if intent.source_actor_id == target_actor_id:
+			if intent.source_actor_id == target_actor_id and intent.intent_id != resolving_intent_id:
 				intent.cancel("source_defeated")
 		_emit_event("actor_defeated", target_actor_id, "", "enemy")
 	if applied > 0 and is_public_intent and target.is_alive():
-		_resolve_echo_counter(target_actor_id, source_actor_id)
+		_resolve_echo_counter(target_actor_id, source_actor_id, resolving_intent_id)
 
 
-func _resolve_echo_counter(defender_actor_id: String, attacker_actor_id: String) -> void:
+func _resolve_echo_counter(defender_actor_id: String, attacker_actor_id: String, resolving_intent_id: String = "") -> void:
 	if not actors.has(defender_actor_id) or not actors.has(attacker_actor_id):
 		return
 	var defender = actors[defender_actor_id]
@@ -575,7 +576,7 @@ func _resolve_echo_counter(defender_actor_id: String, attacker_actor_id: String)
 	statuses.consume_trigger(defender_actor_id, &"echo_counter")
 	var raw_damage: int = CombatMathScript.calculate_raw_damage(defender.attack, multiplier)
 	_emit_event("status_triggered", defender_actor_id, attacker_actor_id, "status=echo_counter multiplier=%.2f" % multiplier)
-	_apply_damage(attacker_actor_id, raw_damage, defender_actor_id, "echo_counter", "physical", false)
+	_apply_damage(attacker_actor_id, raw_damage, defender_actor_id, "echo_counter", "physical", false, resolving_intent_id)
 	_emit_event("counter_resolved", defender_actor_id, attacker_actor_id, "skill=echo_counter multiplier=%.2f raw=%d" % [multiplier, raw_damage])
 
 
