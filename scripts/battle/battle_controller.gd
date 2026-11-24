@@ -33,29 +33,34 @@ func start_encounter(
 	enemy_cells: Array[Vector2i],
 	obstacles: Array[Vector2i] = []
 ) -> bool:
+	# Validate the complete setup before mutating live encounter state.
 	if not GridRulesScript.is_inside_bounds(player_cell, grid_size):
 		return false
+	var candidate_blockers: Dictionary = {}
+	for cell in obstacles:
+		if not GridRulesScript.is_inside_bounds(cell):
+			return false
+		candidate_blockers[cell] = true
+	if candidate_blockers.has(player_cell):
+		return false
+
+	var candidate_enemy_cells: Dictionary = {}
+	for cell in enemy_cells:
+		if not GridRulesScript.is_inside_bounds(cell) or cell == player_cell:
+			return false
+		if candidate_blockers.has(cell) or candidate_enemy_cells.has(cell):
+			return false
+		candidate_enemy_cells[cell] = true
+
 	actors.clear()
-	blocked_cells.clear()
+	blocked_cells = candidate_blockers
 	intents.clear()
 	event_sequence = 0
 	turn_number = 0
 	battle_result = ""
-	for cell in obstacles:
-		if not GridRulesScript.is_inside_bounds(cell, grid_size):
-			return false
-		blocked_cells[cell] = true
-	if blocked_cells.has(player_cell):
-		return false
-
 	actors["sevrin"] = BattleActorScript.new("sevrin", "player", player_cell, 10)
 	for index in range(enemy_cells.size()):
 		var cell: Vector2i = enemy_cells[index]
-		if not GridRulesScript.is_inside_bounds(cell) or cell == player_cell or blocked_cells.has(cell):
-			return false
-		for existing in actors.values():
-			if existing.cell == cell:
-				return false
 		var enemy_id := "vanguard_%02d" % index
 		actors[enemy_id] = BattleActorScript.new(enemy_id, "enemy", cell, 6)
 
