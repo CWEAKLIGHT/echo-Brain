@@ -89,3 +89,10 @@ The main scene now opens an 8×8 tactical board with Sevrin, two Melee Vanguard 
 - Added a boundary regression scenario verifying the area-locked cross footprint is clipped to valid cells when its center is at the map corner.
 
 - Mixed-archetype integration pass: added a controller scenario with Vanguard, Marksman, and Area Controller active together. The scenario checks one captured intent per enemy, the shared priority/tie-break order, fixed telegraph geometry, and damage resolution matching the displayed sequence. Added a second scenario confirming that an intervening Vanguard blocks the Marksman's firing lane at planning time. Updated the first-pass battle scene to instantiate all three archetypes so the prototype view exposes the complete ordinary-enemy roster. These are source-level changes and authored tests only; Godot import, parsing, and test execution remain pending.
+
+
+## Static review — configured grid bounds
+
+- Corrected encounter validation so obstacle and enemy coordinates are checked against the controller's configured `grid_size`, rather than calling the bounds helper without its required dimensions.
+- Added regression scenarios using a 6×6 configured board: valid in-bounds setup is accepted, while an enemy or obstacle at x=6 is rejected.
+- Controller and test files were re-fetched after the commits to verify the exact changes. This remains source-level review only; Godot import, parsing, and test execution are still pending.
