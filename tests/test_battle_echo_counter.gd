@@ -15,6 +15,7 @@ func _run() -> void:
 	_test_marked_attacker_consumes_echo_for_stronger_counter()
 	_test_non_intent_damage_does_not_grant_echo()
 	_test_evaded_intent_does_not_trigger_counter()
+	_test_lethal_counter_preserves_resolved_intent()
 	print("Battle echo counter test run complete. Failures: ", failures.size())
 	quit(1 if not failures.is_empty() else 0)
 
@@ -79,6 +80,21 @@ func _test_evaded_intent_does_not_trigger_counter() -> void:
 	_check(shot_intent.state == IntentScript.IntentState.CANCELED, "empty marked tile cancels the shot")
 	_check(not battle.statuses.has_status("sevrin", &"echo_counter"), "unused Echo Counter expires at enemy phase end")
 	_check(not battle.statuses.has_status("sevrin", &"echo"), "evading does not create Echo")
+	battle.queue_free()
+
+
+func _test_lethal_counter_preserves_resolved_intent() -> void:
+	var battle = ControllerScript.new()
+	root.add_child(battle)
+	var marksman_types: Array[String] = ["marksman"]
+	_check(battle.start_encounter(Vector2i(1, 1), [Vector2i(5, 1)], [], marksman_types), "lethal counter encounter starts")
+	var shot_intent = battle.intents[0]
+	battle.get_actor("marksman_00").health = 1000
+	_check(battle.request_echo_counter(), "lethal counter can be prepared")
+	_check(battle.end_player_turn(), "public intent resolves before its lethal counter")
+	_check(battle.get_actor("marksman_00").is_defeated, "counter can defeat its attacker")
+	_check(shot_intent.state == IntentScript.IntentState.RESOLVED, "an intent that landed before a lethal counter remains resolved")
+	_check(battle.phase == ControllerScript.BattlePhase.FINISHED and battle.battle_result == "victory", "defeating the final attacker ends the encounter in victory")
 	battle.queue_free()
 
 
