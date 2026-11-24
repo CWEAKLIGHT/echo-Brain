@@ -88,12 +88,14 @@ UI is a read-only presentation layer. It must not independently calculate target
 
 An intent should be represented as a stable runtime record. Field names are provisional.
 
+**Confirmed targeting principle:** use a mixed targeting model. The target mode is selected by each action's design rather than forcing every enemy action into one universal lock type. An action may lock to an actor, a grid cell, or an area. The chosen mode and its consequences must be clear in the telegraph. Exact per-action assignments and movement behavior remain to be specified.
+
 | Field | Purpose |
 |---|---|
 | intent_id | Unique battle-local identifier |
 | source_actor_id | Enemy that owns the intent |
 | action_definition_id | Shared action definition to be executed |
-| target_mode | Proposed: actor-locked, tile-locked, or area-locked |
+| target_mode | Confirmed mixed model: actor-locked, tile-locked, or area-locked, selected per action |
 | target_actor_id | Target actor, if applicable |
 | target_cell | Target grid cell, if applicable |
 | affected_cells | Resolved area preview |
@@ -254,7 +256,7 @@ These are role proposals, not confirmed enemy identities, art, stats, or final a
 
 ## 13. Decisions required before implementation
 
-1. Target model: actor-locked, tile-locked, or area-locked for each enemy action.
+1. Assign actor-locked, tile-locked, or area-locked targeting to each Prototype 0.1 enemy action; the overall mixed targeting model is confirmed.
 2. Target movement before execution.
 3. Target leaves threatened area.
 4. Target defeated before execution.
