@@ -266,12 +266,14 @@ These are role proposals, not confirmed enemy identities, art, stats, or final a
 
 **Confirmed no-legal-action fallback:** if an enemy's telegraphed action cannot legally execute at resolution time, cancel that action. Do not select a new target or switch to another skill. Do not refund or compensate player AP. Record the cancellation reason in the battle log/debug event for inspection.
 
+**Confirmed Prototype 0.1 action-selection direction:** use a simple deterministic priority AI. During intent generation, check eligible special actions first, then ordinary attacks, then movement or waiting as the final fallback. When multiple legal choices exist within the same priority, select using a fixed deterministic tie-break rule rather than a fresh random choice. Once an intent is generated and telegraphed, its plan remains fixed for the turn; the resolver must not rerun unconstrained target or skill selection at execution time. Exact per-enemy action priorities and tie-break keys will be specified in the enemy content specifications.
+
 ## 13. Decisions required before implementation
 
 1. Assign actor-locked, tile-locked, or area-locked targeting to each Prototype 0.1 enemy action; the overall mixed targeting model is confirmed.
 2. Whether tile-locked or area-locked actions have any additional range/line-of-sight invalidation conditions after telegraph generation.
 5. Exact control success/failure conditions, resistance values, and duration/effect details (to be specified by the relevant skill and combat rules).
-11. Ordinary enemy action-selection policy and tie-breaker.
+11. Exact per-enemy action priority tables and deterministic tie-break keys.
 12. Exact preview format for variable damage or conditional effects.
 13. Telegraph overlap inspection and layering behavior.
 
