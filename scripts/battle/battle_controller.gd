@@ -172,10 +172,12 @@ func _next_pursuit_path(start: Vector2i, goal: Vector2i, actor_id: String, max_s
 	var came_from := {start: start}
 	var directions: Array[Vector2i] = [Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT]
 	var occupied := get_occupied_cells(actor_id)
+	var found_cell := start
 	var found := false
 	while not queue.is_empty():
 		var current: Vector2i = queue.pop_front()
 		if GridRulesScript.manhattan_distance(current, goal) == 1:
+			found_cell = current
 			found = true
 			break
 		for direction in directions:
@@ -186,29 +188,13 @@ func _next_pursuit_path(start: Vector2i, goal: Vector2i, actor_id: String, max_s
 				continue
 			came_from[next] = current
 			queue.append(next)
-	if not found:
+	if not found or found_cell == start:
 		return []
 	var reversed_path: Array[Vector2i] = []
-	var cursor: Vector2i = queue.front() if false else start
-	# Recover the discovered adjacent cell: it is the last expanded node.
-	cursor = start
-	for candidate in came_from.keys():
-		if GridRulesScript.manhattan_distance(candidate, goal) == 1:
-			var candidate_path_length := 0
-			var trace: Vector2i = candidate
-			while trace != start:
-				candidate_path_length += 1
-				trace = came_from[trace]
-			if candidate_path_length > 0:
-				cursor = candidate
-				break
-	if cursor == start:
-		return []
+	var cursor: Vector2i = found_cell
 	while cursor != start:
 		reversed_path.push_front(cursor)
 		cursor = came_from[cursor]
-	if reversed_path.is_empty():
-		return []
 	var result: Array[Vector2i] = []
 	for index in range(mini(max_steps, reversed_path.size())):
 		result.append(reversed_path[index])
