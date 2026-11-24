@@ -34,7 +34,9 @@ func start_encounter(
 	obstacles: Array[Vector2i] = [],
 	enemy_archetypes: Array[String] = []
 ) -> bool:
-	# Validate the complete setup before mutating live encounter state.
+	# Validate configuration and the complete setup before mutating live encounter state.
+	if grid_size.x <= 0 or grid_size.y <= 0 or player_ap <= 0:
+		return false
 	if not GridRulesScript.is_inside_bounds(player_cell, grid_size):
 		return false
 	if enemy_cells.is_empty():
@@ -60,6 +62,7 @@ func start_encounter(
 			return false
 		candidate_enemy_cells[cell] = true
 
+	ap.maximum = player_ap
 	actors.clear()
 	blocked_cells = candidate_blockers
 	intents.clear()
