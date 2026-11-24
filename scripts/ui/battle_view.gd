@@ -63,7 +63,7 @@ func _draw_actors() -> void:
 		var outline := Color("#e7d7ae") if actor.team == "player" else Color("#d58b78")
 		draw_circle(center, 22.0, body_color)
 		draw_arc(center, 22.0, 0.0, TAU, 48, outline, 3.0)
-		var glyph := "S" if actor.team == "player" else ("M" if actor.archetype == "marksman" else ("C" if actor.archetype == "area_controller" else "V"))
+		var glyph := "守" if actor.team == "player" else ("射" if actor.archetype == "marksman" else ("术" if actor.archetype == "area_controller" else "锋"))
 		draw_string(ThemeDB.fallback_font, center + Vector2(-7.0, 7.0), glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#17191d"))
 
 
