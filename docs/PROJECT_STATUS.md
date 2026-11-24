@@ -4,7 +4,7 @@
 
 **Phase 1 — Prototype 0.1 foundations in progress**
 
-The GitHub repository and minimal Godot project skeleton have been created. No gameplay systems have been implemented or tested in-engine yet.
+The GitHub repository and minimal Godot project skeleton have been created. Foundational gameplay scripts and an authoritative battle model have been committed; Godot engine validation is still pending.
 
 ## Prototype 0.1 target
 
