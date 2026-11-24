@@ -166,3 +166,12 @@ The main scene now opens an 8×8 tactical board with Sevrin, two Melee Vanguard 
 - Extended controller tests for enemy-phase-end expiry and defeated-actor status cleanup.
 - Status effects are still not applied to damage or enemy intent behavior; skill casting and effect execution remain future work.
 - Source files were re-fetched for review. Godot 4.7.2 import/runtime tests remain unexecuted.
+
+
+## Oathguard damage mitigation — 2026-11-24
+
+- `BattleActor.apply_damage` now accepts a final-stage reduction percentage applied after physical defense or magic resistance.
+- `BattleController._apply_damage` checks the `oathguard` status, applies 35% final damage reduction, and consumes its trigger only after positive damage is actually applied.
+- Added a `status_triggered` battle event and controller regression coverage using the Marksman aimed-shot case (post-resistance damage 727, Oathguard damage 472).
+- Oathguard does not yet generate the Echo resource; that reaction condition remains explicitly unimplemented.
+- Updated status system documentation. Changed files were fetched again for source-level review. Godot 4.7.2 import/runtime tests remain unexecuted.
