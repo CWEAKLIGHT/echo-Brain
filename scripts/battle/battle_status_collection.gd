@@ -180,3 +180,12 @@ func _get_actor_statuses(actor_id: String) -> Dictionary:
 	if value is Dictionary:
 		return value
 	return {}
+
+
+## Combining trigger budgets when stacks are added. -1 means unlimited on either
+## side, so the merged budget stays unlimited; otherwise the larger remaining
+## count wins so adding a stack never shortens an existing status.
+func _refresh_trigger_count(current: int, incoming: int) -> int:
+	if current < 0 or incoming < 0:
+		return -1
+	return maxi(current, incoming)
