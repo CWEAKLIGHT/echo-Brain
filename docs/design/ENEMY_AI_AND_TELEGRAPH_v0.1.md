@@ -342,7 +342,7 @@ The Ranged Marksman creates a distant, readable single-cell threat. It teaches t
 | Attack range | Manhattan distance 3–6 | Straight orthogonal line only |
 | Targeting mode | Tile-locked | Fires at the captured cell, not a tracking actor |
 | Footprint | One cell | No splash damage |
-| Execution priority | 1 | After the Vanguard's charged strike and basic melee |
+| Execution priority | 2 | After the Vanguard's charged strike and basic melee |
 
 ### Action — Aimed shot
 
