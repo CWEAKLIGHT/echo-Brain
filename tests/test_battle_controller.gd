@@ -184,6 +184,14 @@ func _run() -> void:
 	terminal_battle.queue_free()
 
 
+	var custom_bounds_battle = ControllerScript.new()
+	root.add_child(custom_bounds_battle)
+	custom_bounds_battle.grid_size = Vector2i(6, 6)
+	_check(custom_bounds_battle.start_encounter(Vector2i(1, 1), [Vector2i(5, 5)]), "custom-size encounter accepts cells inside configured bounds")
+	_check(not custom_bounds_battle.start_encounter(Vector2i(1, 1), [Vector2i(6, 1)]), "enemy outside configured grid bounds is rejected")
+	_check(not custom_bounds_battle.start_encounter(Vector2i(1, 1), [Vector2i(5, 5)], [Vector2i(6, 1)]), "obstacle outside configured grid bounds is rejected")
+	custom_bounds_battle.queue_free()
+
 	var validation_battle = ControllerScript.new()
 	root.add_child(validation_battle)
 	_check(validation_battle.start_encounter(Vector2i(1, 1), [Vector2i(5, 5)], [Vector2i(3, 3)]), "validation encounter starts")
