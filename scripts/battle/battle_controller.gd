@@ -31,13 +31,19 @@ func _ready() -> void:
 func start_encounter(
 	player_cell: Vector2i,
 	enemy_cells: Array[Vector2i],
-	obstacles: Array[Vector2i] = []
+	obstacles: Array[Vector2i] = [],
+	enemy_archetypes: Array[String] = []
 ) -> bool:
 	# Validate the complete setup before mutating live encounter state.
 	if not GridRulesScript.is_inside_bounds(player_cell, grid_size):
 		return false
 	if enemy_cells.is_empty():
 		return false
+	if not enemy_archetypes.is_empty() and enemy_archetypes.size() != enemy_cells.size():
+		return false
+	for archetype in enemy_archetypes:
+		if archetype != "vanguard" and archetype != "marksman":
+			return false
 	var candidate_blockers: Dictionary = {}
 	for cell in obstacles:
 		if not GridRulesScript.is_inside_bounds(cell):
@@ -63,8 +69,10 @@ func start_encounter(
 	actors["sevrin"] = BattleActorScript.new("sevrin", "player", player_cell, 10)
 	for index in range(enemy_cells.size()):
 		var cell: Vector2i = enemy_cells[index]
-		var enemy_id := "vanguard_%02d" % index
-		actors[enemy_id] = BattleActorScript.new(enemy_id, "enemy", cell, 6)
+		var archetype := "vanguard" if enemy_archetypes.is_empty() else enemy_archetypes[index]
+		var enemy_id := "%s_%02d" % [archetype, index]
+		var enemy_health := 4 if archetype == "marksman" else 6
+		actors[enemy_id] = BattleActorScript.new(enemy_id, "enemy", cell, enemy_health, archetype)
 
 	phase = BattlePhase.PLAYER
 	_begin_player_turn()
@@ -148,18 +156,7 @@ func _generate_enemy_intents() -> Array:
 		var target = actors["sevrin"]
 		if not target.is_alive():
 			continue
-		var distance: int = GridRulesScript.manhattan_distance(enemy.cell, target.cell)
-		var intent = null
-		if distance == 2 and GridRulesScript.has_clear_orthogonal_line(enemy.cell, target.cell, blocked_cells, occupied):
-			intent = BattleIntentScript.new("intent_%d_%s" % [turn_number, actor_id], actor_id, "charged_strike", BattleIntentScript.TargetMode.TILE_LOCKED, "", target.cell, [target.cell], 2, 0)
-		elif distance == 1:
-			intent = BattleIntentScript.new("intent_%d_%s" % [turn_number, actor_id], actor_id, "basic_melee", BattleIntentScript.TargetMode.ACTOR_LOCKED, "sevrin", target.cell, [target.cell], 1, 1)
-		else:
-			var pursuit_path: Array[Vector2i] = _next_pursuit_path(enemy.cell, target.cell, actor_id, 2)
-			if not pursuit_path.is_empty():
-				intent = BattleIntentScript.new("intent_%d_%s" % [turn_number, actor_id], actor_id, "pursuit", BattleIntentScript.TargetMode.NONE, "", pursuit_path[pursuit_path.size() - 1], pursuit_path, 0, 2)
-			else:
-				intent = BattleIntentScript.new("intent_%d_%s" % [turn_number, actor_id], actor_id, "wait", BattleIntentScript.TargetMode.NONE, "", enemy.cell, [], 0, 3)
+		var intent = _generate_marksman_intent(enemy, target, occupied) if enemy.archetype == "marksman" else _generate_vanguard_intent(enemy, target, occupied)
 		if intent != null:
 			generated.append(intent)
 	generated.sort_custom(func(a, b):
@@ -174,6 +171,28 @@ func _generate_enemy_intents() -> Array:
 		return a.source_actor_id < b.source_actor_id
 	)
 	return generated
+
+
+func _generate_vanguard_intent(enemy, target, occupied: Dictionary):
+	var distance: int = GridRulesScript.manhattan_distance(enemy.cell, target.cell)
+	if distance == 2 and GridRulesScript.has_clear_orthogonal_line(enemy.cell, target.cell, blocked_cells, occupied):
+		return BattleIntentScript.new("intent_%d_%s" % [turn_number, enemy.actor_id], enemy.actor_id, "charged_strike", BattleIntentScript.TargetMode.TILE_LOCKED, "", target.cell, [target.cell], 2, 0)
+	if distance == 1:
+		return BattleIntentScript.new("intent_%d_%s" % [turn_number, enemy.actor_id], enemy.actor_id, "basic_melee", BattleIntentScript.TargetMode.ACTOR_LOCKED, "sevrin", target.cell, [target.cell], 1, 1)
+	var pursuit_path: Array[Vector2i] = _next_pursuit_path(enemy.cell, target.cell, enemy.actor_id, 2)
+	if not pursuit_path.is_empty():
+		return BattleIntentScript.new("intent_%d_%s" % [turn_number, enemy.actor_id], enemy.actor_id, "pursuit", BattleIntentScript.TargetMode.NONE, "", pursuit_path[pursuit_path.size() - 1], pursuit_path, 0, 2)
+	return BattleIntentScript.new("intent_%d_%s" % [turn_number, enemy.actor_id], enemy.actor_id, "wait", BattleIntentScript.TargetMode.NONE, "", enemy.cell, [], 0, 3)
+
+
+func _generate_marksman_intent(enemy, target, occupied: Dictionary):
+	var distance: int = GridRulesScript.manhattan_distance(enemy.cell, target.cell)
+	var aligned: bool = enemy.cell.x == target.cell.x or enemy.cell.y == target.cell.y
+	var legal_range: bool = distance >= 3 and distance <= 6
+	var clear_line: bool = GridRulesScript.has_clear_orthogonal_line(enemy.cell, target.cell, blocked_cells, occupied)
+	if aligned and legal_range and clear_line:
+		return BattleIntentScript.new("intent_%d_%s" % [turn_number, enemy.actor_id], enemy.actor_id, "aimed_shot", BattleIntentScript.TargetMode.TILE_LOCKED, "", target.cell, [target.cell], 2, 1)
+	return BattleIntentScript.new("intent_%d_%s" % [turn_number, enemy.actor_id], enemy.actor_id, "wait", BattleIntentScript.TargetMode.NONE, "", enemy.cell, [], 0, 3)
 
 
 func _next_pursuit_path(start: Vector2i, goal: Vector2i, actor_id: String, max_steps: int) -> Array[Vector2i]:
@@ -222,7 +241,7 @@ func _resolve_enemy_phase() -> void:
 		match intent.action_id:
 			"basic_melee":
 				_resolve_actor_locked_attack(intent)
-			"charged_strike":
+			"charged_strike", "aimed_shot":
 				_resolve_tile_locked_attack(intent)
 			"pursuit":
 				_resolve_pursuit(intent)
@@ -258,6 +277,10 @@ func _resolve_tile_locked_attack(intent) -> void:
 		intent.cancel("marked_cell_empty")
 		return
 	var source = actors[intent.source_actor_id]
+	var current_distance: int = GridRulesScript.manhattan_distance(source.cell, intent.target_cell)
+	if intent.action_id == "aimed_shot" and (current_distance < 3 or current_distance > 6):
+		intent.cancel("shot_out_of_range")
+		return
 	if not GridRulesScript.has_clear_orthogonal_line(source.cell, intent.target_cell, blocked_cells, get_occupied_cells(intent.source_actor_id)):
 		intent.cancel("marked_cell_line_blocked")
 		return
