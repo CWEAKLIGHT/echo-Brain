@@ -5,6 +5,7 @@ extends RefCounted
 
 var actor_id: String
 var team: String
+var archetype: String = "vanguard"
 var cell: Vector2i
 var max_health: int
 var health: int
@@ -15,10 +16,12 @@ func _init(
 	p_actor_id: String,
 	p_team: String,
 	p_cell: Vector2i,
-	p_max_health: int
+	p_max_health: int,
+	p_archetype: String = "vanguard"
 ) -> void:
 	actor_id = p_actor_id
 	team = p_team
+	archetype = p_archetype
 	cell = p_cell
 	max_health = maxi(1, p_max_health)
 	health = max_health
