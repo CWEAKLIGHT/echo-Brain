@@ -61,3 +61,11 @@ The runtime battle model now supports validated player movement and adjacent att
 ## Playable-slice presentation
 
 The main scene now opens an 8×8 tactical board with Sevrin, two Melee Vanguard units, obstacle cells, enemy intent previews/order, AP and health display, tap-to-move, tap-to-attack, and an End Turn control. Landscape-first viewport settings are configured. This is an unvalidated first-pass UI: no Godot runtime, Android export, or device test has been performed in this environment.
+
+
+## Static review — 2026-11-24
+
+- Encounter setup now validates the full player/enemy/obstacle layout before changing the active battle state. Invalid duplicate or overlapping enemy positions no longer leave a partially replaced encounter.
+- Battle UI intent rendering and enemy-order labels now use the named `IntentState` enum rather than numeric state literals; active, resolved, and canceled states are distinguished.
+- Added controller scenarios verifying that an invalid encounter setup is rejected without mutating the currently active encounter.
+- This is a source-level review and test-harness update only. Godot 4.x import, script parsing, headless execution, Android export, and device behavior remain unverified because no Godot runtime is available in the current environment.
