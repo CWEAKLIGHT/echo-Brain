@@ -256,12 +256,13 @@ These are role proposals, not confirmed enemy identities, art, stats, or final a
 9. Overlapping telegraphs can be inspected on a phone-sized landscape display.
 10. Repeated encounters do not produce stale telegraphs, duplicate enemy actions, or soft-locks.
 
+**Confirmed control/telegraph interaction:** when a control effect successfully interrupts an enemy, that enemy's current telegraph is canceled immediately. If the control attempt fails, its telegraph remains unchanged and the enemy proceeds with its planned action. A control effect changes only the affected enemy's telegraph; it does not alter other enemies' intents.
+
 ## 13. Decisions required before implementation
 
 1. Assign actor-locked, tile-locked, or area-locked targeting to each Prototype 0.1 enemy action; the overall mixed targeting model is confirmed.
 2. Whether tile-locked or area-locked actions have any additional range/line-of-sight invalidation conditions after telegraph generation.
-5. Control/interruption success behavior.
-6. Control/interruption failure behavior.
+5. Exact control success/failure conditions, resistance values, and duration/effect details (to be specified by the relevant skill and combat rules).
 7. Fixed enemy execution-order sorting rule.
 8. Later intent invalidated by an earlier enemy action.
 9. Terrain changes after telegraph generation.
