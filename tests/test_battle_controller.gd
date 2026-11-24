@@ -71,6 +71,17 @@ func _run() -> void:
 	_check(shot_intent.state == IntentScript.IntentState.RESOLVED, "aimed shot intent resolves")
 	marksman_battle.queue_free()
 
+	var evaded_marksman_battle = ControllerScript.new()
+	root.add_child(evaded_marksman_battle)
+	_check(evaded_marksman_battle.start_encounter(Vector2i(1, 1), [Vector2i(5, 1)], [], marksman_types), "evadable marksman encounter starts")
+	var evaded_shot = evaded_marksman_battle.intents[0]
+	var marksman_evade_path: Array[Vector2i] = [Vector2i(1, 2)]
+	_check(evaded_marksman_battle.request_player_move(marksman_evade_path), "player can leave marksman marked cell")
+	_check(evaded_marksman_battle.end_player_turn(), "evaded marksman phase resolves")
+	_check(evaded_marksman_battle.get_actor("sevrin").health == 10, "tile-locked aimed shot does not track moved player")
+	_check(evaded_shot.state == IntentScript.IntentState.CANCELED, "aimed shot cancels when marked cell is empty")
+	evaded_marksman_battle.queue_free()
+
 	var blocked_marksman_battle = ControllerScript.new()
 	root.add_child(blocked_marksman_battle)
 	_check(blocked_marksman_battle.start_encounter(Vector2i(1, 1), [Vector2i(5, 1)], [Vector2i(3, 1)], marksman_types), "blocked marksman encounter starts")
