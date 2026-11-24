@@ -175,3 +175,15 @@ The main scene now opens an 8×8 tactical board with Sevrin, two Melee Vanguard 
 - Added a `status_triggered` battle event and controller regression coverage using the Marksman aimed-shot case (post-resistance damage 727, Oathguard damage 472).
 - Oathguard does not yet generate the Echo resource; that reaction condition remains explicitly unimplemented.
 - Updated status system documentation. Changed files were fetched again for source-level review. Godot 4.7.2 import/runtime tests remain unexecuted.
+
+
+## Judgment Mark intent intervention — 2026-11-24
+
+- Added BattleIntent.judgment_marked so an already revealed intent can retain its marked state without changing its captured target or footprint.
+- Added BattleController.request_judgment_mark: validates player phase, living enemy target, orthogonal range 1–4, clear line, and 1 AP; applies the mark and annotates the target's current active attack intent.
+- Single-target attacks (basic melee and aimed shot) reduce raw damage by 25% before resistance, then consume the mark on execution.
+- Charged tile attacks and area attacks preserve their original damage and telegraph footprint; successful execution consumes the mark and applies exposed to the attacker.
+- exposed reduces physical defense and magic resistance by 200 through the following player phase and expires when that player phase ends.
+- Wait/pursuit intents do not consume the mark; it expires at the end of that enemy phase. Canceled or empty-target attacks do not apply Exposed.
+- Added controller regression cases for marked aimed shot, charged strike/Exposed, and pursuit expiry. Updated battle status documentation.
+- Source files were fetched again for static review. Godot 4.7.2 import and runtime tests have not yet been executed.
