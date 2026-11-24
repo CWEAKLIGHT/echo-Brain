@@ -46,7 +46,7 @@ func start_encounter(
 			return false
 	var candidate_blockers: Dictionary = {}
 	for cell in obstacles:
-		if not GridRulesScript.is_inside_bounds(cell):
+		if not GridRulesScript.is_inside_bounds(cell, grid_size):
 			return false
 		candidate_blockers[cell] = true
 	if candidate_blockers.has(player_cell):
@@ -54,7 +54,7 @@ func start_encounter(
 
 	var candidate_enemy_cells: Dictionary = {}
 	for cell in enemy_cells:
-		if not GridRulesScript.is_inside_bounds(cell) or cell == player_cell:
+		if not GridRulesScript.is_inside_bounds(cell, grid_size) or cell == player_cell:
 			return false
 		if candidate_blockers.has(cell) or candidate_enemy_cells.has(cell):
 			return false
