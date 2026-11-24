@@ -23,6 +23,12 @@ func _run() -> void:
 	_check(statuses.expire_boundary("marksman", &"enemy_phase_end") == 1, "phase boundary expires matching status", failures)
 	_check(not statuses.has_status("marksman", &"judgment_mark"), "expired status is no longer present", failures)
 
+	_check(statuses.apply_status(&"judgment_mark", "sevrin", "vanguard_mark", 1, 1, -1, &"enemy_phase_end"), "deferred judgment mark can be applied", failures)
+	_check(statuses.defer_status_boundary(&"judgment_mark", &"enemy_phase_end", &"enemy_phase_end_next") == 1, "unused mark can defer its expiry by one enemy phase", failures)
+	var deferred_mark: BattleStatus = statuses.get_status("vanguard_mark", &"judgment_mark")
+	_check(deferred_mark != null and deferred_mark.expiry_boundary == &"enemy_phase_end_next", "deferred mark stores its next enemy-phase boundary", failures)
+	_check(statuses.expire_all_boundary(&"enemy_phase_end_next") == 1, "deferred mark expires after the following enemy phase", failures)
+
 	_check(statuses.apply_status(&"exposed", "sevrin", "vanguard", 1, 3, -1, &""), "unlimited status can be applied", failures)
 	_check(statuses.apply_status(&"exposed", "sevrin", "vanguard", 1, 3, -1, &"", BattleStatusScript.STACK_ADD), "stack policy adds stacks", failures)
 	var exposed: BattleStatus = statuses.get_status("vanguard", &"exposed")
