@@ -228,7 +228,7 @@ Each Prototype 0.1 enemy must be documented with:
 - Test cases
 
 **Confirmed Prototype 0.1 enemy role roster (three ordinary enemies):**
-1. **Melee Vanguard:** creates close-range pressure and tests spacing, movement, and defensive responses. Its approved behavior direction is a hybrid: it normally pursues and applies steady melee pressure, then uses a charged strike when its conditions are met. Exact trigger conditions, action definitions, ranges, damage, and telegraph details remain open.
+1. **Melee Vanguard:** creates close-range pressure and tests spacing, movement, and defensive responses. Its approved behavior direction is a hybrid: it normally pursues and applies steady melee pressure, then uses a charged strike when its conditions are met. Detailed behavior and initial tuning values are specified in Section 10.1; numerical balance remains subject to playtesting.
 2. **Ranged Marksman:** creates long-range threats and tests positioning, line-of-fire, and ranged telegraph responses.
 3. **Area Controller:** creates area threats and tests area denial, repositioning, and timing.
 
