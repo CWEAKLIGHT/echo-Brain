@@ -90,7 +90,7 @@ An intent should be represented as a stable runtime record. Field names are prov
 
 **Confirmed targeting principle:** use a mixed targeting model. The target mode is selected by each action's design rather than forcing every enemy action into one universal lock type. An action may lock to an actor, a grid cell, or an area. The chosen mode and its consequences must be clear in the telegraph.
 
-**Confirmed target-movement and defeat behavior:** actor-locked actions continue tracking their designated actor; tile-locked actions resolve at the originally marked cell; area-locked actions resolve in the originally marked area. If the designated target is defeated before execution, the action follows its own explicitly defined fallback/cancellation rule; it must not silently retarget another actor.
+**Confirmed target-movement and defeat behavior:** actor-locked actions continue tracking their designated actor; tile-locked actions resolve at the originally marked cell; area-locked actions resolve in the originally marked area. If an actor-locked action's designated target is defeated before execution, that action is canceled, does not retarget another actor, and does not refund or compensate player AP. The enemy's action slot is considered resolved for that phase.
 
 | Field | Purpose |
 |---|---|
@@ -259,8 +259,7 @@ These are role proposals, not confirmed enemy identities, art, stats, or final a
 ## 13. Decisions required before implementation
 
 1. Assign actor-locked, tile-locked, or area-locked targeting to each Prototype 0.1 enemy action; the overall mixed targeting model is confirmed.
-2. Exact fallback/cancellation behavior when an actor-locked target is defeated before execution; silent retargeting is prohibited.
-3. Whether tile-locked or area-locked actions have any additional range/line-of-sight invalidation conditions after telegraph generation.
+2. Whether tile-locked or area-locked actions have any additional range/line-of-sight invalidation conditions after telegraph generation.
 5. Control/interruption success behavior.
 6. Control/interruption failure behavior.
 7. Fixed enemy execution-order sorting rule.
