@@ -53,7 +53,7 @@ func apply_status(
 		BattleStatusScript.STACK_REFRESH:
 			current.stacks = mini(current.stacks, max_stacks)
 			current.max_stacks = max_stacks
-			current.remaining_triggers = _refresh_trigger_count(current.remaining_triggers, remaining_triggers)
+			current.remaining_triggers = remaining_triggers
 			current.source_actor_id = source_actor_id
 			current.expiry_boundary = expiry_boundary
 		BattleStatusScript.STACK_ADD:
@@ -142,9 +142,3 @@ func _get_actor_statuses(actor_id: String) -> Dictionary:
 	if value is Dictionary:
 		return value
 	return {}
-
-
-func _refresh_trigger_count(current_count: int, new_count: int) -> int:
-	if current_count < 0 or new_count < 0:
-		return -1
-	return maxi(current_count, new_count)
