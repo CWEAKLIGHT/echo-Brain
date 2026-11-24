@@ -1,6 +1,7 @@
 extends Node2D
 
 const ControllerScript = preload("res://scripts/battle/battle_controller.gd")
+const IntentScript = preload("res://scripts/battle/battle_intent.gd")
 const CELL_SIZE: float = 64.0
 const BOARD_ORIGIN := Vector2(384.0, 72.0)
 const BOARD_SIZE := 8
@@ -67,7 +68,7 @@ func _draw_actors() -> void:
 
 func _draw_telegraphs() -> void:
 	for intent in controller.intents:
-		if intent.state != 0:
+		if intent.state != IntentScript.IntentState.ACTIVE:
 			continue
 		match intent.action_id:
 			"charged_strike":
@@ -99,7 +100,7 @@ func _draw_hud() -> void:
 	for index in range(controller.intents.size()):
 		var intent = controller.intents[index]
 		var action_label: String = intent.action_id.replace("_", " ").to_upper()
-		var state_label: String = "  [CANCELED]" if intent.state == 2 else ""
+		var state_label: String = "  [ACTIVE]" if intent.state == IntentScript.IntentState.ACTIVE else ("  [RESOLVED]" if intent.state == IntentScript.IntentState.RESOLVED else "  [CANCELED]")
 		draw_string(font, Vector2(48, order_y), "%d. %s — %s%s" % [index + 1, intent.source_actor_id, action_label, state_label], HORIZONTAL_ALIGNMENT_LEFT, 315, 13, Color("#c7c2b6"))
 		order_y += 24.0
 	draw_rect(END_TURN_RECT, Color("#4b4030"), true)
