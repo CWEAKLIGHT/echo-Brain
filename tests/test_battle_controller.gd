@@ -44,6 +44,17 @@ func _run() -> void:
 	_check(pursuit_battle.get_actor("vanguard_00").cell == Vector2i(2, 1), "pursuit moves two cells toward target")
 	pursuit_battle.queue_free()
 
+	var wait_battle = ControllerScript.new()
+	root.add_child(wait_battle)
+	var cage: Array[Vector2i] = [Vector2i(4, 5), Vector2i(6, 5), Vector2i(5, 4), Vector2i(5, 6)]
+	_check(wait_battle.start_encounter(Vector2i(1, 1), [Vector2i(5, 5)], cage), "blocked-enemy encounter starts")
+	_check(wait_battle.intents.size() == 1, "blocked enemy still receives a visible intent")
+	_check(wait_battle.intents[0].action_id == "wait", "enemy with no legal pursuit captures wait intent")
+	_check(wait_battle.end_player_turn(), "wait intent resolves during enemy phase")
+	_check(wait_battle.intents[0].state == IntentScript.IntentState.RESOLVED, "wait intent resolves exactly once")
+	_check(wait_battle.get_actor("vanguard_00").cell == Vector2i(5, 5), "waiting enemy remains in place")
+	wait_battle.queue_free()
+
 
 	var actor_lock_battle = ControllerScript.new()
 	root.add_child(actor_lock_battle)
