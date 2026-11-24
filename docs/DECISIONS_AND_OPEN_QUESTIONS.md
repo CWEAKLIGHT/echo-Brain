@@ -25,6 +25,7 @@ Use these labels consistently:
 - Enemy execution order is fixed and visibly communicated: sort by predefined enemy action priority, then by stable battlefield position for ties; show the complete order before the enemy phase and keep it fixed for that phase.
 - Earlier enemy actions do not silently rewrite later enemies' telegraphed targets: actor locks continue tracking the same actor, tile locks resolve at the original cell, and area locks resolve in the original area. If a later action becomes genuinely impossible because the battlefield changed, cancel it rather than retargeting or generating a replacement attack.
 - Terrain changes do not silently alter existing telegraphs: if the original action remains possible, it resolves at its original target/area; if terrain makes it impossible, cancel it. Terrain changes cannot silently expand its area or change its target.
+- If an enemy's telegraphed action cannot legally execute at resolution time, cancel it without selecting a new target or switching skills, do not refund/compensate player AP, and record the cancellation reason in the battle log/debug event.
 - An enemy's telegraph is canceled immediately when that enemy dies.
 - Prototype companion actions are player-commanded, then automatically executed; the companion has one independent support action per player turn.
 - No mid-run saves, checkpoints, or run restoration. Out-of-run progression may persist.
@@ -38,7 +39,6 @@ One playable Oathkeeper (Sevrin), one temporary Hunter companion, three ordinary
 
 - Which targeting mode (actor-locked, tile-locked, or area-locked) should each individual Prototype 0.1 enemy action use?
 - Do tile-locked or area-locked actions have additional range/line-of-sight invalidation conditions after telegraph generation?
-- What should an enemy do when its planned action has no legal target or destination?
 - How should overlapping telegraphs be layered and inspected on a phone screen?
 - What is the final event-resolution order for damage, death, status effects, telegraph cancellation, and triggers?
 - What are the final damage, armor, health, and control formulas?
