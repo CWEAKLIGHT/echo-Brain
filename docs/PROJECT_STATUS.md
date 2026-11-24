@@ -193,3 +193,14 @@ The main scene now opens an 8×8 tactical board with Sevrin, two Melee Vanguard 
 
 - Added BattleStatusCollection.defer_status_boundary and regression coverage to preserve an unused Judgment Mark through one enemy phase, allowing it to attach to the target's next attack intent.
 - Added an area-attack mark regression case confirming the captured footprint and damage remain unchanged while Exposed is applied to the attacker.
+
+## Desktop skill integration — 2026-11-25
+
+- Reconciled the earlier historical status notes with the current implementation: all five Sevrin active-skill controller requests and their combat effects are present in the current prototype branch.
+- Confirmed the main battle view already contains the six-entry action bar (basic attack plus five active skills), mouse selection, self-skill activation, actor-target confirmation, AP display, status markers, and target range hints.
+- Improved desktop controls: number keys 1–6 activate/select the matching action; Enter/Space ends the player turn; Esc/right mouse cancels an actor-target selection and returns to basic attack.
+- Target previews for Judgment Mark and Oath Severance now require a clear orthogonal line, matching controller validation.
+- Added tests/test_battle_view_skills.gd to exercise the main scene's UI-to-controller paths for self skills, Judgment Mark, and Oath Severance.
+- Updated README with Godot 4.7.2 Standard Windows import/run instructions, the current skill list, desktop controls, and all current test commands. Updated the skill specification and validation checklist to reflect UI integration.
+- The main scene remains a functional prototype battle view and starts directly in combat; a title/menu and level-selection flow are not part of this integration.
+- All changes were statically re-fetched from prototype/0.1. Godot 4.7.2 import, automated test execution, and interactive Windows desktop verification are still pending; do not mark them as passed until the user runs them in the engine.
