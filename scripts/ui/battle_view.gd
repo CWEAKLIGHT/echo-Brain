@@ -84,6 +84,9 @@ func _draw_telegraphs() -> void:
 				for path_cell in intent.affected_cells:
 					draw_rect(_cell_rect(path_cell).grow(-10.0), Color(0.75, 0.61, 0.31, 0.22), true)
 					draw_rect(_cell_rect(path_cell).grow(-10.0), Color("#c5a45c"), false, 2.0)
+			"wait":
+				var wait_center := _cell_center(controller.get_actor(intent.source_actor_id).cell)
+				draw_arc(wait_center, 27.0, 0.0, TAU, 48, Color("#8c8b84"), 2.0)
 
 
 func _draw_hud() -> void:
