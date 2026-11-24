@@ -347,6 +347,12 @@ func _resolve_enemy_phase() -> void:
 		if phase == BattlePhase.FINISHED:
 			break
 	if phase != BattlePhase.FINISHED:
+		var expired_deferred_marks: int = statuses.expire_all_boundary(&"enemy_phase_end_next")
+		if expired_deferred_marks > 0:
+			_emit_event("statuses_expired", "", "", "boundary=enemy_phase_end_next count=%d" % expired_deferred_marks)
+		var deferred_marks: int = statuses.defer_status_boundary(&"judgment_mark", &"enemy_phase_end", &"enemy_phase_end_next")
+		if deferred_marks > 0:
+			_emit_event("statuses_deferred", "", "", "status=judgment_mark count=%d" % deferred_marks)
 		var expired_statuses: int = statuses.expire_all_boundary(&"enemy_phase_end")
 		if expired_statuses > 0:
 			_emit_event("statuses_expired", "", "", "boundary=enemy_phase_end count=%d" % expired_statuses)
