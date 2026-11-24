@@ -107,6 +107,29 @@ func _run() -> void:
 	_check(mixed_battle.intents[0].state == IntentScript.IntentState.RESOLVED and mixed_battle.intents[1].state == IntentScript.IntentState.RESOLVED, "both mixed intents resolve")
 	mixed_battle.queue_free()
 
+
+	var all_archetypes_battle = ControllerScript.new()
+	root.add_child(all_archetypes_battle)
+	var all_archetypes: Array[String] = ["vanguard", "marksman", "area_controller"]
+	_check(all_archetypes_battle.start_encounter(Vector2i(1, 3), [Vector2i(2, 3), Vector2i(1, 0), Vector2i(4, 3)], [], all_archetypes), "all three enemy archetypes can share one encounter")
+	_check(all_archetypes_battle.intents.size() == 3, "mixed three-archetype encounter creates one intent per enemy")
+	_check(all_archetypes_battle.intents[0].source_actor_id == "vanguard_00" and all_archetypes_battle.intents[0].action_id == "basic_melee", "mixed roster places adjacent Vanguard first")
+	_check(all_archetypes_battle.intents[1].source_actor_id == "area_controller_02" and all_archetypes_battle.intents[1].action_id == "ground_pulse", "equal-priority Area Controller uses stable battlefield tie-break")
+	_check(all_archetypes_battle.intents[2].source_actor_id == "marksman_01" and all_archetypes_battle.intents[2].action_id == "aimed_shot", "higher-priority-number Marksman acts after the first two intents")
+	_check(all_archetypes_battle.intents[1].affected_cells.has(Vector2i(1, 3)) and all_archetypes_battle.intents[2].target_cell == Vector2i(1, 3), "mixed roster telegraphs retain their captured area and tile")
+	_check(all_archetypes_battle.end_player_turn(), "all-archetype enemy phase resolves")
+	_check(all_archetypes_battle.get_actor("sevrin").health == 6, "mixed roster resolves Vanguard, area, and ranged damage in displayed order")
+	_check(all_archetypes_battle.intents.all(func(intent): return intent.state == IntentScript.IntentState.RESOLVED), "all three mixed-roster intents resolve exactly once")
+	all_archetypes_battle.queue_free()
+
+	var lane_block_battle = ControllerScript.new()
+	root.add_child(lane_block_battle)
+	var lane_block_types: Array[String] = ["vanguard", "marksman"]
+	_check(lane_block_battle.start_encounter(Vector2i(1, 3), [Vector2i(1, 1), Vector2i(1, 0)], [], lane_block_types), "mixed lane-block encounter starts")
+	_check(lane_block_battle.intents.size() == 2 and lane_block_battle.intents[0].action_id == "charged_strike", "Vanguard telegraphs its fixed-cell strike in the firing lane")
+	_check(lane_block_battle.intents[1].action_id == "wait", "occupied firing lane prevents Marksman from telegraphing a shot")
+	lane_block_battle.queue_free()
+
 	var area_battle = ControllerScript.new()
 	root.add_child(area_battle)
 	var area_types: Array[String] = ["area_controller"]
