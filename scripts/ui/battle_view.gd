@@ -180,7 +180,7 @@ func _path_to_cell(start: Vector2i, goal: Vector2i) -> Array[Vector2i]:
 	var queue: Array[Vector2i] = [start]
 	var came_from := {start: start}
 	var directions: Array[Vector2i] = [Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT]
-	var occupied := controller.get_occupied_cells("sevrin")
+	var occupied: Dictionary = controller.get_occupied_cells("sevrin")
 	while not queue.is_empty():
 		var current: Vector2i = queue.pop_front()
 		if current == goal:
