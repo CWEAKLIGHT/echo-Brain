@@ -47,3 +47,18 @@ The first implementation slice now contains:
 - `tests/test_core_rules.gd`: dependency-free Godot SceneTree test harness for path validation, AP behavior, and health/defeat behavior.
 
 These are foundational primitives, not yet a complete playable battle loop. The UI and battle scene do not consume them yet. Runtime validation requires Godot 4.x and remains pending.
+
+
+## Authoritative battle model — first integration slice
+
+The following runtime pieces now exist on `prototype/0.1`:
+
+- `scripts/battle/battle_intent.gd`: captured enemy action snapshot with actor/tile/area target-mode enum and one-way active/resolved/canceled lifecycle.
+- `scripts/battle/battle_controller.gd`: owns encounter runtime state, player AP actions, turn boundaries, deterministic enemy intent generation, enemy-phase execution, damage/death, terminal results, and ordered battle events.
+- `tests/test_battle_controller.gd`: headless SceneTree scenarios for tile-lock evasion, two-cell pursuit, actor-lock tracking, and immediate terminal handling.
+
+Current integration limitations:
+- The controller currently spawns a single Oathkeeper and Melee Vanguard instances only.
+- Companion commands, control skills, ranged/area enemies, UI rendering, and a complete encounter scene are not yet integrated.
+- The controller is not yet connected to `main.tscn`.
+- Godot 4.x runtime import and test execution remain pending.
