@@ -62,3 +62,13 @@ Current integration limitations:
 - Companion commands, control skills, ranged/area enemies, UI rendering, and a complete encounter scene are not yet integrated.
 - The controller is not yet connected to `main.tscn`.
 - Godot 4.x runtime import and test execution remain pending.
+
+
+## First playable presentation layer
+
+- `scripts/ui/battle_view.gd` draws the 8×8 board, blocked cells, actors, enemy telegraphs, AP/health, captured enemy order, and an end-turn control.
+- `scenes/main/main.tscn` now launches this battle view, which creates and owns a runtime `BattleController`.
+- Touch and mouse input share the same handler: tap a reachable cell to move (up to two orthogonal cells), tap an adjacent enemy to attack, and tap End Turn to resolve captured enemy intents.
+- `project.godot` now requests landscape orientation and a canvas-items stretch mode for the 1280×720 landscape-first layout.
+
+This is a functional first-pass debug presentation, not final art or production UI. It requires Godot 4.x import and device validation.
