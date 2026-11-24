@@ -167,6 +167,37 @@ func request_judgment_mark(target_actor_id: String) -> bool:
 	return true
 
 
+func request_oath_severance(target_actor_id: String) -> bool:
+	if phase != BattlePhase.PLAYER or not actors.has("sevrin") or not actors.has(target_actor_id):
+		return false
+	var player = actors["sevrin"]
+	var target = actors[target_actor_id]
+	if not player.is_alive() or not target.is_alive() or target.team != "enemy":
+		return false
+	if not statuses.has_status(target_actor_id, &"judgment_mark"):
+		return false
+	var distance: int = GridRulesScript.manhattan_distance(player.cell, target.cell)
+	if distance < 1 or distance > 2:
+		return false
+	if not GridRulesScript.has_clear_orthogonal_line(player.cell, target.cell, blocked_cells, get_occupied_cells()):
+		return false
+	if not ap.can_spend(2) or not ap.spend(2):
+		return false
+	statuses.remove_status(target_actor_id, &"judgment_mark")
+	var interrupted := false
+	for intent in intents:
+		if intent.source_actor_id == target_actor_id and intent.state == BattleIntentScript.IntentState.ACTIVE:
+			interrupted = intent.cancel("oath_severance")
+			if interrupted:
+				_emit_event("intent_severed", "sevrin", target_actor_id, "intent=%s action=%s" % [intent.intent_id, intent.action_id])
+			break
+	var damage: int = CombatMathScript.calculate_raw_damage(player.attack, 1.4)
+	_apply_damage(target_actor_id, damage, "sevrin", "oath_severance", "physical")
+	_emit_event("skill_resolved", "sevrin", target_actor_id, "skill=oath_severance interrupted=%s raw=%d" % [str(interrupted), damage])
+	_check_battle_end()
+	return true
+
+
 func end_player_turn() -> bool:
 	if phase != BattlePhase.PLAYER:
 		return false
