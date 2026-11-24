@@ -264,12 +264,13 @@ These are role proposals, not confirmed enemy identities, art, stats, or final a
 
 **Confirmed terrain-change interaction:** an existing telegraph remains unchanged after terrain changes. If the original action can still execute, it resolves against its original target and area. If the terrain change makes the action impossible, cancel it. Terrain changes must not silently expand the attack area or change its target.
 
+**Confirmed no-legal-action fallback:** if an enemy's telegraphed action cannot legally execute at resolution time, cancel that action. Do not select a new target or switch to another skill. Do not refund or compensate player AP. Record the cancellation reason in the battle log/debug event for inspection.
+
 ## 13. Decisions required before implementation
 
 1. Assign actor-locked, tile-locked, or area-locked targeting to each Prototype 0.1 enemy action; the overall mixed targeting model is confirmed.
 2. Whether tile-locked or area-locked actions have any additional range/line-of-sight invalidation conditions after telegraph generation.
 5. Exact control success/failure conditions, resistance values, and duration/effect details (to be specified by the relevant skill and combat rules).
-10. No legal target/action fallback.
 11. Ordinary enemy action-selection policy and tie-breaker.
 12. Exact preview format for variable damage or conditional effects.
 13. Telegraph overlap inspection and layering behavior.
