@@ -204,3 +204,6 @@ The main scene now opens an 8×8 tactical board with Sevrin, two Melee Vanguard 
 - Updated README with Godot 4.7.2 Standard Windows import/run instructions, the current skill list, desktop controls, and all current test commands. Updated the skill specification and validation checklist to reflect UI integration.
 - The main scene remains a functional prototype battle view and starts directly in combat; a title/menu and level-selection flow are not part of this integration.
 - All changes were statically re-fetched from prototype/0.1. Godot 4.7.2 import, automated test execution, and interactive Windows desktop verification are still pending; do not mark them as passed until the user runs them in the engine.
+
+- Follow-up UI polish: Watchwall now draws its locked five-cell protection footprint; the player displays separate Oathguard, Echo Counter, and Echo markers; marked enemies display Judgment Mark and Exposed markers.
+- Expanded the UI integration test to verify right-click cancellation before target confirmation. Reconciled docs/battle_status_system_zh-CN.md so it no longer describes Echo generation, Echo Counter, Watchwall, or the skill UI as unimplemented.
