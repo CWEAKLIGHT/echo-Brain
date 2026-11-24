@@ -36,7 +36,7 @@ Use these labels consistently:
 
 One playable Oathkeeper (Sevrin), one temporary Hunter companion, three ordinary enemy types, one battlefield, five to six skills, the AP and telegraph systems, victory/defeat resolution, and Android touch interaction.
 
-Confirmed enemy battlefield roles: melee vanguard (close-range pressure), ranged marksman (long-range threat), and area controller (area denial). This confirms role coverage only; identities, art, stats, exact actions, targeting assignments, and numerical values remain open.
+Confirmed enemy battlefield roles: melee vanguard (close-range pressure), ranged marksman (long-range threat), and area controller (area denial). The melee vanguard's approved behavior direction is hybrid: normally pursues and applies steady melee pressure, then uses a charged strike when conditions are met. Exact trigger conditions and all action details remain open. Other identities, art, stats, exact actions, targeting assignments, and numerical values remain open.
 
 ## Open questions — do not silently decide in code
 
