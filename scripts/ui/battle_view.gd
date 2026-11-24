@@ -291,13 +291,20 @@ func _input(event: InputEvent) -> void:
 			_cancel_target_selection()
 	elif event is InputEventKey and event.pressed and not event.echo:
 		match event.keycode:
-			KEY_1: _on_skill_pressed(0)
-			KEY_2: _on_skill_pressed(1)
-			KEY_3: _on_skill_pressed(2)
-			KEY_4: _on_skill_pressed(3)
-			KEY_5: _on_skill_pressed(4)
-			KEY_6: _on_skill_pressed(5)
-			KEY_ESCAPE: _cancel_target_selection()
+			KEY_1:
+				_on_skill_pressed(0)
+			KEY_2:
+				_on_skill_pressed(1)
+			KEY_3:
+				_on_skill_pressed(2)
+			KEY_4:
+				_on_skill_pressed(3)
+			KEY_5:
+				_on_skill_pressed(4)
+			KEY_6:
+				_on_skill_pressed(5)
+			KEY_ESCAPE:
+				_cancel_target_selection()
 			KEY_ENTER, KEY_SPACE:
 				if controller.phase == ControllerScript.BattlePhase.PLAYER:
 					controller.end_player_turn()
