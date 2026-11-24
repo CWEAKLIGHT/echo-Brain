@@ -1,6 +1,8 @@
 class_name BattleActor
 extends RefCounted
 
+const CombatMathScript = preload("res://scripts/battle/combat_math.gd")
+
 ## Runtime combatant stats and damage resolution.
 
 var actor_id: String
@@ -52,5 +54,3 @@ func apply_damage(raw_damage: int, damage_type: String = "physical") -> int:
 func is_alive() -> bool:
 	return not is_defeated and health > 0
 
-
-const CombatMathScript = preload("res://scripts/battle/combat_math.gd")
