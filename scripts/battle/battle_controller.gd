@@ -10,6 +10,8 @@ const BattleActorScript = preload("res://scripts/actors/battle_actor.gd")
 const BattleIntentScript = preload("res://scripts/battle/battle_intent.gd")
 const CombatMathScript = preload("res://scripts/battle/combat_math.gd")
 const StatusCollectionScript = preload("res://scripts/battle/battle_status_collection.gd")
+const AreaEffectScript = preload("res://scripts/battle/battle_area_effect.gd")
+const AreaEffectCollectionScript = preload("res://scripts/battle/battle_area_effect_collection.gd")
 
 enum BattlePhase { PLAYER, ENEMY, FINISHED }
 
@@ -25,6 +27,7 @@ var event_sequence: int = 0
 var turn_number: int = 0
 var battle_result: String = ""
 var statuses: BattleStatusCollection = StatusCollectionScript.new()
+var area_effects: BattleAreaEffectCollection = AreaEffectCollectionScript.new()
 
 
 func _ready() -> void:
@@ -68,6 +71,7 @@ func start_encounter(
 	ap.maximum = player_ap
 	actors.clear()
 	statuses.clear_all()
+	area_effects.clear_all()
 	blocked_cells = candidate_blockers
 	intents.clear()
 	event_sequence = 0
@@ -136,6 +140,39 @@ func request_player_attack(target_actor_id: String, damage_multiplier: float = 1
 	_apply_damage(target_actor_id, damage, "sevrin", "player_attack", "physical")
 	_emit_event("attack_resolved", "sevrin", target_actor_id, "倍率=%.2f 伤害=%d" % [damage_multiplier, damage])
 	_check_battle_end()
+	return true
+
+
+func request_watchwall() -> bool:
+	if phase != BattlePhase.PLAYER or not actors.has("sevrin"):
+		return false
+	var caster = actors["sevrin"]
+	if not caster.is_alive() or not ap.can_spend(1):
+		return false
+	var affected_cells: Array[Vector2i] = []
+	var offsets: Array[Vector2i] = [Vector2i.ZERO, Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT]
+	for offset in offsets:
+		var cell: Vector2i = caster.cell + offset
+		if GridRulesScript.is_inside_bounds(cell, grid_size):
+			affected_cells.append(cell)
+	var effect = AreaEffectScript.new(
+		&"watchwall",
+		AreaEffectScript.EFFECT_DAMAGE_REDUCTION,
+		caster.actor_id,
+		caster.team,
+		caster.cell,
+		affected_cells,
+		AreaEffectScript.TARGET_SAME_TEAM,
+		20,
+		&"player_phase_start"
+	)
+	if not effect.is_valid() or not ap.spend(1):
+		return false
+	if not area_effects.apply_effect(effect):
+		ap.current += 1
+		return false
+	_emit_event("area_effect_applied", caster.actor_id, "", "effect=watchwall center=%s cells=%d reduction=20%%" % [str(caster.cell), affected_cells.size()])
+	_emit_event("skill_resolved", caster.actor_id, "", "skill=watchwall ap=1")
 	return true
 
 
@@ -212,6 +249,9 @@ func end_player_turn() -> bool:
 
 
 func _begin_player_turn() -> void:
+	var expired_area_effects: int = area_effects.expire_boundary(&"player_phase_start")
+	if expired_area_effects > 0:
+		_emit_event("area_effects_expired", "", "", "boundary=player_phase_start count=%d" % expired_area_effects)
 	var expired_statuses: int = statuses.expire_all_boundary(&"player_phase_start")
 	if expired_statuses > 0:
 		_emit_event("statuses_expired", "", "", "boundary=player_phase_start count=%d" % expired_statuses)
@@ -459,12 +499,13 @@ func _apply_damage(target_actor_id: String, amount: int, source_actor_id: String
 	if statuses.has_status(target_actor_id, &"oathguard"):
 		final_reduction_percent = 35
 		triggered_statuses.append(&"oathguard")
-	var applied: int = target.apply_damage(amount, damage_type, final_reduction_percent, resistance_penalty)
+	var area_reductions: Array[int] = area_effects.get_damage_reductions_for_actor(target)
+	var applied: int = target.apply_damage(amount, damage_type, final_reduction_percent, resistance_penalty, area_reductions)
 	if applied > 0:
 		for status_id in triggered_statuses:
 			statuses.consume_trigger(target_actor_id, status_id)
 			_emit_event("status_triggered", target_actor_id, source_actor_id, "status=%s reduction=%d%%" % [status_id, final_reduction_percent])
-	_emit_event("damage_applied", source_actor_id, target_actor_id, "action=%s type=%s raw=%d resistance_penalty=%d final_reduction=%d%% applied=%d health=%d" % [action_id, damage_type, amount, resistance_penalty, final_reduction_percent, applied, target.health])
+	_emit_event("damage_applied", source_actor_id, target_actor_id, "action=%s type=%s raw=%d resistance_penalty=%d area_reductions=%s final_reduction=%d%% applied=%d health=%d" % [action_id, damage_type, amount, resistance_penalty, str(area_reductions), final_reduction_percent, applied, target.health])
 	if target.is_defeated:
 		var removed_statuses: int = statuses.clear_actor(target_actor_id)
 		if removed_statuses > 0:
@@ -499,6 +540,9 @@ func _finish_battle(result: String) -> void:
 		if intent.state == BattleIntentScript.IntentState.ACTIVE:
 			intent.cancel("battle_finished")
 	var removed_statuses: int = statuses.clear_all()
+	var removed_area_effects: int = area_effects.clear_all()
+	if removed_area_effects > 0:
+		_emit_event("area_effects_cleared", "", "", "reason=battle_finished count=%d" % removed_area_effects)
 	if removed_statuses > 0:
 		_emit_event("statuses_cleared", "", "", "reason=battle_finished count=%d" % removed_statuses)
 	battle_finished.emit(result)
