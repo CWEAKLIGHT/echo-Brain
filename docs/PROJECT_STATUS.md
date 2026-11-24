@@ -103,3 +103,11 @@ The main scene now opens an 8×8 tactical board with Sevrin, two Melee Vanguard 
 - A tester opened the project with Godot 4.7.2 stable on Windows and reported a parser error in `scripts/ui/battle_view.gd:183`: Godot could not infer the type of `occupied`.
 - Confirmed that `BattleController.get_occupied_cells()` returns `Dictionary`; changed the local declaration to explicitly type `occupied: Dictionary`.
 - The fix was committed to `prototype/0.1` and re-fetched for verification. The project has not yet been re-imported or run after this fix; further parser errors may appear and should be handled from the tester's next screenshot.
+
+
+## Follow-up static parser-risk review
+
+- The Windows Godot 4.7.2 report identified an inference failure at the UI call to `get_occupied_cells`. In addition to the explicit `Dictionary` annotation in `battle_view.gd`, the controller method now declares its return type as `-> Dictionary` and its local map as `Dictionary`.
+- Re-scanned all tracked GDScript files in the current prototype tree for inferred declarations involving method calls. Remaining matches use concrete built-in constructors/helpers or functions with explicit return types; no additional same-pattern untyped getter call was found in this scan.
+- Reviewed the main scene resource path and `project.godot` main-scene setting; both point to the tracked `scenes/main/main.tscn` and `scripts/ui/battle_view.gd` resources.
+- These are source-level checks only. Godot editor import, parser validation, runtime behavior, and test-suite execution remain unverified until the tester reimports the latest ZIP and runs the project.
