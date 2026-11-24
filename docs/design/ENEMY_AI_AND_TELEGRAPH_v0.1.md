@@ -258,12 +258,13 @@ These are role proposals, not confirmed enemy identities, art, stats, or final a
 
 **Confirmed control/telegraph interaction:** when a control effect successfully interrupts an enemy, that enemy's current telegraph is canceled immediately. If the control attempt fails, its telegraph remains unchanged and the enemy proceeds with its planned action. A control effect changes only the affected enemy's telegraph; it does not alter other enemies' intents.
 
+**Confirmed enemy execution order:** enemies execute in a fixed, deterministic order. Sort by a predefined enemy action-priority value; when priorities tie, use a stable battlefield-position order. Show the complete order to the player before the enemy phase begins, and keep it fixed for that phase.
+
 ## 13. Decisions required before implementation
 
 1. Assign actor-locked, tile-locked, or area-locked targeting to each Prototype 0.1 enemy action; the overall mixed targeting model is confirmed.
 2. Whether tile-locked or area-locked actions have any additional range/line-of-sight invalidation conditions after telegraph generation.
 5. Exact control success/failure conditions, resistance values, and duration/effect details (to be specified by the relevant skill and combat rules).
-7. Fixed enemy execution-order sorting rule.
 8. Later intent invalidated by an earlier enemy action.
 9. Terrain changes after telegraph generation.
 10. No legal target/action fallback.
