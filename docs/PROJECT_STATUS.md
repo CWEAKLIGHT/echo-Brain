@@ -87,3 +87,5 @@ The main scene now opens an 8×8 tactical board with Sevrin, two Melee Vanguard 
 - Source-level implementation and test authoring only. Godot 4.x parsing and execution remain unverified because the runtime is unavailable in this environment.
 
 - Added a boundary regression scenario verifying the area-locked cross footprint is clipped to valid cells when its center is at the map corner.
+
+- Mixed-archetype integration pass: added a controller scenario with Vanguard, Marksman, and Area Controller active together. The scenario checks one captured intent per enemy, the shared priority/tie-break order, fixed telegraph geometry, and damage resolution matching the displayed sequence. Added a second scenario confirming that an intervening Vanguard blocks the Marksman's firing lane at planning time. Updated the first-pass battle scene to instantiate all three archetypes so the prototype view exposes the complete ordinary-enemy roster. These are source-level changes and authored tests only; Godot import, parsing, and test execution remain pending.
