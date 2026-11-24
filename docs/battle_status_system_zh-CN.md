@@ -53,7 +53,9 @@
 - 蓄力格子攻击和区域攻击不降低伤害、不改变预告范围；成功执行后消耗印记，并给攻击来源施加 `exposed`。
 - `exposed` 在下一玩家阶段持续有效，使物理防御和魔法抗性各降低 200；玩家结束该回合时到期。
 - 待机/追击不被标记为攻击；印记保留至本次敌方阶段结束，并在该边界到期。被取消或未命中的攻击不会触发破绽。
-- 事件包含 `intent_judgment_marked`、`status_applied`、`status_consumed` 与 `judgment_mark_resolved`。
+- `request_oath_severance(target_actor_id)` 校验 1–2 格、清晰视线、存活敌人、印记与 2 AP；确认后先消耗印记，再取消目标当前活动意图（若有），最后造成 1.4×物理伤害。
+- 成功取消时意图原因记录为 `oath_severance`，并发出 `intent_severed` 事件；该敌人在本敌方阶段不会执行该意图。
+- 事件包含 `intent_judgment_marked`、`status_applied`、`status_consumed`、`judgment_mark_resolved`、`intent_severed` 与 `skill_resolved`。
 
 ## 计划中的状态映射
 
