@@ -186,6 +186,19 @@ func _run() -> void:
 	_check(terminal_battle.intents[1].state == IntentScript.IntentState.CANCELED, "remaining enemy intent is canceled after terminal result")
 	terminal_battle.queue_free()
 
+	var victory_battle = ControllerScript.new()
+	root.add_child(victory_battle)
+	_check(victory_battle.start_encounter(Vector2i(1, 1), [Vector2i(2, 1)]), "victory encounter starts")
+	var victory_intent = victory_battle.intents[0]
+	_check(victory_battle.request_player_attack("vanguard_00"), "first confirmed attack spends AP")
+	_check(victory_battle.request_player_attack("vanguard_00"), "second confirmed attack spends AP")
+	_check(victory_battle.request_player_attack("vanguard_00"), "lethal third attack defeats the final enemy")
+	_check(victory_battle.phase == ControllerScript.BattlePhase.FINISHED and victory_battle.battle_result == "victory", "defeating the final enemy ends battle in victory")
+	_check(victory_intent.state == IntentScript.IntentState.CANCELED, "defeated final enemy intent is canceled")
+	_check(not victory_battle.request_player_attack("vanguard_00"), "actions are rejected after battle victory")
+	_check(victory_battle.ap.current == 0, "victory sequence spends exactly three AP")
+	victory_battle.queue_free()
+
 
 	var custom_bounds_battle = ControllerScript.new()
 	root.add_child(custom_bounds_battle)
