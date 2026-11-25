@@ -75,6 +75,7 @@ godot --headless --path . --script res://tests/test_battle_view_skills.gd
 godot --headless --path . --script res://tests/test_skill_definitions.gd
 godot --headless --path . --script res://tests/test_turn_bookkeeping.gd
 godot --headless --path . --script res://tests/test_hunter_summon.gd
+godot --headless --path . --script res://tests/test_oathkeeper_v2_actor.gd
 ```
 
 如果 Windows 没有把 Godot 加入 PATH，请使用 Godot 可执行文件的完整路径替换命令中的 `godot`。
