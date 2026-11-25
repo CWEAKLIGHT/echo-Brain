@@ -45,6 +45,8 @@ ECHO 是一款使用 Godot 4.7.2 Standard 与 GDScript 开发的 2D 回合制战
 
 ## Oathkeeper v2 开发状态（仅开发分支）
 
+- **新版正式设计规范**：[守誓者·瑟弗林新版技能与战斗机制规范 1.0](docs/design/OATHKEEPER_V2_DESIGN_SPEC_v1.0_zh-CN.md)。旧版技能文档已明确标记为历史版本。
+
 新版技能目录与界面已切换，但仍处于待 Godot 引擎验证阶段：
 
 - 新版技能目录 oathkeeper_v2_skill_catalog.gd 独立定义三项主动技能；不屈誓约以被动定义表示。
