@@ -40,6 +40,8 @@ var statuses: BattleStatusCollection = StatusCollectionScript.new()
 var area_effects: BattleAreaEffectCollection = AreaEffectCollectionScript.new()
 ## actor_id -> player turn number after which the oath shield expires.
 var oath_shield_expiry_turn: Dictionary = {}
+## Enemy intent IDs already counted by Oath Vow; prevents multi-hit actions stacking repeatedly.
+var oath_vow_triggered_intents: Dictionary = {}
 
 
 func _ready() -> void:
@@ -85,6 +87,7 @@ func start_encounter(
 	statuses.clear_all()
 	area_effects.clear_all()
 	oath_shield_expiry_turn.clear()
+	oath_vow_triggered_intents.clear()
 	blocked_cells = candidate_blockers
 	intents.clear()
 	event_sequence = 0
@@ -687,10 +690,13 @@ func _apply_damage(
 	var applied: int = int(damage_result.get("health_damage", 0))
 	var was_hit: bool = bool(damage_result.get("hit", false))
 	if was_hit and is_public_intent and target_actor_id == "sevrin" and actors.has(source_actor_id) and actors[source_actor_id].team == "enemy":
-		var current_vow_stacks: int = get_oath_vow_stacks("sevrin")
-		if current_vow_stacks < 3:
-			statuses.apply_status(&"oath_vow", source_actor_id, "sevrin", 1, 3, -1, &"", &"add")
-			_emit_event("status_applied", source_actor_id, "sevrin", "status=oath_vow stacks=%d" % get_oath_vow_stacks("sevrin"))
+		var intent_key: String = resolving_intent_id if not resolving_intent_id.is_empty() else "%d:%s:%s" % [turn_number, source_actor_id, action_id]
+		if not oath_vow_triggered_intents.has(intent_key):
+			oath_vow_triggered_intents[intent_key] = true
+			var current_vow_stacks: int = get_oath_vow_stacks("sevrin")
+			if current_vow_stacks < 3:
+				statuses.apply_status(&"oath_vow", source_actor_id, "sevrin", 1, 3, -1, &"", &"add")
+				_emit_event("status_applied", source_actor_id, "sevrin", "status=oath_vow stacks=%d" % get_oath_vow_stacks("sevrin"))
 	if applied > 0:
 		for status_id in triggered_statuses:
 			statuses.consume_trigger(target_actor_id, status_id)
