@@ -12,6 +12,7 @@ func _initialize() -> void:
 
 func _run() -> void:
 	_test_oath_vow_passive_and_shield_application()
+	_test_oath_vow_counts_once_per_intent_and_caps_at_three()
 	_test_oath_shield_validation_and_duration()
 	print("Oathkeeper v2 controller tests complete. Failures: ", failures.size())
 	quit(1 if not failures.is_empty() else 0)
@@ -39,6 +40,22 @@ func _test_oath_vow_passive_and_shield_application() -> void:
 	_check(battle.request_oath_shield("sevrin"), "Oath Shield can target Sevrin alone")
 	_check(battle.get_oath_vow_stacks() == 0, "Oath Shield consumes all current Oath Vow stacks")
 	_check(battle.get_actor("sevrin").shield >= 214, "one Oath Vow stack increases the newly calculated shield")
+	battle.queue_free()
+
+
+func _test_oath_vow_counts_once_per_intent_and_caps_at_three() -> void:
+	var battle = ControllerScript.new()
+	root.add_child(battle)
+	_check(battle.start_encounter(Vector2i(1, 1), [Vector2i(2, 1)]), "Oath Vow stacking encounter starts")
+	battle._apply_damage("sevrin", 100, "vanguard_00", "scripted_damage", "physical", false)
+	_check(battle.get_oath_vow_stacks() == 0, "non-public damage does not grant Oath Vow")
+	battle._apply_damage("sevrin", 100, "vanguard_00", "multi_hit_test", "physical", true, "intent_multi_hit")
+	battle._apply_damage("sevrin", 100, "vanguard_00", "multi_hit_test", "physical", true, "intent_multi_hit")
+	_check(battle.get_oath_vow_stacks() == 1, "multiple damage instances from one enemy intent grant only one stack")
+	battle._apply_damage("sevrin", 100, "vanguard_00", "attack_test", "physical", true, "intent_two")
+	battle._apply_damage("sevrin", 100, "vanguard_00", "attack_test", "physical", true, "intent_three")
+	battle._apply_damage("sevrin", 100, "vanguard_00", "attack_test", "physical", true, "intent_four")
+	_check(battle.get_oath_vow_stacks() == 3, "Oath Vow stacks cap at three")
 	battle.queue_free()
 
 
