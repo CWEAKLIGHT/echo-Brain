@@ -42,6 +42,10 @@ var area_effects: BattleAreaEffectCollection = AreaEffectCollectionScript.new()
 var oath_shield_expiry_turn: Dictionary = {}
 ## Enemy intent IDs already counted by Oath Vow; prevents multi-hit actions stacking repeatedly.
 var oath_vow_triggered_intents: Dictionary = {}
+## Intent IDs whose public attack action successfully hit Sevrin during Absolute Guard.
+var absolute_guard_hit_intents: Dictionary = {}
+## Enemy actor IDs that have already been countered during the current player turn.
+var absolute_guard_countered_enemies: Dictionary = {}
 
 
 func _ready() -> void:
@@ -88,6 +92,8 @@ func start_encounter(
 	area_effects.clear_all()
 	oath_shield_expiry_turn.clear()
 	oath_vow_triggered_intents.clear()
+	absolute_guard_hit_intents.clear()
+	absolute_guard_countered_enemies.clear()
 	blocked_cells = candidate_blockers
 	intents.clear()
 	event_sequence = 0
@@ -126,6 +132,35 @@ func get_actor(actor_id: String):
 func get_oath_vow_stacks(actor_id: String = "sevrin") -> int:
 	var vow = statuses.get_status(actor_id, &"oath_vow")
 	return 0 if vow == null else vow.stacks
+
+
+func request_absolute_guard() -> bool:
+	## Ultimate: taunt eligible single-target attacks and counter once per enemy.
+	if phase != BattlePhase.PLAYER or not actors.has("sevrin"):
+		return false
+	var caster = actors["sevrin"]
+	if not caster.is_alive() or not ap.can_spend(2) or caster.ultimate_energy < 5:
+		return false
+	if not statuses.apply_status(&"absolute_guard", "sevrin", "sevrin", 1, 1, -1, &"player_phase_start", &"replace"):
+		return false
+	if not ap.spend(2) or not caster.spend_ultimate_energy(5):
+		statuses.remove_status("sevrin", &"absolute_guard")
+		return false
+	_emit_event("skill_resolved", "sevrin", "sevrin", "skill=absolute_guard ap=2 energy=5 radius=2 expires=next_player_phase_start")
+	return true
+
+
+func _gain_active_energy(actor_id: String) -> void:
+	if not actors.has(actor_id):
+		return
+	var actor = actors[actor_id]
+	if actor.team != "player" or not actor.is_alive() or actor.active_energy_gain_turn == turn_number:
+		return
+	actor.active_energy_gain_turn = turn_number
+	var before: int = actor.ultimate_energy
+	actor.gain_ultimate_energy(1)
+	if actor.ultimate_energy != before:
+		_emit_event("ultimate_energy_gained", actor_id, actor_id, "source=active_action energy=%d" % actor.ultimate_energy)
 
 
 func request_oath_shield(target_actor_id: String) -> bool:
@@ -168,6 +203,7 @@ func request_oath_shield(target_actor_id: String) -> bool:
 				turn_number + 1
 			]
 		)
+	_gain_active_energy("sevrin")
 	if vow_stacks > 0:
 		statuses.remove_status("sevrin", &"oath_vow")
 		_emit_event("status_consumed", "sevrin", "sevrin", "status=oath_vow stacks=%d" % vow_stacks)
@@ -205,6 +241,7 @@ func request_oathkeeper_judgment_mark(target_actor_id: String) -> bool:
 	if not statuses.apply_status(&"oathkeeper_mark", "sevrin", target_actor_id, 1, 1, -1, &"enemy_phase_end", &"replace"):
 		ap.current += 1
 		return false
+	_gain_active_energy("sevrin")
 	var raw_damage: int = CombatMathScript.calculate_raw_damage(caster.defense, 0.8)
 	_apply_damage(target_actor_id, raw_damage, "sevrin", "oathkeeper_judgment_mark", "physical")
 	_emit_event(
@@ -229,6 +266,7 @@ func request_player_move(path: Array[Vector2i]) -> bool:
 	if not ap.spend(1):
 		return false
 	player.cell = path[path.size() - 1]
+	_gain_active_energy("sevrin")
 	_emit_event("actor_moved", "sevrin", "", str(player.cell))
 	_check_battle_end()
 	return true
@@ -476,6 +514,12 @@ func _begin_player_turn() -> void:
 	if expired_statuses > 0:
 		_emit_event("statuses_expired", "", "", "boundary=player_phase_start count=%d" % expired_statuses)
 	turn_number += 1
+	absolute_guard_countered_enemies.clear()
+	if actors.has("sevrin") and actors["sevrin"].is_alive():
+		var energy_before: int = actors["sevrin"].ultimate_energy
+		actors["sevrin"].gain_ultimate_energy(1)
+		if actors["sevrin"].ultimate_energy != energy_before:
+			_emit_event("ultimate_energy_gained", "sevrin", "sevrin", "source=player_turn_start energy=%d" % actors["sevrin"].ultimate_energy)
 	ap.reset()
 	phase = BattlePhase.PLAYER
 	intents = _generate_enemy_intents()
@@ -589,6 +633,8 @@ func _resolve_enemy_phase() -> void:
 		if not actors.has(intent.source_actor_id) or not actors[intent.source_actor_id].is_alive():
 			intent.cancel("source_defeated")
 			continue
+		if statuses.has_status("sevrin", &"absolute_guard"):
+			_redirect_single_target_intent_to_sevrin(intent)
 		match intent.action_id:
 			"basic_melee":
 				_resolve_actor_locked_attack(intent)
@@ -603,6 +649,9 @@ func _resolve_enemy_phase() -> void:
 				_emit_event("enemy_action_resolved", intent.source_actor_id, "", "wait")
 			_:
 				intent.cancel("unknown_action")
+		if absolute_guard_hit_intents.has(intent.intent_id):
+			_resolve_absolute_guard_counter(intent)
+			absolute_guard_hit_intents.erase(intent.intent_id)
 		_check_battle_end()
 		if phase == BattlePhase.FINISHED:
 			break
@@ -617,6 +666,48 @@ func _resolve_enemy_phase() -> void:
 		if expired_statuses > 0:
 			_emit_event("statuses_expired", "", "", "boundary=enemy_phase_end count=%d" % expired_statuses)
 		_begin_player_turn()
+
+
+func _redirect_single_target_intent_to_sevrin(intent) -> void:
+	if not actors.has("sevrin") or not actors["sevrin"].is_alive() or not actors.has(intent.source_actor_id):
+		return
+	if intent.target_mode != BattleIntentScript.TargetMode.ACTOR_LOCKED and intent.target_mode != BattleIntentScript.TargetMode.TILE_LOCKED:
+		return
+	var source = actors[intent.source_actor_id]
+	var target = actors["sevrin"]
+	var distance: int = GridRulesScript.manhattan_distance(source.cell, target.cell)
+	var legal := false
+	match intent.action_id:
+		"basic_melee":
+			legal = distance == 1
+		"charged_strike":
+			legal = distance == 2 and GridRulesScript.has_clear_orthogonal_line(source.cell, target.cell, blocked_cells, get_occupied_cells(intent.source_actor_id))
+		"aimed_shot":
+			legal = distance >= 3 and distance <= 6 and (source.cell.x == target.cell.x or source.cell.y == target.cell.y) and GridRulesScript.has_clear_orthogonal_line(source.cell, target.cell, blocked_cells, get_occupied_cells(intent.source_actor_id))
+		_:
+			return
+	if not legal:
+		return
+	if intent.target_mode == BattleIntentScript.TargetMode.ACTOR_LOCKED:
+		intent.target_actor_id = "sevrin"
+	intent.target_cell = target.cell
+	intent.affected_cells = [target.cell]
+	_emit_event("absolute_guard_taunt", intent.source_actor_id, "sevrin", "intent=%s action=%s" % [intent.intent_id, intent.action_id])
+
+
+func _resolve_absolute_guard_counter(intent) -> void:
+	if not statuses.has_status("sevrin", &"absolute_guard") or not actors.has("sevrin") or not actors["sevrin"].is_alive():
+		return
+	if not actors.has(intent.source_actor_id) or not actors[intent.source_actor_id].is_alive():
+		return
+	if absolute_guard_countered_enemies.has(intent.source_actor_id):
+		return
+	absolute_guard_countered_enemies[intent.source_actor_id] = true
+	var marked: bool = statuses.has_status(intent.source_actor_id, &"oathkeeper_mark")
+	var multiplier: float = 0.7 if marked else 0.5
+	var raw_damage: int = CombatMathScript.calculate_raw_damage(actors["sevrin"].defense, multiplier)
+	_apply_damage(intent.source_actor_id, raw_damage, "sevrin", "absolute_guard_counter", "physical", false, intent.intent_id)
+	_emit_event("counter_resolved", "sevrin", intent.source_actor_id, "skill=absolute_guard multiplier=%.2f raw=%d" % [multiplier, raw_damage])
 
 
 func _resolve_actor_locked_attack(intent) -> void:
@@ -732,6 +823,8 @@ func _apply_damage(
 	var applied: int = int(damage_result.get("health_damage", 0))
 	var was_hit: bool = bool(damage_result.get("hit", false))
 	if was_hit and is_public_intent and target_actor_id == "sevrin" and actors.has(source_actor_id) and actors[source_actor_id].team == "enemy":
+		if statuses.has_status("sevrin", &"absolute_guard") and not resolving_intent_id.is_empty():
+			absolute_guard_hit_intents[resolving_intent_id] = true
 		var intent_key: String = resolving_intent_id if not resolving_intent_id.is_empty() else "%d:%s:%s" % [turn_number, source_actor_id, action_id]
 		if not oath_vow_triggered_intents.has(intent_key):
 			oath_vow_triggered_intents[intent_key] = true
