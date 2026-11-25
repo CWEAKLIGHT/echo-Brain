@@ -11,10 +11,10 @@ const SKILL_PANEL_X: float = 940.0
 const SKILL_PANEL_W: float = 300.0
 const SKILL_FIRST_Y: float = 112.0
 const SKILL_BTN_H: float = 50.0
-const SKILL_BTN_STEP: float = 56.0
+const SKILL_BTN_STEP: float = 54.0
 
 ## Prototype skill bar. Self-target skills resolve on press; actor-target skills wait for confirmation.
-## Number keys 1–6 mirror the visible order.
+## Number keys 1–7 mirror the visible order.
 const SKILL_BAR := [
 	{"id": "attack", "name": "普通攻击", "hint": "相邻敌人 · 物理伤害", "cost": 1, "mode": "actor"},
 	{"id": "oathguard_stance", "name": "誓盾架势", "hint": "自身 · 抵御下一次攻击", "cost": 1, "mode": "self"},
@@ -22,6 +22,7 @@ const SKILL_BAR := [
 	{"id": "judgment_mark", "name": "裁决印记", "hint": "1–4 格 · 标记敌人", "cost": 1, "mode": "actor"},
 	{"id": "echo_counter", "name": "回响反击", "hint": "自身 · 受击时反击", "cost": 1, "mode": "self"},
 	{"id": "oath_severance", "name": "誓约裁断", "hint": "1–2 格 · 需印记 · 打断", "cost": 2, "mode": "actor"},
+	{"id": "hunter_summon", "name": "猎人通灵", "hint": "任意敌人 · 现身一击 · 冷却 2 回合", "cost": 0, "mode": "actor"},
 ]
 
 var controller: BattleController
@@ -172,6 +173,8 @@ func _draw_target_hints() -> void:
 			range_max = 4
 		"oath_severance":
 			range_max = 2
+		"hunter_summon":
+			range_max = 99
 	for actor_id in controller.actors:
 		var actor = controller.actors[actor_id]
 		if actor.team != "enemy" or not actor.is_alive():
@@ -218,6 +221,13 @@ func _draw_skill_panel() -> void:
 		var skill: Dictionary = SKILL_BAR[index]
 		var rect := _skill_rect(index)
 		var affordable: bool = controller.ap != null and controller.ap.can_spend(int(skill["cost"]))
+		var cost_label := "%d AP" % int(skill["cost"])
+		var cost_offset: float = 52.0
+		if skill["id"] == "hunter_summon":
+			var summon_remaining: int = controller.summon_cooldown_remaining()
+			affordable = controller.phase == ControllerScript.BattlePhase.PLAYER and summon_remaining <= 0
+			cost_label = "就绪" if summon_remaining <= 0 else "冷却 %d" % summon_remaining
+			cost_offset = 76.0
 		var is_selected: bool = (index == selected_skill and skill["mode"] == "actor")
 		var bg := Color("#3a3f46") if is_selected else Color("#262a2f")
 		var border := Color("#d4b77b") if is_selected else Color("#45484c")
@@ -229,21 +239,20 @@ func _draw_skill_panel() -> void:
 		var text_color := Color("#f0e5d0") if affordable else Color("#6b6a66")
 		draw_string(font, rect.position + Vector2(14.0, 21.0), str(skill["name"]), HORIZONTAL_ALIGNMENT_LEFT, -1, 17, text_color)
 		draw_string(font, rect.position + Vector2(14.0, 39.0), str(skill["hint"]), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, text_color)
-		var cost_label := "%d AP" % int(skill["cost"])
-		draw_string(font, rect.position + Vector2(rect.size.x - 52.0, 30.0), cost_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#d4b77b") if affordable else Color("#6b6a66"))
+		draw_string(font, rect.position + Vector2(rect.size.x - cost_offset, 30.0), cost_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#d4b77b") if affordable else Color("#6b6a66"))
 
 	var end_color := Color("#4b4030") if controller.phase == ControllerScript.BattlePhase.PLAYER else Color("#2a2d31")
 	draw_rect(END_TURN_RECT, end_color, true)
 	draw_rect(END_TURN_RECT, Color("#c4a66c"), false, 2.0)
 	draw_string(font, END_TURN_RECT.position + Vector2(100.0, 38.0), "结束回合", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#f0e5d0"))
 
-	var hint_y := 470.0
+	var hint_y := 496.0
 	draw_string(font, Vector2(SKILL_PANEL_X, hint_y), "操作", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#9b9a94"))
-	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 24.0), "点格子移动，最多两格直线", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
-	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 44.0), "自身技能点一下即生效", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
-	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 64.0), "选中技能后，黄圈标出可打目标", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
-	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 84.0), "数字键 1–6 施放/选择技能", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
-	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 104.0), "Esc / 右键取消目标选择", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
+	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 22.0), "点格子移动，最多两格直线", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
+	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 40.0), "自身技能点一下即生效", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
+	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 58.0), "选中技能后，黄圈标出可打目标", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
+	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 76.0), "数字键 1–7 施放/选择技能", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
+	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 94.0), "Esc / 右键取消目标选择", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
 
 
 func _skill_rect(index: int) -> Rect2:
@@ -303,6 +312,8 @@ func _input(event: InputEvent) -> void:
 				_on_skill_pressed(4)
 			KEY_6:
 				_on_skill_pressed(5)
+			KEY_7:
+				_on_skill_pressed(6)
 			KEY_ESCAPE:
 				_cancel_target_selection()
 			KEY_ENTER, KEY_SPACE:
@@ -391,6 +402,8 @@ func _use_skill_on(actor_id: String) -> void:
 			cast_ok = controller.request_judgment_mark(actor_id)
 		"oath_severance":
 			cast_ok = controller.request_oath_severance(actor_id)
+		"hunter_summon":
+			cast_ok = controller.request_hunter_summon(actor_id)
 		_:
 			status_message = "该技能需要点击自身，不需要选择目标。"
 			queue_redraw()
@@ -404,6 +417,8 @@ func _use_skill_on(actor_id: String) -> void:
 				status_message = "裁决印记已施加，目标被标记。"
 			"oath_severance":
 				status_message = "誓约裁断命中，目标意图已被打断。"
+			"hunter_summon":
+				status_message = "猎人现身一击命中，未消耗行动点。"
 	else:
 		match skill["id"]:
 			"attack":
@@ -412,6 +427,8 @@ func _use_skill_on(actor_id: String) -> void:
 				status_message = "裁决印记失败：目标需在 1–4 格内且视线无遮挡。"
 			"oath_severance":
 				status_message = "誓约裁断失败：目标需带裁决印记，且距离 1–2 格。"
+			"hunter_summon":
+				status_message = "猎人通灵失败：冷却未结束，或目标四周没有空位。"
 	queue_redraw()
 
 

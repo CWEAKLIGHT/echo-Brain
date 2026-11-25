@@ -73,11 +73,12 @@ godot --headless --path . --script res://tests/test_battle_controller.gd
 godot --headless --path . --script res://tests/test_battle_view_skills.gd
 godot --headless --path . --script res://tests/test_skill_definitions.gd
 godot --headless --path . --script res://tests/test_turn_bookkeeping.gd
+godot --headless --path . --script res://tests/test_hunter_summon.gd
 ```
 
 如果 Windows 没有把 Godot 加入 PATH，请使用 Godot 可执行文件的完整路径替换命令中的 `godot`。
 
-以上命令已于 2026-11-25 在 Godot 4.7.2 中全部执行，结果为零失败（八个套件共 369 条断言，详见 `docs/GODOT_ENGINE_VALIDATION_zh-CN.md`）。后续任何改动都应重新执行，并以实际输出中的零失败为准；headless 测试不能替代 F5 主场景的鼠标、键盘和画面检查。
+以上命令已于 2026-11-25 在 Godot 4.7.2 中全部执行，结果为零失败（九个套件共 408 条断言，详见 `docs/GODOT_ENGINE_VALIDATION_zh-CN.md`）。后续任何改动都应重新执行，并以实际输出中的零失败为准；headless 测试不能替代 F5 主场景的鼠标、键盘和画面检查。
 
 ## 当前边界
 
