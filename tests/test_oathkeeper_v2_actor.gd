@@ -13,6 +13,7 @@ func _run() -> void:
 	_test_shield_cap_and_reapplication()
 	_test_shield_absorption_and_overflow()
 	_test_legacy_damage_return_value()
+	_test_ultimate_energy_limits()
 	print("Oathkeeper v2 actor shield tests complete. Failures: ", failures.size())
 	quit(1 if not failures.is_empty() else 0)
 
@@ -49,6 +50,15 @@ func _test_legacy_damage_return_value() -> void:
 	_check(actor.health == 975 and actor.shield == 0, "legacy damage API also respects shield absorption")
 	var invalid: Dictionary = actor.apply_damage_with_result(0)
 	_check(not bool(invalid.get("hit", true)), "zero damage is not reported as a hit")
+
+
+func _test_ultimate_energy_limits() -> void:
+	var actor = ActorScript.new("energy", "player", Vector2i.ZERO, 1000)
+	_check(actor.gain_ultimate_energy(1) == 1, "ultimate energy increases")
+	_check(actor.gain_ultimate_energy(10) == 5, "ultimate energy is capped at five")
+	_check(actor.spend_ultimate_energy(5), "ultimate energy can be spent")
+	_check(actor.ultimate_energy == 0, "spending ultimate energy reduces the pool")
+	_check(not actor.spend_ultimate_energy(1), "cannot spend unavailable ultimate energy")
 
 
 func _check(condition: bool, label: String) -> void:
