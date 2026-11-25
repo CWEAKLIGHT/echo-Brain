@@ -16,6 +16,10 @@ var defense: int
 var magic_resistance: int
 var is_defeated: bool = false
 var shield: int = 0
+## Independent ultimate-energy pool; capped at five for each actor.
+var ultimate_energy: int = 0
+## Prevents more than one successful-action energy gain per player turn.
+var active_energy_gain_turn: int = -1
 
 
 func _init(
@@ -37,6 +41,18 @@ func _init(
 	attack = maxi(0, p_attack)
 	defense = maxi(0, p_defense)
 	magic_resistance = maxi(0, p_magic_resistance)
+
+
+func gain_ultimate_energy(amount: int = 1) -> int:
+	ultimate_energy = clampi(ultimate_energy + maxi(0, amount), 0, 5)
+	return ultimate_energy
+
+
+func spend_ultimate_energy(amount: int) -> bool:
+	if amount < 0 or ultimate_energy < amount:
+		return false
+	ultimate_energy -= amount
+	return true
 
 
 func grant_shield(requested_amount: int) -> int:
