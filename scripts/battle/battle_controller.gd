@@ -175,6 +175,48 @@ func request_oath_shield(target_actor_id: String) -> bool:
 	return true
 
 
+func get_oathkeeper_marked_target() -> String:
+	for actor_id in actors.keys():
+		if statuses.has_status(String(actor_id), &"oathkeeper_mark"):
+			return String(actor_id)
+	return ""
+
+
+func request_oathkeeper_judgment_mark(target_actor_id: String) -> bool:
+	## V2 Judgment Mark: a DEF-scaled strike and a single replaceable mark.
+	## This is deliberately separate from the legacy judgment_mark status/API.
+	if phase != BattlePhase.PLAYER or not actors.has("sevrin") or not actors.has(target_actor_id):
+		return false
+	var caster = actors["sevrin"]
+	var target = actors[target_actor_id]
+	if not caster.is_alive() or not target.is_alive() or target.team != "enemy":
+		return false
+	var distance: int = GridRulesScript.manhattan_distance(caster.cell, target.cell)
+	if distance < 1 or distance > 4:
+		return false
+	if not GridRulesScript.has_clear_orthogonal_line(caster.cell, target.cell, blocked_cells, get_occupied_cells()):
+		return false
+	if not ap.can_spend(1):
+		return false
+	if not ap.spend(1):
+		return false
+	for actor_id in actors.keys():
+		statuses.remove_status(String(actor_id), &"oathkeeper_mark")
+	if not statuses.apply_status(&"oathkeeper_mark", "sevrin", target_actor_id, 1, 1, -1, &"enemy_phase_end", &"replace"):
+		ap.current += 1
+		return false
+	var raw_damage: int = CombatMathScript.calculate_raw_damage(caster.defense, 0.8)
+	_apply_damage(target_actor_id, raw_damage, "sevrin", "oathkeeper_judgment_mark", "physical")
+	_emit_event(
+		"skill_resolved",
+		"sevrin",
+		target_actor_id,
+		"skill=oathkeeper_judgment_mark ap=1 raw=%d mark=oathkeeper_mark expires=enemy_phase_end" % raw_damage
+	)
+	_check_battle_end()
+	return true
+
+
 func request_player_move(path: Array[Vector2i]) -> bool:
 	if phase != BattlePhase.PLAYER or not actors.has("sevrin"):
 		return false
