@@ -51,7 +51,7 @@ godot --headless --path . --script res://tests/test_battle_area_effects.gd
 
 ## 每次修改后的即时检查
 
-1. **改动范围**：确认只修改 qingxu443-dev/echo-game 的 prototype/0.1；不触碰拾光。
+1. **改动范围**：确认只修改 qingxu443-dev/echo-game 的 `main`；不触碰拾光。
 2. **类型检查**：检查新增变量、函数参数、返回值、信号、数组和 Dictionary 的类型声明。
 3. **调用检查**：搜索所有被修改函数的调用点，核对参数数量、顺序、类型及默认值。
 4. **资源检查**：核对 preload、load、场景脚本路径、节点路径和资源文件名。

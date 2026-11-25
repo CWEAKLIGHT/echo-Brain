@@ -4,7 +4,7 @@
 
 ## 交付包内容
 
-项目所有者应从 ECHO 私有仓库的 `prototype/0.1` 分支下载 ZIP，并将解压后的项目文件夹重新压缩或直接交付。项目根目录必须能看到 `project.godot`。
+项目所有者应从 ECHO 私有仓库的 `main` 分支下载 ZIP，并将解压后的项目文件夹重新压缩或直接交付。项目根目录必须能看到 `project.godot`。
 
 另行准备 Godot 4.x Standard（标准版）Windows x86_64 发行包。不要使用 .NET 版；本次只做桌面运行，不需要 Android 导出模板。
 
@@ -53,6 +53,6 @@
 
 ## 测试状态说明
 
-本项目已于 2026-11-25 在 Godot 4.7.2（headless）完成首次引擎验证：导入零错误，六个测试套件共 300 条断言、0 失败，主场景连续运行 120 帧无运行时错误（详见 `docs/GODOT_ENGINE_VALIDATION_zh-CN.md`）。
+本项目已于 2026-11-25 在 Godot 4.7.2（Windows）完成引擎验证：导入零错误，十五个测试套件共 582 条断言、0 失败，主场景可正常启动与渲染（详见 `docs/PROJECT_STATUS.md` 的验证记录小节；更早的 Linux 无头记录见 `docs/GODOT_ENGINE_VALIDATION_zh-CN.md`）。
 
 本文档面向 **Windows 桌面端人工确认**——headless 无法覆盖交互手感、画面观感与设备表现。因此仍不得将“成功导入”当作人工验收完成；需要逐一记录实际操作中的观察结果。
