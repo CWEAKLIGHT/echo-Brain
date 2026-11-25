@@ -62,6 +62,8 @@ func _test_target_skill_flow() -> void:
 	var view: Node = MainScene.instantiate()
 	root.add_child(view)
 	await process_frame
+	# Target skills need the mixed roster; level 1 only teaches a single vanguard.
+	view.call("_start_level", 2)
 	var controller: Variant = view.get("controller")
 	var marksman = controller.get_actor("marksman_02")
 	_check(marksman != null, "main encounter exposes the expected Marksman target")

@@ -3,6 +3,7 @@ extends Node2D
 const ControllerScript = preload("res://scripts/battle/battle_controller.gd")
 const IntentScript = preload("res://scripts/battle/battle_intent.gd")
 const GridRulesScript = preload("res://scripts/battle/grid_rules.gd")
+const LevelCatalogScript = preload("res://scripts/battle/level_catalog.gd")
 const CELL_SIZE: float = 64.0
 const BOARD_ORIGIN := Vector2(384.0, 72.0)
 const BOARD_SIZE := 8
@@ -12,6 +13,10 @@ const SKILL_PANEL_W: float = 300.0
 const SKILL_FIRST_Y: float = 112.0
 const SKILL_BTN_H: float = 50.0
 const SKILL_BTN_STEP: float = 54.0
+
+const SETTLEMENT_RECT := Rect2(330.0, 210.0, 620.0, 330.0)
+const RESTART_BTN := Rect2(390.0, 464.0, 220.0, 52.0)
+const NEXT_BTN := Rect2(640.0, 464.0, 220.0, 52.0)
 
 ## Prototype skill bar. Self-target skills resolve on press; actor-target skills wait for confirmation.
 ## Number keys 1–6 mirror the visible order; no default attack is selected.
@@ -32,22 +37,40 @@ const SUMMON_OPTIONS := [
 var selected_summon_option: int = 0
 
 var controller: BattleController
+var levels: Array[EncounterDefinition] = []
+var current_level: int = 0
 var status_message: String = "点击格子移动；点右侧技能后选择目标。"
 var selected_skill: int = -1
 
 
 func _ready() -> void:
+	levels = LevelCatalogScript.create_prototype_levels()
 	controller = ControllerScript.new()
 	add_child(controller)
 	controller.battle_event.connect(_on_battle_event)
 	controller.battle_finished.connect(_on_battle_finished)
-	controller.start_encounter(
-		Vector2i(1, 3),
-		[Vector2i(5, 3), Vector2i(6, 6), Vector2i(1, 0)],
-		[Vector2i(3, 1), Vector2i(3, 2)],
-		["vanguard", "area_controller", "marksman"]
-	)
+	_start_level(0)
+
+
+func _start_level(index: int) -> void:
+	if index < 0 or index >= levels.size():
+		return
+	current_level = index
+	var level: EncounterDefinition = levels[index]
+	selected_skill = -1
+	controller.start_encounter(level.player_cell, level.enemy_cells, level.obstacles, level.enemy_archetypes)
+	status_message = level.tactical_hint_zh
 	queue_redraw()
+
+
+func _current_level() -> EncounterDefinition:
+	if current_level < 0 or current_level >= levels.size():
+		return null
+	return levels[current_level]
+
+
+func _has_next_level() -> bool:
+	return current_level + 1 < levels.size()
 
 
 func _draw() -> void:
@@ -60,12 +83,17 @@ func _draw() -> void:
 	_draw_actors()
 	_draw_hud()
 	_draw_skill_panel()
+	if controller.phase == ControllerScript.BattlePhase.FINISHED:
+		_draw_settlement()
 
 
 func _draw_header() -> void:
 	var font = ThemeDB.fallback_font
 	draw_string(font, Vector2(48, 52), "回声计划  /  原型 0.1", HORIZONTAL_ALIGNMENT_LEFT, -1, 26, Color("#e4dfd3"))
 	draw_string(font, Vector2(48, 82), "初次守望", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#9b9a94"))
+	var level := _current_level()
+	if level != null:
+		draw_string(font, Vector2(48, 112), "%s　（%d / %d）" % [level.display_name_zh, current_level + 1, levels.size()], HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#c5a45c"))
 
 
 func _draw_board() -> void:
@@ -197,15 +225,15 @@ func _draw_target_hints() -> void:
 
 func _draw_hud() -> void:
 	var font = ThemeDB.fallback_font
-	draw_string(font, Vector2(48, 145), "回合  %02d" % controller.turn_number, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#d9d4c8"))
-	draw_string(font, Vector2(48, 180), "行动点  %d / %d" % [controller.ap.current, controller.ap.maximum], HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#d4b77b"))
-	draw_string(font, Vector2(48, 235), "瑟弗林", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("#e4dfd3"))
+	draw_string(font, Vector2(48, 152), "回合  %02d" % controller.turn_number, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#d9d4c8"))
+	draw_string(font, Vector2(48, 187), "行动点  %d / %d" % [controller.ap.current, controller.ap.maximum], HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#d4b77b"))
+	draw_string(font, Vector2(48, 232), "瑟弗林", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("#e4dfd3"))
 	var sevrin = controller.get_actor("sevrin")
 	if sevrin != null:
-		draw_string(font, Vector2(48, 263), "生命  %d / %d" % [sevrin.health, sevrin.max_health], HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("#b9b7ad"))
-		draw_string(font, Vector2(48, 290), "攻击 %d  防御 %d" % [sevrin.attack, sevrin.defense], HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#b9b7ad"))
-		draw_string(font, Vector2(48, 313), "魔抗 %d" % sevrin.magic_resistance, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#b9b7ad"))
-	_draw_wrapped(font, status_message, Vector2(48, 348), 320.0, 15, Color("#aaa79e"), 2)
+		draw_string(font, Vector2(48, 260), "生命  %d / %d" % [sevrin.health, sevrin.max_health], HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("#b9b7ad"))
+		draw_string(font, Vector2(48, 287), "攻击 %d  防御 %d" % [sevrin.attack, sevrin.defense], HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#b9b7ad"))
+		draw_string(font, Vector2(48, 310), "魔抗 %d" % sevrin.magic_resistance, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#b9b7ad"))
+	_draw_wrapped(font, status_message, Vector2(48, 345), 320.0, 15, Color("#aaa79e"), 2)
 	draw_string(font, Vector2(48, 425), "敌方行动顺序", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#c5a45c"))
 	var order_y := 455.0
 	for index in range(controller.intents.size()):
@@ -214,9 +242,6 @@ func _draw_hud() -> void:
 		var state_label: String = "  [待执行]" if intent.state == IntentScript.IntentState.ACTIVE else ("  [已执行]" if intent.state == IntentScript.IntentState.RESOLVED else "  [已取消]")
 		draw_string(font, Vector2(48, order_y), "%d. %s — %s%s" % [index + 1, _actor_name(intent.source_actor_id), action_label, state_label], HORIZONTAL_ALIGNMENT_LEFT, 315, 13, Color("#c7c2b6"))
 		order_y += 24.0
-	if controller.phase == ControllerScript.BattlePhase.FINISHED:
-		draw_rect(Rect2(330.0, 300.0, 620.0, 110.0), Color(0.06, 0.07, 0.08, 0.94), true)
-		draw_string(font, Vector2(510.0, 365.0), "战斗结束：" + ("胜利" if controller.battle_result == "victory" else "失败"), HORIZONTAL_ALIGNMENT_LEFT, -1, 34, Color("#e4d2aa"))
 
 
 func _draw_skill_panel() -> void:
@@ -271,6 +296,58 @@ func _draw_skill_panel() -> void:
 	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 58.0), "选中技能后，黄圈标出可打目标", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
 	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 76.0), "数字键 1–6 施放/选择技能", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
 	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 94.0), "Esc / 右键取消目标选择", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
+
+
+func _draw_settlement() -> void:
+	var font = ThemeDB.fallback_font
+	var won := controller.battle_result == "victory"
+	draw_rect(Rect2(Vector2.ZERO, Vector2(1280.0, 720.0)), Color(0.03, 0.04, 0.05, 0.72), true)
+	draw_rect(SETTLEMENT_RECT, Color("#1b1e22"), true)
+	draw_rect(SETTLEMENT_RECT, Color("#c4a66c"), false, 2.0)
+
+	var title := "战斗结束 · 胜利" if won else "战斗结束 · 失败"
+	draw_string(font, Vector2(370.0, 262.0), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 30, Color("#e4d2aa") if won else Color("#d58b78"))
+
+	var level := _current_level()
+	var level_name := "—" if level == null else level.display_name_zh
+	_draw_settlement_row(font, 296.0, "关卡", level_name)
+	_draw_settlement_row(font, 324.0, "回合数", "%d" % controller.turn_number)
+	_draw_settlement_row(font, 352.0, "造成伤害", "%d" % controller.damage_dealt)
+	_draw_settlement_row(font, 380.0, "承受伤害", "%d" % controller.damage_taken)
+	_draw_settlement_row(font, 408.0, "击败敌人", "%d" % controller.enemies_defeated)
+
+	var sevrin = controller.get_actor("sevrin")
+	var health_label := "—"
+	if sevrin != null:
+		health_label = "%d / %d" % [sevrin.health, sevrin.max_health]
+	_draw_settlement_row(font, 436.0, "剩余生命", health_label)
+
+	_draw_settlement_button(font, RESTART_BTN, "重开本关")
+	if won:
+		_draw_settlement_button(font, NEXT_BTN, "下一关" if _has_next_level() else "从头开始")
+
+
+func _draw_settlement_row(font: Font, y: float, label: String, value: String) -> void:
+	draw_string(font, Vector2(390.0, y), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#9b9a94"))
+	# draw_string ignores alignment when width is -1, so right-align by measuring.
+	var value_width: float = font.get_string_size(value, HORIZONTAL_ALIGNMENT_LEFT, -1, 17).x
+	draw_string(font, Vector2(910.0 - value_width, y), value, HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color("#e4dfd3"))
+
+
+func _draw_settlement_button(font: Font, rect: Rect2, label: String) -> void:
+	draw_rect(rect, Color("#4b4030"), true)
+	draw_rect(rect, Color("#c4a66c"), false, 2.0)
+	var text_width: float = font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 20).x
+	draw_string(font, rect.position + Vector2((rect.size.x - text_width) * 0.5, 34.0), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color("#f0e5d0"))
+
+
+func _handle_settlement_tap(position: Vector2) -> void:
+	if RESTART_BTN.has_point(position):
+		_start_level(current_level)
+		return
+	if controller.battle_result != "victory" or not NEXT_BTN.has_point(position):
+		return
+	_start_level(current_level + 1 if _has_next_level() else 0)
 
 
 func _skill_rect(index: int) -> Rect2:
@@ -348,6 +425,9 @@ func _cancel_target_selection() -> void:
 
 
 func _handle_tap(position: Vector2) -> void:
+	if controller.phase == ControllerScript.BattlePhase.FINISHED:
+		_handle_settlement_tap(position)
+		return
 	if controller.phase != ControllerScript.BattlePhase.PLAYER:
 		return
 

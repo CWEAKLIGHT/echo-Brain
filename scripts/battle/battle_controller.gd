@@ -34,6 +34,10 @@ var intents: Array = []
 var event_sequence: int = 0
 var turn_number: int = 0
 var battle_result: String = ""
+## Settlement tallies for the end-of-battle panel. Reset on every encounter.
+var damage_dealt: int = 0
+var damage_taken: int = 0
+var enemies_defeated: int = 0
 ## Turn number the hunter summon was last used on. -1 means "not yet used".
 var summon_last_used_turn: int = -1
 var statuses: BattleStatusCollection = StatusCollectionScript.new()
@@ -88,6 +92,9 @@ func start_encounter(
 	turn_number = 0
 	battle_result = ""
 	summon_last_used_turn = -1
+	damage_dealt = 0
+	damage_taken = 0
+	enemies_defeated = 0
 	actors["sevrin"] = BattleActorScript.new("sevrin", "player", player_cell, 12000, "oathkeeper", 2000, 650, 500)
 	for index in range(enemy_cells.size()):
 		var cell: Vector2i = enemy_cells[index]
@@ -615,6 +622,10 @@ func _apply_damage(
 	var area_reductions: Array[int] = area_effects.get_damage_reductions_for_actor(target)
 	var applied: int = target.apply_damage(amount, damage_type, final_reduction_percent, resistance_penalty, area_reductions)
 	if applied > 0:
+		if target.team == "enemy":
+			damage_dealt += applied
+		elif target.team == "player":
+			damage_taken += applied
 		for status_id in triggered_statuses:
 			statuses.consume_trigger(target_actor_id, status_id)
 			_emit_event("status_triggered", target_actor_id, source_actor_id, "status=%s reduction=%d%%" % [status_id, final_reduction_percent])
@@ -627,6 +638,8 @@ func _apply_damage(
 		if removed_statuses > 0:
 			_emit_event("statuses_cleared", target_actor_id, "", "reason=actor_defeated count=%d" % removed_statuses)
 	if target.is_defeated and target.team == "enemy":
+		if applied > 0:
+			enemies_defeated += 1
 		for intent in intents:
 			if intent.source_actor_id == target_actor_id and intent.intent_id != resolving_intent_id:
 				intent.cancel("source_defeated")
