@@ -129,7 +129,7 @@ func _test_absolute_guard_taunt_counter_and_energy() -> void:
 	sevrin.ultimate_energy = 5
 	battle.actors["ally_test"] = ActorScript.new("ally_test", "player", Vector2i(3, 1), 1000, "support", 300, 100, 100)
 	_check(battle.request_absolute_guard(), "Absolute Guard can be activated at five energy")
-	_check(sevrin.ultimate_energy == 0 and battle.ap.current == 1, "Absolute Guard spends five energy and two AP")
+	_check(sevrin.ultimate_energy == 1 and battle.ap.current == 1, "Absolute Guard spends five energy, gains the once-per-turn active-action point, and spends two AP")
 	_check(battle.statuses.has_status("sevrin", &"absolute_guard"), "Absolute Guard status is active after casting")
 
 	var melee = IntentScript.new("taunt_test", "vanguard_00", "basic_melee", IntentScript.TargetMode.ACTOR_LOCKED, "ally_test", Vector2i(3, 1), [Vector2i(3, 1)], 100, 0)
@@ -144,7 +144,11 @@ func _test_absolute_guard_taunt_counter_and_energy() -> void:
 	battle._redirect_single_target_intent_to_sevrin(ranged)
 	_check(ranged.target_cell == Vector2i(4, 1), "Absolute Guard does not redirect an attack outside its two-cell radius")
 
+	sevrin.shield = 500
 	battle._apply_damage("sevrin", 1, "vanguard_00", "basic_melee", "physical", true, "counter_test_intent")
+	battle._apply_damage("sevrin", 1, "vanguard_00", "basic_melee", "physical", true, "counter_test_intent")
+	_check(battle.absolute_guard_hit_intents.has("counter_test_intent"), "a fully shield-absorbed enemy hit queues an Absolute Guard counter")
+	_check(battle.absolute_guard_hit_intents.size() == 1, "multiple hits in one enemy intent queue only one counter")
 	var stacks_after_hit: int = battle.get_oath_vow_stacks()
 	battle.statuses.apply_status(&"oathkeeper_mark", "sevrin", "vanguard_00", 1, 1, -1, &"enemy_phase_end")
 	var counter_intent = IntentScript.new("counter_test_intent", "vanguard_00", "basic_melee", IntentScript.TargetMode.ACTOR_LOCKED, "sevrin", sevrin.cell, [sevrin.cell], 1, 0)
