@@ -25,6 +25,13 @@ const SKILL_BAR := [
 	{"id": "hunter_summon", "name": "猎人通灵", "hint": "任意敌人 · 现身一击 · 冷却 2 回合", "cost": 0, "mode": "actor"},
 ]
 
+## Presentation-only summon roster. Future summons can be added here without changing
+## the existing hunter_summon execution path. Selection currently affects the displayed icon/name only.
+const SUMMON_OPTIONS := [
+	{"id": "yu_bubble", "name": "余泡泡", "icon": preload("res://assets/ui/summons/yu_bubble.webp")},
+]
+var selected_summon_option: int = 0
+
 var controller: BattleController
 var status_message: String = "点击格子移动；点右侧技能后选择目标。"
 var selected_skill: int = 0
@@ -237,8 +244,15 @@ func _draw_skill_panel() -> void:
 		draw_rect(rect, bg, true)
 		draw_rect(rect, border, false, 2.0 if is_selected else 1.0)
 		var text_color := Color("#f0e5d0") if affordable else Color("#6b6a66")
-		draw_string(font, rect.position + Vector2(14.0, 21.0), str(skill["name"]), HORIZONTAL_ALIGNMENT_LEFT, -1, 17, text_color)
-		draw_string(font, rect.position + Vector2(14.0, 39.0), str(skill["hint"]), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, text_color)
+		var skill_name: String = str(skill["name"])
+		var text_x: float = 14.0
+		if skill["id"] == "hunter_summon":
+			var summon_option: Dictionary = SUMMON_OPTIONS[selected_summon_option]
+			draw_texture_rect(summon_option["icon"], Rect2(rect.position + Vector2(8.0, 8.0), Vector2(34.0, 34.0)), false)
+			skill_name += " · " + str(summon_option["name"])
+			text_x = 50.0
+		draw_string(font, rect.position + Vector2(text_x, 21.0), skill_name, HORIZONTAL_ALIGNMENT_LEFT, -1, 17, text_color)
+		draw_string(font, rect.position + Vector2(text_x, 39.0), str(skill["hint"]), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, text_color)
 		draw_string(font, rect.position + Vector2(rect.size.x - cost_offset, 30.0), cost_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#d4b77b") if affordable else Color("#6b6a66"))
 
 	var end_color := Color("#4b4030") if controller.phase == ControllerScript.BattlePhase.PLAYER else Color("#2a2d31")
