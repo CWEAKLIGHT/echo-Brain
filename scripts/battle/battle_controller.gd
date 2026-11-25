@@ -454,6 +454,7 @@ func request_hunter_summon(target_actor_id: String) -> bool:
 		"cell=%s target=%s cooldown=%d" % [str(hunter_cell), target_actor_id, HUNTER_SUMMON_COOLDOWN_TURNS]
 	)
 	_apply_damage(target_actor_id, damage, "hunter", "hunter_summon", "physical")
+	_gain_active_energy("sevrin")
 	_emit_event("skill_resolved", "hunter", target_actor_id, "skill=hunter_summon raw=%d cell=%s" % [damage, str(hunter_cell)])
 	_check_battle_end()
 	return true
@@ -676,6 +677,8 @@ func _redirect_single_target_intent_to_sevrin(intent) -> void:
 	var source = actors[intent.source_actor_id]
 	var target = actors["sevrin"]
 	var distance: int = GridRulesScript.manhattan_distance(source.cell, target.cell)
+	if distance > 2:
+		return
 	var legal := false
 	match intent.action_id:
 		"basic_melee":
