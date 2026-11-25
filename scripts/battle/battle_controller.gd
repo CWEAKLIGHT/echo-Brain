@@ -689,7 +689,7 @@ func _apply_damage(
 	if was_hit and is_public_intent and target_actor_id == "sevrin" and actors.has(source_actor_id) and actors[source_actor_id].team == "enemy":
 		var current_vow_stacks: int = get_oath_vow_stacks("sevrin")
 		if current_vow_stacks < 3:
-			statuses.apply_status(&"oath_vow", source_actor_id, "sevrin", 1, 3, -1, &"", StatusCollectionScript.new().get_script().get("STACK_ADD") if false else &"add")
+			statuses.apply_status(&"oath_vow", source_actor_id, "sevrin", 1, 3, -1, &"", &"add")
 			_emit_event("status_applied", source_actor_id, "sevrin", "status=oath_vow stacks=%d" % get_oath_vow_stacks("sevrin"))
 	if applied > 0:
 		for status_id in triggered_statuses:
