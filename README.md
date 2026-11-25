@@ -9,7 +9,7 @@ ECHO 是一款使用 Godot 4.7.2 Standard 与 GDScript 开发的 2D 回合制战
 - **桌面开发与验证平台**：Windows 10/11（64 位）
 - **目标画面**：1280 × 720，横向布局
 - **移动端方向**：Android 横屏；本阶段优先完成 Windows 桌面导入与玩法验证
-- **验证状态**：已在 Godot 4.7.2 中完成导入、六个测试套件与主场景无头运行（2026-11-25，300 条断言 0 失败，详见 `docs/GODOT_ENGINE_VALIDATION_zh-CN.md`）；Windows 交互与画面、Android 导出仍待人工验证
+- **验证状态**：正式原型基线曾在 Godot 4.7.2 中完成导入与自动化验证（详见 `docs/GODOT_ENGINE_VALIDATION_zh-CN.md`）；当前新版开发分支尚未重新执行 Godot 导入、自动化测试或主场景运行
 
 本仓库是 ECHO 的独立项目，与「拾光」完全分离。
 
@@ -23,8 +23,9 @@ ECHO 是一款使用 Godot 4.7.2 Standard 与 GDScript 开发的 2D 回合制战
 
 也可以直接下载当前开发分支：
 
-- [下载 prototype/0.1 分支 ZIP](https://github.com/qingxu443-dev/echo-game/archive/refs/heads/prototype/0.1.zip)
-- [打开 ECHO GitHub 仓库](https://github.com/qingxu443-dev/echo-game/tree/prototype/0.1)
+- [下载当前 Oathkeeper v2 开发分支 ZIP](https://github.com/qingxu443-dev/echo-game/archive/refs/heads/feature/oathkeeper-v2-sync-20261125.zip)
+- [打开当前开发分支](https://github.com/qingxu443-dev/echo-game/tree/feature/oathkeeper-v2-sync-20261125)
+- [打开正式原型分支](https://github.com/qingxu443-dev/echo-game/tree/prototype/0.1)
 
 首次运行不需要 Android 导出模板，也不需要 Godot .NET 版本。
 
