@@ -23,7 +23,9 @@ func _test_no_default_basic_attack() -> void:
 	await process_frame
 	var controller: Variant = view.get("controller")
 	_check(int(view.get("selected_skill")) == -1, "battle view starts with no selected player skill")
-	_check(view.get("SKILL_BAR").size() == 4, "player skill bar no longer exposes basic attack")
+	var skill_bar: Array = view.get("SKILL_BAR")
+	_check(skill_bar.size() == 4, "player skill bar exposes three V2 skills and Hunter Summon")
+	_check(skill_bar[0]["id"] == "oathkeeper_judgment_mark" and skill_bar[1]["id"] == "oath_shield" and skill_bar[2]["id"] == "absolute_guard" and skill_bar[3]["id"] == "hunter_summon", "skill bar order contains only V2 skills and the retained summon")
 	var enemy = controller.get_actor("vanguard_00")
 	var starting_ap: int = controller.ap.current
 	_tap_cell(view, enemy.cell)
