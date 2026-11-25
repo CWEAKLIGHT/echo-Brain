@@ -217,6 +217,9 @@ func _draw_skill_panel() -> void:
 		var skill: Dictionary = SKILL_BAR[index]
 		var rect := _skill_rect(index)
 		var affordable: bool = controller.ap != null and controller.ap.can_spend(int(skill["cost"]))
+		if skill["id"] == "absolute_guard":
+			var sevrin = controller.get_actor("sevrin")
+			affordable = affordable and sevrin != null and sevrin.ultimate_energy >= 5
 		var cost_label := "%d AP" % int(skill["cost"])
 		var cost_offset: float = 52.0
 		var cost_y: float = 30.0
