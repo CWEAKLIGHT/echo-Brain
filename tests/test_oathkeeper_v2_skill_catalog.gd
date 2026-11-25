@@ -21,6 +21,7 @@ func _run() -> void:
 	_check(passive.is_valid(), "Oath Vow passive definition validates", failures)
 	_check(skills[0].ap_cost == 1 and skills[0].damage_multiplier == 0.8 and skills[0].max_range == 4, "Judgment Mark data matches the V2 baseline", failures)
 	_check(skills[1].ap_cost == 1 and skills[2].ap_cost == 2, "Oath Shield and Absolute Guard AP costs match the V2 baseline", failures)
+	_check(skills[1].target_mode == SkillDefinitionScript.TARGET_SELF_AND_ALLY and skills[1].min_range == 0 and skills[1].max_range == 2, "Oath Shield metadata represents Sevrin plus one ally within two cells", failures)
 	print("Oathkeeper v2 skill catalog test complete. Failures: ", failures.size())
 	quit(1 if not failures.is_empty() else 0)
 
