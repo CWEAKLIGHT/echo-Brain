@@ -126,6 +126,9 @@ func _test_absolute_guard_taunt_counter_and_energy() -> void:
 	var sevrin = battle.get_actor("sevrin")
 	var enemy = battle.get_actor("vanguard_00")
 	_check(sevrin.ultimate_energy == 1, "each player turn start grants one ultimate energy")
+	sevrin.ultimate_energy = 4
+	_check(not battle.request_absolute_guard(), "Absolute Guard rejects activation below five energy")
+	_check(sevrin.ultimate_energy == 4 and battle.ap.current == 3, "failed Absolute Guard activation preserves energy and AP")
 	sevrin.ultimate_energy = 5
 	battle.actors["ally_test"] = ActorScript.new("ally_test", "player", Vector2i(3, 1), 1000, "support", 300, 100, 100)
 	_check(battle.request_absolute_guard(), "Absolute Guard can be activated at five energy")
@@ -159,6 +162,12 @@ func _test_absolute_guard_taunt_counter_and_energy() -> void:
 	enemy_health_before = enemy.health
 	battle._resolve_absolute_guard_counter(counter_intent)
 	_check(enemy.health == enemy_health_before, "each enemy can be countered only once per player turn")
+	battle.ap.current = 3
+	sevrin.ultimate_energy = 5
+	_check(battle.request_absolute_guard(), "Absolute Guard can be recast when resources are available")
+	enemy_health_before = enemy.health
+	battle._resolve_absolute_guard_counter(counter_intent)
+	_check(enemy.health == enemy_health_before, "recasting Absolute Guard does not reset the per-enemy counter limit")
 
 	battle.absolute_guard_countered_enemies.clear()
 	battle._begin_player_turn()
