@@ -13,6 +13,7 @@ func _initialize() -> void:
 func _run() -> void:
 	_test_oath_vow_passive_and_shield_application()
 	_test_oath_vow_counts_once_per_intent_and_caps_at_three()
+	_test_v2_judgment_mark_damage_replacement_and_expiry()
 	_test_oath_shield_validation_and_duration()
 	print("Oathkeeper v2 controller tests complete. Failures: ", failures.size())
 	quit(1 if not failures.is_empty() else 0)
@@ -56,6 +57,37 @@ func _test_oath_vow_counts_once_per_intent_and_caps_at_three() -> void:
 	battle._apply_damage("sevrin", 100, "vanguard_00", "attack_test", "physical", true, "intent_three")
 	battle._apply_damage("sevrin", 100, "vanguard_00", "attack_test", "physical", true, "intent_four")
 	_check(battle.get_oath_vow_stacks() == 3, "Oath Vow stacks cap at three")
+	battle.queue_free()
+
+
+func _test_v2_judgment_mark_damage_replacement_and_expiry() -> void:
+	var battle = ControllerScript.new()
+	root.add_child(battle)
+	_check(battle.start_encounter(Vector2i(1, 1), [Vector2i(2, 1), Vector2i(1, 4)]), "v2 Judgment Mark encounter starts")
+	var first_target = battle.get_actor("vanguard_00")
+	var second_target = battle.get_actor("vanguard_01")
+	var first_health: int = first_target.health
+	var expected_damage: int = 520
+	_check(battle.request_oathkeeper_judgment_mark("vanguard_00"), "v2 Judgment Mark accepts a legal enemy target")
+	_check(first_target.health == first_health - expected_damage, "v2 Judgment Mark deals DEF times 0.8 physical damage")
+	_check(battle.get_oathkeeper_marked_target() == "vanguard_00", "v2 Judgment Mark records the selected target")
+	_check(battle.statuses.has_status("vanguard_00", &"oathkeeper_mark"), "v2 mark uses its isolated status ID")
+	_check(not battle.statuses.has_status("vanguard_00", &"judgment_mark"), "v2 mark does not create the legacy judgment status")
+	_check(battle.request_oathkeeper_judgment_mark("vanguard_01"), "v2 Judgment Mark can be recast on another enemy")
+	_check(not battle.statuses.has_status("vanguard_00", &"oathkeeper_mark"), "recasting removes the previous v2 mark")
+	_check(battle.get_oathkeeper_marked_target() == "vanguard_01", "only the latest enemy remains marked")
+	_check(battle.end_player_turn(), "marked enemy phase resolves")
+	_check(battle.get_oathkeeper_marked_target().is_empty(), "v2 mark expires at the end of the enemy phase after application")
+	battle.queue_free()
+
+
+func _test_v2_judgment_mark_rejects_invalid_targets() -> void:
+	var battle = ControllerScript.new()
+	root.add_child(battle)
+	_check(battle.start_encounter(Vector2i(1, 1), [Vector2i(7, 7)]), "v2 Judgment Mark validation encounter starts")
+	_check(not battle.request_oathkeeper_judgment_mark("missing"), "v2 Judgment Mark rejects unknown targets")
+	_check(not battle.request_oathkeeper_judgment_mark("sevrin"), "v2 Judgment Mark rejects self targeting")
+	_check(battle.ap.current == 3, "invalid v2 Judgment Mark targets do not spend AP")
 	battle.queue_free()
 
 
