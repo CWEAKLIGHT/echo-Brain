@@ -517,11 +517,14 @@ func _begin_player_turn() -> void:
 		_emit_event("statuses_expired", "", "", "boundary=player_phase_start count=%d" % expired_statuses)
 	turn_number += 1
 	absolute_guard_countered_enemies.clear()
-	if actors.has("sevrin") and actors["sevrin"].is_alive():
-		var energy_before: int = actors["sevrin"].ultimate_energy
-		actors["sevrin"].gain_ultimate_energy(1)
-		if actors["sevrin"].ultimate_energy != energy_before:
-			_emit_event("ultimate_energy_gained", "sevrin", "sevrin", "source=player_turn_start energy=%d" % actors["sevrin"].ultimate_energy)
+	for actor_id in actors.keys():
+		var player_actor = actors[actor_id]
+		if player_actor.team != "player" or not player_actor.is_alive():
+			continue
+		var energy_before: int = player_actor.ultimate_energy
+		player_actor.gain_ultimate_energy(1)
+		if player_actor.ultimate_energy != energy_before:
+			_emit_event("ultimate_energy_gained", String(actor_id), String(actor_id), "source=player_turn_start energy=%d" % player_actor.ultimate_energy)
 	ap.reset()
 	phase = BattlePhase.PLAYER
 	intents = _generate_enemy_intents()
