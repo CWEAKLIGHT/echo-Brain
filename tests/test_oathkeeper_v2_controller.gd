@@ -135,9 +135,18 @@ func _test_absolute_guard_taunt_counter_and_energy() -> void:
 	_check(sevrin.ultimate_energy == 1 and battle.ap.current == 1, "Absolute Guard spends five energy, gains the once-per-turn active-action point, and spends two AP")
 	_check(battle.statuses.has_status("sevrin", &"absolute_guard"), "Absolute Guard status is active after casting")
 
-	var melee = IntentScript.new("taunt_test", "vanguard_00", "basic_melee", IntentScript.TargetMode.ACTOR_LOCKED, "ally_test", Vector2i(3, 1), [Vector2i(3, 1)], 100, 0)
+	var melee = IntentScript.new("taunt_test", "vanguard_00", "basic_melee", IntentScript.TargetMode.ACTOR_LOCKED, "ally_test", Vector2i(1, 2), [Vector2i(1, 2)], 100, 0)
 	battle._redirect_single_target_intent_to_sevrin(melee)
 	_check(melee.target_actor_id == "sevrin" and melee.target_cell == sevrin.cell, "Absolute Guard redirects a legal single-target melee intent")
+	enemy.cell = Vector2i(3, 1)
+	var charged = IntentScript.new("charged_test", "vanguard_00", "charged_strike", IntentScript.TargetMode.TILE_LOCKED, "", Vector2i(1, 2), [Vector2i(1, 2)], 100, 0)
+	battle._redirect_single_target_intent_to_sevrin(charged)
+	_check(charged.target_cell == sevrin.cell and charged.affected_cells == [sevrin.cell], "Absolute Guard redirects a legal two-cell charged strike to Sevrin")
+	battle.blocked_cells[Vector2i(2, 1)] = true
+	var blocked_charged = IntentScript.new("blocked_charged_test", "vanguard_00", "charged_strike", IntentScript.TargetMode.TILE_LOCKED, "", Vector2i(1, 2), [Vector2i(1, 2)], 100, 0)
+	battle._redirect_single_target_intent_to_sevrin(blocked_charged)
+	_check(blocked_charged.target_cell == Vector2i(1, 2), "Absolute Guard does not redirect a charged strike through blocked line of sight")
+	battle.blocked_cells.erase(Vector2i(2, 1))
 	var area_cells: Array[Vector2i] = [Vector2i(3, 1), Vector2i(3, 2)]
 	var area_intent = IntentScript.new("area_test", "vanguard_00", "ground_pulse", IntentScript.TargetMode.AREA_LOCKED, "", Vector2i(3, 1), area_cells, 100, 0)
 	battle._redirect_single_target_intent_to_sevrin(area_intent)
@@ -174,6 +183,23 @@ func _test_absolute_guard_taunt_counter_and_energy() -> void:
 	_check(not battle.statuses.has_status("sevrin", &"absolute_guard"), "Absolute Guard expires at the next player turn start")
 	_check(sevrin.ultimate_energy == 1, "new player turn restores one energy after the recast spent the remaining ultimate energy")
 	_check(battle.get_actor("ally_test").ultimate_energy == 1, "each living allied actor receives independent turn-start ultimate energy")
+	battle.queue_free()
+	_test_absolute_guard_cleans_up_on_sevrin_death()
+
+
+func _test_absolute_guard_cleans_up_on_sevrin_death() -> void:
+	var battle = ControllerScript.new()
+	root.add_child(battle)
+	_check(battle.start_encounter(Vector2i(1, 1), [Vector2i(2, 1)]), "Absolute Guard death-cleanup encounter starts")
+	var sevrin = battle.get_actor("sevrin")
+	sevrin.ultimate_energy = 5
+	_check(battle.request_absolute_guard(), "Absolute Guard activates before Sevrin is defeated")
+	_check(battle.statuses.has_status("sevrin", &"absolute_guard"), "Absolute Guard status exists before defeat")
+	sevrin.health = 1
+	battle._apply_damage("sevrin", 1, "vanguard_00", "death_test", "physical", false)
+	battle._check_battle_end()
+	_check(battle.phase == ControllerScript.BattlePhase.FINISHED, "Sevrin defeat ends the encounter")
+	_check(not battle.statuses.has_status("sevrin", &"absolute_guard"), "Sevrin defeat clears Absolute Guard immediately")
 	battle.queue_free()
 
 
