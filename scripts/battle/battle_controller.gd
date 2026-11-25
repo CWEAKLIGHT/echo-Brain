@@ -13,6 +13,14 @@ const StatusCollectionScript = preload("res://scripts/battle/battle_status_colle
 const AreaEffectScript = preload("res://scripts/battle/battle_area_effect.gd")
 const AreaEffectCollectionScript = preload("res://scripts/battle/battle_area_effect_collection.gd")
 
+## Hunter summon: a free support strike on a cooldown. The hunter is not a
+## battlefield unit -- it appears next to the chosen enemy, strikes once and is
+## gone, so it never occupies a cell, never appears in the intent order and can
+## never be targeted. Values are prototype baselines pending playtesting.
+const HUNTER_SUMMON_ATTACK: int = 1400
+const HUNTER_SUMMON_MULTIPLIER: float = 0.9
+const HUNTER_SUMMON_COOLDOWN_TURNS: int = 2
+
 enum BattlePhase { PLAYER, ENEMY, FINISHED }
 
 @export var grid_size: Vector2i = Vector2i(8, 8)
@@ -26,6 +34,8 @@ var intents: Array = []
 var event_sequence: int = 0
 var turn_number: int = 0
 var battle_result: String = ""
+## Turn number the hunter summon was last used on. -1 means "not yet used".
+var summon_last_used_turn: int = -1
 var statuses: BattleStatusCollection = StatusCollectionScript.new()
 var area_effects: BattleAreaEffectCollection = AreaEffectCollectionScript.new()
 
@@ -77,6 +87,7 @@ func start_encounter(
 	event_sequence = 0
 	turn_number = 0
 	battle_result = ""
+	summon_last_used_turn = -1
 	actors["sevrin"] = BattleActorScript.new("sevrin", "player", player_cell, 12000, "oathkeeper", 2000, 650, 500)
 	for index in range(enemy_cells.size()):
 		var cell: Vector2i = enemy_cells[index]
@@ -263,6 +274,70 @@ func request_oath_severance(target_actor_id: String) -> bool:
 	_emit_event("skill_resolved", "sevrin", target_actor_id, "skill=oath_severance interrupted=%s raw=%d" % [str(interrupted), damage])
 	_check_battle_end()
 	return true
+
+
+## Remaining turns until the hunter can be summoned again. 0 means ready.
+func summon_cooldown_remaining() -> int:
+	if summon_last_used_turn < 0:
+		return 0
+	return maxi(0, HUNTER_SUMMON_COOLDOWN_TURNS - (turn_number - summon_last_used_turn))
+
+
+func can_summon(target_actor_id: String = "") -> bool:
+	if phase != BattlePhase.PLAYER or not actors.has("sevrin"):
+		return false
+	if not actors["sevrin"].is_alive() or summon_cooldown_remaining() > 0:
+		return false
+	if target_actor_id.is_empty():
+		return true
+	if not actors.has(target_actor_id):
+		return false
+	var target = actors[target_actor_id]
+	if not target.is_alive() or target.team != "enemy":
+		return false
+	return not _is_cell_missing(_find_hunter_cell(target))
+
+
+## The hunter strikes once and leaves. No AP is spent, no unit is created and
+## nothing is added to the intent order.
+func request_hunter_summon(target_actor_id: String) -> bool:
+	if not can_summon(target_actor_id):
+		return false
+	var target = actors[target_actor_id]
+	var hunter_cell: Vector2i = _find_hunter_cell(target)
+	if _is_cell_missing(hunter_cell):
+		return false
+	var damage: int = CombatMathScript.calculate_raw_damage(HUNTER_SUMMON_ATTACK, HUNTER_SUMMON_MULTIPLIER)
+	summon_last_used_turn = turn_number
+	_emit_event(
+		"hunter_summoned",
+		"hunter",
+		target_actor_id,
+		"cell=%s target=%s cooldown=%d" % [str(hunter_cell), target_actor_id, HUNTER_SUMMON_COOLDOWN_TURNS]
+	)
+	_apply_damage(target_actor_id, damage, "hunter", "hunter_summon", "physical")
+	_emit_event("skill_resolved", "hunter", target_actor_id, "skill=hunter_summon raw=%d cell=%s" % [damage, str(hunter_cell)])
+	_check_battle_end()
+	return true
+
+
+## First free orthogonal neighbour of the target, in a fixed order so the
+## appearance cell is deterministic. Vector2i(-1, -1) means no room.
+func _find_hunter_cell(target) -> Vector2i:
+	var offsets: Array[Vector2i] = [Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT]
+	var occupied: Dictionary = get_occupied_cells()
+	for offset in offsets:
+		var cell: Vector2i = target.cell + offset
+		if not GridRulesScript.is_inside_bounds(cell, grid_size):
+			continue
+		if blocked_cells.has(cell) or occupied.has(cell):
+			continue
+		return cell
+	return Vector2i(-1, -1)
+
+
+func _is_cell_missing(cell: Vector2i) -> bool:
+	return cell.x < 0 or cell.y < 0
 
 
 func end_player_turn() -> bool:

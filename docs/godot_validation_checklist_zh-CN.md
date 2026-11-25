@@ -95,6 +95,7 @@ godot --headless --path . --script res://tests/test_battle_controller.gd
 godot --headless --path . --script res://tests/test_battle_view_skills.gd
 godot --headless --path . --script res://tests/test_skill_definitions.gd
 godot --headless --path . --script res://tests/test_turn_bookkeeping.gd
+godot --headless --path . --script res://tests/test_hunter_summon.gd
 ```
 
 该测试通过主场景实例化战斗界面，检查：
@@ -104,5 +105,5 @@ godot --headless --path . --script res://tests/test_turn_bookkeeping.gd
 - 誓约裁断可通过技能栏选择、战场点击确认，并验证印记消耗、伤害与意图打断。
 - 技能 UI 的行动点消耗与控制器规则一致。
 
-随后按 F5 运行主场景，手动确认窗口尺寸、技能按钮可见性、鼠标目标选择、Esc/右键取消、数字键 1–6、Enter/空格结束回合。Headless 测试不验证实际窗口绘制和输入焦点。
+随后按 F5 运行主场景，手动确认窗口尺寸、技能按钮可见性、鼠标目标选择、Esc/右键取消、数字键 1–7、Enter/空格结束回合。Headless 测试不验证实际窗口绘制和输入焦点。
 
