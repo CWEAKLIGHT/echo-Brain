@@ -2,6 +2,7 @@ extends SceneTree
 
 const ControllerScript = preload("res://scripts/battle/battle_controller.gd")
 const ActorScript = preload("res://scripts/actors/battle_actor.gd")
+const IntentScript = preload("res://scripts/battle/battle_intent.gd")
 
 var failures: Array[String] = []
 
@@ -15,6 +16,7 @@ func _run() -> void:
 	_test_oath_vow_counts_once_per_intent_and_caps_at_three()
 	_test_v2_judgment_mark_damage_replacement_and_expiry()
 	_test_oath_shield_validation_and_duration()
+	_test_absolute_guard_taunt_counter_and_energy()
 	print("Oathkeeper v2 controller tests complete. Failures: ", failures.size())
 	quit(1 if not failures.is_empty() else 0)
 
@@ -113,6 +115,46 @@ func _test_oath_shield_validation_and_duration() -> void:
 	_check(battle.end_player_turn(), "second player turn ends")
 	_check(battle.get_actor("sevrin").shield == 0, "shield expires at the end of the second player turn")
 	_check(battle.get_actor("ally_near").shield == 0, "ally shield expires at the same two-turn boundary")
+	battle.queue_free()
+
+
+func _test_absolute_guard_taunt_counter_and_energy() -> void:
+	var battle = ControllerScript.new()
+	root.add_child(battle)
+	_check(battle.start_encounter(Vector2i(1, 1), [Vector2i(2, 1)]), "Absolute Guard encounter starts")
+	var sevrin = battle.get_actor("sevrin")
+	var enemy = battle.get_actor("vanguard_00")
+	_check(sevrin.ultimate_energy == 1, "each player turn start grants one ultimate energy")
+	sevrin.ultimate_energy = 5
+	battle.actors["ally_test"] = ActorScript.new("ally_test", "player", Vector2i(3, 1), 1000, "support", 300, 100, 100)
+	_check(battle.request_absolute_guard(), "Absolute Guard can be activated at five energy")
+	_check(sevrin.ultimate_energy == 0 and battle.ap.current == 1, "Absolute Guard spends five energy and two AP")
+	_check(battle.statuses.has_status("sevrin", &"absolute_guard"), "Absolute Guard status is active after casting")
+
+	var melee = IntentScript.new("taunt_test", "vanguard_00", "basic_melee", IntentScript.TargetMode.ACTOR_LOCKED, "ally_test", Vector2i(3, 1), [Vector2i(3, 1)], 100, 0)
+	battle._redirect_single_target_intent_to_sevrin(melee)
+	_check(melee.target_actor_id == "sevrin" and melee.target_cell == sevrin.cell, "Absolute Guard redirects a legal single-target melee intent")
+	var area_cells: Array[Vector2i] = [Vector2i(3, 1), Vector2i(3, 2)]
+	var area_intent = IntentScript.new("area_test", "vanguard_00", "ground_pulse", IntentScript.TargetMode.AREA_LOCKED, "", Vector2i(3, 1), area_cells, 100, 0)
+	battle._redirect_single_target_intent_to_sevrin(area_intent)
+	_check(area_intent.target_cell == Vector2i(3, 1) and area_intent.affected_cells == area_cells, "Absolute Guard never changes area attack geometry")
+
+	battle._apply_damage("sevrin", 1, "vanguard_00", "basic_melee", "physical", true, "counter_test_intent")
+	var stacks_after_hit: int = battle.get_oath_vow_stacks()
+	battle.statuses.apply_status(&"oathkeeper_mark", "sevrin", "vanguard_00", 1, 1, -1, &"enemy_phase_end")
+	var counter_intent = IntentScript.new("counter_test_intent", "vanguard_00", "basic_melee", IntentScript.TargetMode.ACTOR_LOCKED, "sevrin", sevrin.cell, [sevrin.cell], 1, 0)
+	var enemy_health_before: int = enemy.health
+	battle._resolve_absolute_guard_counter(counter_intent)
+	_check(enemy.health == enemy_health_before - 267, "marked enemy receives DEF times 0.7 counter damage after defense")
+	_check(battle.get_oath_vow_stacks() == stacks_after_hit, "Absolute Guard counter does not generate another Oath Vow stack")
+	enemy_health_before = enemy.health
+	battle._resolve_absolute_guard_counter(counter_intent)
+	_check(enemy.health == enemy_health_before, "each enemy can be countered only once per player turn")
+
+	battle.absolute_guard_countered_enemies.clear()
+	battle._begin_player_turn()
+	_check(not battle.statuses.has_status("sevrin", &"absolute_guard"), "Absolute Guard expires at the next player turn start")
+	_check(sevrin.ultimate_energy == 1, "new player turn restores one ultimate energy")
 	battle.queue_free()
 
 
