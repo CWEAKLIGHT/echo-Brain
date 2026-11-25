@@ -189,7 +189,8 @@ func _draw_hud() -> void:
 		draw_string(font, Vector2(48, 290), "攻击 %d  防御 %d" % [sevrin.attack, sevrin.defense], HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#b9b7ad"))
 		draw_string(font, Vector2(48, 336), "护盾 %d  终极能量 %d / 5" % [sevrin.shield, sevrin.ultimate_energy], HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#8fc7dc"))
 		draw_string(font, Vector2(48, 313), "魔抗 %d" % sevrin.magic_resistance, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#b9b7ad"))
-	_draw_wrapped(font, status_message, Vector2(48, 370), 320.0, 15, Color("#aaa79e"), 2)
+		draw_string(font, Vector2(48, 359), "被动：不屈誓约 · 守誓 %d / 3" % controller.get_oath_vow_stacks(), HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#d4b77b"))
+	_draw_wrapped(font, status_message, Vector2(48, 382), 320.0, 15, Color("#aaa79e"), 2)
 	draw_string(font, Vector2(48, 425), "敌方行动顺序", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#c5a45c"))
 	var order_y := 455.0
 	for index in range(controller.intents.size()):
