@@ -41,9 +41,9 @@ func _test_self_skill_controls() -> void:
 
 	var oathguard_key := InputEventKey.new()
 	oathguard_key.pressed = true
-	oathguard_key.keycode = KEY_2
+	oathguard_key.keycode = KEY_1
 	view.call("_input", oathguard_key)
-	_check(controller.statuses.has_status("sevrin", &"oathguard"), "keyboard shortcut 2 activates Oathguard Stance")
+	_check(controller.statuses.has_status("sevrin", &"oathguard"), "keyboard shortcut 1 activates Oathguard Stance")
 	_check(controller.ap.current == 2, "Oathguard Stance spends one AP through the battle view")
 
 	_tap_skill(view, 1)
