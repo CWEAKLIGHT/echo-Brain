@@ -691,7 +691,8 @@ func _redirect_single_target_intent_to_sevrin(intent) -> void:
 	if intent.target_mode == BattleIntentScript.TargetMode.ACTOR_LOCKED:
 		intent.target_actor_id = "sevrin"
 	intent.target_cell = target.cell
-	intent.affected_cells = [target.cell]
+	var redirected_cells: Array[Vector2i] = [target.cell]
+	intent.affected_cells = redirected_cells
 	_emit_event("absolute_guard_taunt", intent.source_actor_id, "sevrin", "intent=%s action=%s" % [intent.intent_id, intent.action_id])
 
 
