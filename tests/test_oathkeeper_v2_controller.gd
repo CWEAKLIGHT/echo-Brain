@@ -163,7 +163,7 @@ func _test_absolute_guard_taunt_counter_and_energy() -> void:
 	battle.absolute_guard_countered_enemies.clear()
 	battle._begin_player_turn()
 	_check(not battle.statuses.has_status("sevrin", &"absolute_guard"), "Absolute Guard expires at the next player turn start")
-	_check(sevrin.ultimate_energy == 1, "new player turn restores one ultimate energy")
+	_check(sevrin.ultimate_energy == 2, "new player turn restores one energy after the once-per-turn active gain was already used")
 	battle.queue_free()
 
 
