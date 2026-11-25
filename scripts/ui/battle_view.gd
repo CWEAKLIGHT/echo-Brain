@@ -14,9 +14,8 @@ const SKILL_BTN_H: float = 50.0
 const SKILL_BTN_STEP: float = 54.0
 
 ## Prototype skill bar. Self-target skills resolve on press; actor-target skills wait for confirmation.
-## Number keys 1–7 mirror the visible order.
+## Number keys 1–6 mirror the visible order; no default attack is selected.
 const SKILL_BAR := [
-	{"id": "attack", "name": "普通攻击", "hint": "相邻敌人 · 物理伤害", "cost": 1, "mode": "actor"},
 	{"id": "oathguard_stance", "name": "誓盾架势", "hint": "自身 · 抵御下一次攻击", "cost": 1, "mode": "self"},
 	{"id": "watchwall", "name": "守望壁垒", "hint": "自身 · 建立十字守护区", "cost": 1, "mode": "self"},
 	{"id": "judgment_mark", "name": "裁决印记", "hint": "1–4 格 · 标记敌人", "cost": 1, "mode": "actor"},
@@ -34,7 +33,7 @@ var selected_summon_option: int = 0
 
 var controller: BattleController
 var status_message: String = "点击格子移动；点右侧技能后选择目标。"
-var selected_skill: int = 0
+var selected_skill: int = -1
 
 
 func _ready() -> void:
@@ -270,7 +269,7 @@ func _draw_skill_panel() -> void:
 	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 22.0), "点格子移动，最多两格直线", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
 	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 40.0), "自身技能点一下即生效", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
 	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 58.0), "选中技能后，黄圈标出可打目标", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
-	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 76.0), "数字键 1–7 施放/选择技能", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
+	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 76.0), "数字键 1–6 施放/选择技能", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
 	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 94.0), "Esc / 右键取消目标选择", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
 
 
@@ -331,8 +330,6 @@ func _input(event: InputEvent) -> void:
 				_on_skill_pressed(4)
 			KEY_6:
 				_on_skill_pressed(5)
-			KEY_7:
-				_on_skill_pressed(6)
 			KEY_ESCAPE:
 				_cancel_target_selection()
 			KEY_ENTER, KEY_SPACE:
@@ -343,10 +340,10 @@ func _input(event: InputEvent) -> void:
 
 
 func _cancel_target_selection() -> void:
-	if selected_skill == 0:
+	if selected_skill < 0:
 		return
-	selected_skill = 0
-	status_message = "已取消目标选择，当前默认普通攻击。"
+	selected_skill = -1
+	status_message = "已取消目标选择。"
 	queue_redraw()
 
 
@@ -373,7 +370,8 @@ func _handle_tap(position: Vector2) -> void:
 	for actor_id in controller.actors:
 		var actor = controller.actors[actor_id]
 		if actor.team == "enemy" and actor.is_alive() and actor.cell == cell:
-			_use_skill_on(actor_id)
+			if selected_skill >= 0:
+				_use_skill_on(actor_id)
 			return
 
 	var path := _path_to_cell(controller.get_actor("sevrin").cell, cell)
@@ -391,7 +389,7 @@ func _on_skill_pressed(index: int) -> void:
 		return
 	var skill: Dictionary = SKILL_BAR[index]
 	if skill["mode"] == "self":
-		selected_skill = 0
+		selected_skill = -1
 		var cast_ok := false
 		match skill["id"]:
 			"oathguard_stance":
@@ -415,8 +413,6 @@ func _use_skill_on(actor_id: String) -> void:
 	var skill: Dictionary = SKILL_BAR[selected_skill]
 	var cast_ok := false
 	match skill["id"]:
-		"attack":
-			cast_ok = controller.request_player_attack(actor_id)
 		"judgment_mark":
 			cast_ok = controller.request_judgment_mark(actor_id)
 		"oath_severance":
@@ -430,8 +426,6 @@ func _use_skill_on(actor_id: String) -> void:
 
 	if cast_ok:
 		match skill["id"]:
-			"attack":
-				status_message = "普通攻击命中。"
 			"judgment_mark":
 				status_message = "裁决印记已施加，目标被标记。"
 			"oath_severance":
@@ -440,8 +434,6 @@ func _use_skill_on(actor_id: String) -> void:
 				status_message = "猎人现身一击命中，未消耗行动点。"
 	else:
 		match skill["id"]:
-			"attack":
-				status_message = "攻击失败：目标需正交相邻，且需要 1 点行动点。"
 			"judgment_mark":
 				status_message = "裁决印记失败：目标需在 1–4 格内且视线无遮挡。"
 			"oath_severance":
