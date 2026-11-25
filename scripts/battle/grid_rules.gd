@@ -59,3 +59,37 @@ static func has_clear_orthogonal_line(
 	if not ignore_target_occupant and occupied_cells.has(target):
 		return false
 	return true
+
+
+## Player-facing line of sight. Accepts any straight line: the same row, the same
+## column, or an exact 45-degree diagonal. Non-aligned offsets still fail because
+## there is no single straight line between them.
+## The orthogonal-only helper above is kept for enemy firing lanes, which stay
+## orthogonal by design.
+static func has_clear_line_of_sight(
+	start: Vector2i,
+	target: Vector2i,
+	blocked_cells: Dictionary,
+	occupied_cells: Dictionary,
+	ignore_target_occupant: bool = true
+) -> bool:
+	if start == target:
+		return false
+	var delta: Vector2i = target - start
+	var dx: int = absi(delta.x)
+	var dy: int = absi(delta.y)
+	if dx != 0 and dy != 0 and dx != dy:
+		return false
+
+	var step := Vector2i(signi(delta.x), signi(delta.y))
+	var cursor: Vector2i = start + step
+	while cursor != target:
+		if blocked_cells.has(cursor) or occupied_cells.has(cursor):
+			return false
+		cursor += step
+
+	if blocked_cells.has(target):
+		return false
+	if not ignore_target_occupant and occupied_cells.has(target):
+		return false
+	return true

@@ -234,7 +234,7 @@ func request_judgment_mark(target_actor_id: String) -> bool:
 	var distance: int = GridRulesScript.manhattan_distance(player.cell, target.cell)
 	if distance < 1 or distance > 4:
 		return false
-	if not GridRulesScript.has_clear_orthogonal_line(player.cell, target.cell, blocked_cells, get_occupied_cells()):
+	if not GridRulesScript.has_clear_line_of_sight(player.cell, target.cell, blocked_cells, get_occupied_cells()):
 		return false
 	if not ap.can_spend(1):
 		return false
@@ -264,7 +264,7 @@ func request_oath_severance(target_actor_id: String) -> bool:
 	var distance: int = GridRulesScript.manhattan_distance(player.cell, target.cell)
 	if distance < 1 or distance > 2:
 		return false
-	if not GridRulesScript.has_clear_orthogonal_line(player.cell, target.cell, blocked_cells, get_occupied_cells()):
+	if not GridRulesScript.has_clear_line_of_sight(player.cell, target.cell, blocked_cells, get_occupied_cells()):
 		return false
 	if not ap.can_spend(2) or not ap.spend(2):
 		return false

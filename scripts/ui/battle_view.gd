@@ -216,7 +216,7 @@ func _draw_target_hints() -> void:
 		var distance: int = absi(actor.cell.x - player.cell.x) + absi(actor.cell.y - player.cell.y)
 		if distance < range_min or distance > range_max:
 			continue
-		if skill["id"] in ["judgment_mark", "oath_severance"] and not GridRulesScript.has_clear_orthogonal_line(player.cell, actor.cell, controller.blocked_cells, controller.get_occupied_cells()):
+		if skill["id"] in ["judgment_mark", "oath_severance"] and not GridRulesScript.has_clear_line_of_sight(player.cell, actor.cell, controller.blocked_cells, controller.get_occupied_cells()):
 			continue
 		if skill["id"] == "oath_severance" and not controller.statuses.has_status(actor_id, &"judgment_mark"):
 			continue
