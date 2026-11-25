@@ -16,11 +16,9 @@ const SKILL_BTN_STEP: float = 54.0
 ## Prototype skill bar. Self-target skills resolve on press; actor-target skills wait for confirmation.
 ## Number keys 1–6 mirror the visible order; no default attack is selected.
 const SKILL_BAR := [
-	{"id": "oathguard_stance", "name": "誓盾架势", "hint": "自身 · 抵御下一次攻击", "cost": 1, "mode": "self"},
-	{"id": "watchwall", "name": "守望壁垒", "hint": "自身 · 建立十字守护区", "cost": 1, "mode": "self"},
-	{"id": "judgment_mark", "name": "裁决印记", "hint": "1–4 格 · 标记敌人", "cost": 1, "mode": "actor"},
-	{"id": "echo_counter", "name": "回响反击", "hint": "自身 · 受击时反击", "cost": 1, "mode": "self"},
-	{"id": "oath_severance", "name": "誓约裁断", "hint": "1–2 格 · 需印记 · 打断", "cost": 2, "mode": "actor"},
+	{"id": "oathkeeper_judgment_mark", "name": "裁决印记", "hint": "1–4 格 · DEF×0.8 · 施加标记", "cost": 1, "mode": "actor"},
+	{"id": "oath_shield", "name": "誓盾庇护", "hint": "自身 + 两格内友军 · 护盾", "cost": 1, "mode": "self"},
+	{"id": "absolute_guard", "name": "绝对守护", "hint": "2 AP + 5 能量 · 嘲讽反击", "cost": 2, "mode": "self"},
 	{"id": "hunter_summon", "name": "猎人通灵", "hint": "任意敌人 · 现身一击 · 冷却 2 回合", "cost": 0, "mode": "actor"},
 ]
 
@@ -106,22 +104,17 @@ func _draw_actors() -> void:
 		_draw_actor_badges(actor_id, actor, center)
 
 
-## Status markers: player stances ring the caster, judgment marks ring the enemy.
+## V2 status markers: shield/guard on Sevrin and the isolated mark on enemies.
 func _draw_actor_badges(actor_id: String, actor, center: Vector2) -> void:
 	if actor.team == "player":
-		if controller.statuses.has_status(actor_id, &"oathguard"):
+		if actor.shield > 0:
 			draw_arc(center, 27.0, 0.0, TAU, 48, Color("#7fb8d8"), 3.0)
-		if controller.statuses.has_status(actor_id, &"echo_counter"):
-			draw_arc(center, 31.0, 0.0, TAU, 48, Color("#e0b25c"), 2.0)
-		if controller.statuses.has_status(actor_id, &"echo"):
-			draw_arc(center, 35.0, 0.0, TAU, 48, Color("#c28ce0"), 2.0)
-			draw_string(ThemeDB.fallback_font, center + Vector2(-7.0, -38.0), "回", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#e8c9f6"))
+		if actor_id == "sevrin" and controller.statuses.has_status(actor_id, &"absolute_guard"):
+			draw_arc(center, 32.0, 0.0, TAU, 48, Color("#e0b25c"), 3.0)
 		return
-	if controller.statuses.has_status(actor_id, &"judgment_mark"):
+	if controller.statuses.has_status(actor_id, &"oathkeeper_mark"):
 		draw_arc(center, 27.0, 0.0, TAU, 48, Color("#c98be0"), 3.0)
 		draw_string(ThemeDB.fallback_font, center + Vector2(-7.0, -28.0), "印", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#e6c9f2"))
-	if controller.statuses.has_status(actor_id, &"exposed"):
-		draw_string(ThemeDB.fallback_font, center + Vector2(-7.0, 35.0), "破", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#f0a16f"))
 
 
 func _draw_telegraphs() -> void:
@@ -175,10 +168,8 @@ func _draw_target_hints() -> void:
 	var range_min: int = 1
 	var range_max: int = 1
 	match skill["id"]:
-		"judgment_mark":
+		"oathkeeper_judgment_mark":
 			range_max = 4
-		"oath_severance":
-			range_max = 2
 		"hunter_summon":
 			range_max = 99
 	for actor_id in controller.actors:
@@ -188,11 +179,9 @@ func _draw_target_hints() -> void:
 		var distance: int = absi(actor.cell.x - player.cell.x) + absi(actor.cell.y - player.cell.y)
 		if distance < range_min or distance > range_max:
 			continue
-		if skill["id"] in ["judgment_mark", "oath_severance"] and not GridRulesScript.has_clear_orthogonal_line(player.cell, actor.cell, controller.blocked_cells, controller.get_occupied_cells()):
+		if skill["id"] == "oathkeeper_judgment_mark" and not GridRulesScript.has_clear_orthogonal_line(player.cell, actor.cell, controller.blocked_cells, controller.get_occupied_cells()):
 			continue
-		if skill["id"] == "oath_severance" and not controller.statuses.has_status(actor_id, &"judgment_mark"):
-			continue
-		draw_arc(_cell_center(actor.cell), 31.0, 0.0, TAU, 48, Color(0.95, 0.85, 0.55, 0.55), 2.0)
+				draw_arc(_cell_center(actor.cell), 31.0, 0.0, TAU, 48, Color(0.95, 0.85, 0.55, 0.55), 2.0)
 
 
 func _draw_hud() -> void:
@@ -204,8 +193,9 @@ func _draw_hud() -> void:
 	if sevrin != null:
 		draw_string(font, Vector2(48, 263), "生命  %d / %d" % [sevrin.health, sevrin.max_health], HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("#b9b7ad"))
 		draw_string(font, Vector2(48, 290), "攻击 %d  防御 %d" % [sevrin.attack, sevrin.defense], HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#b9b7ad"))
+		draw_string(font, Vector2(48, 336), "护盾 %d  终极能量 %d / 5" % [sevrin.shield, sevrin.ultimate_energy], HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#8fc7dc"))
 		draw_string(font, Vector2(48, 313), "魔抗 %d" % sevrin.magic_resistance, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#b9b7ad"))
-	_draw_wrapped(font, status_message, Vector2(48, 348), 320.0, 15, Color("#aaa79e"), 2)
+	_draw_wrapped(font, status_message, Vector2(48, 370), 320.0, 15, Color("#aaa79e"), 2)
 	draw_string(font, Vector2(48, 425), "敌方行动顺序", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#c5a45c"))
 	var order_y := 455.0
 	for index in range(controller.intents.size()):
@@ -269,7 +259,7 @@ func _draw_skill_panel() -> void:
 	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 22.0), "点格子移动，最多两格直线", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
 	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 40.0), "自身技能点一下即生效", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
 	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 58.0), "选中技能后，黄圈标出可打目标", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
-	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 76.0), "数字键 1–6 施放/选择技能", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
+	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 76.0), "数字键 1–4 施放/选择技能", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
 	draw_string(font, Vector2(SKILL_PANEL_X, hint_y + 94.0), "Esc / 右键取消目标选择", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#8c8b84"))
 
 
@@ -324,12 +314,7 @@ func _input(event: InputEvent) -> void:
 				_on_skill_pressed(1)
 			KEY_3:
 				_on_skill_pressed(2)
-			KEY_4:
-				_on_skill_pressed(3)
-			KEY_5:
-				_on_skill_pressed(4)
-			KEY_6:
-				_on_skill_pressed(5)
+			
 			KEY_ESCAPE:
 				_cancel_target_selection()
 			KEY_ENTER, KEY_SPACE:
@@ -392,16 +377,14 @@ func _on_skill_pressed(index: int) -> void:
 		selected_skill = -1
 		var cast_ok := false
 		match skill["id"]:
-			"oathguard_stance":
-				cast_ok = controller.request_oathguard_stance()
-			"watchwall":
-				cast_ok = controller.request_watchwall()
-			"echo_counter":
-				cast_ok = controller.request_echo_counter()
+			"oath_shield":
+				cast_ok = controller.request_oath_shield("sevrin")
+			"absolute_guard":
+				cast_ok = controller.request_absolute_guard()
 		if cast_ok:
 			status_message = "「%s」已生效。" % str(skill["name"])
 		else:
-			status_message = "无法施放「%s」：行动点不足或当前阶段不允许。" % str(skill["name"])
+			status_message = "无法施放「%s」：检查行动点、终极能量与当前阶段。" % str(skill["name"])
 		queue_redraw()
 		return
 	selected_skill = index
@@ -413,10 +396,8 @@ func _use_skill_on(actor_id: String) -> void:
 	var skill: Dictionary = SKILL_BAR[selected_skill]
 	var cast_ok := false
 	match skill["id"]:
-		"judgment_mark":
-			cast_ok = controller.request_judgment_mark(actor_id)
-		"oath_severance":
-			cast_ok = controller.request_oath_severance(actor_id)
+		"oathkeeper_judgment_mark":
+			cast_ok = controller.request_oathkeeper_judgment_mark(actor_id)
 		"hunter_summon":
 			cast_ok = controller.request_hunter_summon(actor_id)
 		_:
@@ -426,18 +407,14 @@ func _use_skill_on(actor_id: String) -> void:
 
 	if cast_ok:
 		match skill["id"]:
-			"judgment_mark":
-				status_message = "裁决印记已施加，目标被标记。"
-			"oath_severance":
-				status_message = "誓约裁断命中，目标意图已被打断。"
+			"oathkeeper_judgment_mark":
+				status_message = "裁决印记已施加，造成伤害并标记目标。"
 			"hunter_summon":
 				status_message = "猎人现身一击命中，未消耗行动点。"
 	else:
 		match skill["id"]:
-			"judgment_mark":
+			"oathkeeper_judgment_mark":
 				status_message = "裁决印记失败：目标需在 1–4 格内且视线无遮挡。"
-			"oath_severance":
-				status_message = "誓约裁断失败：目标需带裁决印记，且距离 1–2 格。"
 			"hunter_summon":
 				status_message = "猎人通灵失败：冷却未结束，或目标四周没有空位。"
 	queue_redraw()
