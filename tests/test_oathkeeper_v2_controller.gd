@@ -15,6 +15,7 @@ func _run() -> void:
 	_test_oath_vow_passive_and_shield_application()
 	_test_oath_vow_counts_once_per_intent_and_caps_at_three()
 	_test_v2_judgment_mark_damage_replacement_and_expiry()
+	_test_v2_judgment_mark_rejects_invalid_targets()
 	_test_oath_shield_validation_and_duration()
 	_test_absolute_guard_taunt_counter_and_energy()
 	print("Oathkeeper v2 controller tests complete. Failures: ", failures.size())
@@ -138,6 +139,9 @@ func _test_absolute_guard_taunt_counter_and_energy() -> void:
 	var area_intent = IntentScript.new("area_test", "vanguard_00", "ground_pulse", IntentScript.TargetMode.AREA_LOCKED, "", Vector2i(3, 1), area_cells, 100, 0)
 	battle._redirect_single_target_intent_to_sevrin(area_intent)
 	_check(area_intent.target_cell == Vector2i(3, 1) and area_intent.affected_cells == area_cells, "Absolute Guard never changes area attack geometry")
+	var ranged = IntentScript.new("ranged_test", "vanguard_00", "aimed_shot", IntentScript.TargetMode.TILE_LOCKED, "", Vector2i(4, 1), [Vector2i(4, 1)], 100, 0)
+	battle._redirect_single_target_intent_to_sevrin(ranged)
+	_check(ranged.target_cell == Vector2i(4, 1), "Absolute Guard does not redirect an attack outside its two-cell radius")
 
 	battle._apply_damage("sevrin", 1, "vanguard_00", "basic_melee", "physical", true, "counter_test_intent")
 	var stacks_after_hit: int = battle.get_oath_vow_stacks()
