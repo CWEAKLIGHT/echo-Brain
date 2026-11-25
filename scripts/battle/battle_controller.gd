@@ -38,6 +38,8 @@ var battle_result: String = ""
 var summon_last_used_turn: int = -1
 var statuses: BattleStatusCollection = StatusCollectionScript.new()
 var area_effects: BattleAreaEffectCollection = AreaEffectCollectionScript.new()
+## actor_id -> player turn number after which the oath shield expires.
+var oath_shield_expiry_turn: Dictionary = {}
 
 
 func _ready() -> void:
@@ -82,6 +84,7 @@ func start_encounter(
 	actors.clear()
 	statuses.clear_all()
 	area_effects.clear_all()
+	oath_shield_expiry_turn.clear()
 	blocked_cells = candidate_blockers
 	intents.clear()
 	event_sequence = 0
@@ -115,6 +118,58 @@ func get_occupied_cells(exclude_actor_id: String = "") -> Dictionary:
 
 func get_actor(actor_id: String):
 	return actors.get(actor_id)
+
+
+func get_oath_vow_stacks(actor_id: String = "sevrin") -> int:
+	var vow = statuses.get_status(actor_id, &"oath_vow")
+	return 0 if vow == null else vow.stacks
+
+
+func request_oath_shield(target_actor_id: String) -> bool:
+	## Applies a DEF-scaled shield to Sevrin and one selected allied actor.
+	## The target may be Sevrin himself; allied units are supported by the API
+	## without adding a companion to the prototype encounter roster.
+	if phase != BattlePhase.PLAYER or not actors.has("sevrin") or not actors.has(target_actor_id):
+		return false
+	var caster = actors["sevrin"]
+	var target = actors[target_actor_id]
+	if not caster.is_alive() or not target.is_alive() or target.team != "player":
+		return false
+	if GridRulesScript.manhattan_distance(caster.cell, target.cell) > 2:
+		return false
+	if not ap.can_spend(1):
+		return false
+	var vow_stacks: int = get_oath_vow_stacks("sevrin")
+	var raw_shield: int = floori(float(caster.defense) * 0.3 * (1.0 + 0.1 * float(vow_stacks)))
+	var shielded_ids: Array[String] = ["sevrin"]
+	if target_actor_id != "sevrin":
+		shielded_ids.append(target_actor_id)
+	if not ap.spend(1):
+		return false
+	for shielded_id in shielded_ids:
+		var shielded = actors[shielded_id]
+		var previous_shield: int = shielded.shield
+		var final_shield: int = shielded.grant_shield(raw_shield)
+		# Reapplication refreshes the two-player-turn duration even when the
+		# retained shield amount is stronger than the newly calculated amount.
+		oath_shield_expiry_turn[shielded_id] = turn_number + 1
+		_emit_event(
+			"oath_shield_applied",
+			"sevrin",
+			shielded_id,
+			"raw=%d previous=%d current=%d cap=%d expires_after_player_turn=%d" % [
+				raw_shield,
+				previous_shield,
+				final_shield,
+				floori(float(shielded.max_health) * 0.15),
+				turn_number + 1
+			]
+		)
+	if vow_stacks > 0:
+		statuses.remove_status("sevrin", &"oath_vow")
+		_emit_event("status_consumed", "sevrin", "sevrin", "status=oath_vow stacks=%d" % vow_stacks)
+	_emit_event("skill_resolved", "sevrin", target_actor_id, "skill=oath_shield ap=1 vow_stacks=%d shield=%d" % [vow_stacks, raw_shield])
+	return true
 
 
 func request_player_move(path: Array[Vector2i]) -> bool:
@@ -343,6 +398,7 @@ func _is_cell_missing(cell: Vector2i) -> bool:
 func end_player_turn() -> bool:
 	if phase != BattlePhase.PLAYER:
 		return false
+	_expire_oath_shields_for_current_turn()
 	var expired_statuses: int = statuses.expire_all_boundary(&"player_phase_end")
 	if expired_statuses > 0:
 		_emit_event("statuses_expired", "", "", "boundary=player_phase_end count=%d" % expired_statuses)
@@ -351,6 +407,20 @@ func end_player_turn() -> bool:
 	_emit_event("turn_ended", "sevrin", "", "turn=%d" % turn_number)
 	_resolve_enemy_phase()
 	return true
+
+
+func _expire_oath_shields_for_current_turn() -> void:
+	var expired_ids: Array[String] = []
+	for actor_id in oath_shield_expiry_turn.keys():
+		if int(oath_shield_expiry_turn[actor_id]) <= turn_number:
+			expired_ids.append(String(actor_id))
+	for actor_id in expired_ids:
+		if actors.has(actor_id):
+			var actor = actors[actor_id]
+			var removed: int = actor.shield
+			actor.shield = 0
+			_emit_event("oath_shield_expired", actor_id, actor_id, "removed=%d turn=%d" % [removed, turn_number])
+		oath_shield_expiry_turn.erase(actor_id)
 
 
 func _begin_player_turn() -> void:
@@ -613,7 +683,14 @@ func _apply_damage(
 		final_reduction_percent = 35
 		triggered_statuses.append(&"oathguard")
 	var area_reductions: Array[int] = area_effects.get_damage_reductions_for_actor(target)
-	var applied: int = target.apply_damage(amount, damage_type, final_reduction_percent, resistance_penalty, area_reductions)
+	var damage_result: Dictionary = target.apply_damage_with_result(amount, damage_type, final_reduction_percent, resistance_penalty, area_reductions)
+	var applied: int = int(damage_result.get("health_damage", 0))
+	var was_hit: bool = bool(damage_result.get("hit", false))
+	if was_hit and is_public_intent and target_actor_id == "sevrin" and actors.has(source_actor_id) and actors[source_actor_id].team == "enemy":
+		var current_vow_stacks: int = get_oath_vow_stacks("sevrin")
+		if current_vow_stacks < 3:
+			statuses.apply_status(&"oath_vow", source_actor_id, "sevrin", 1, 3, -1, &"", StatusCollectionScript.new().get_script().get("STACK_ADD") if false else &"add")
+			_emit_event("status_applied", source_actor_id, "sevrin", "status=oath_vow stacks=%d" % get_oath_vow_stacks("sevrin"))
 	if applied > 0:
 		for status_id in triggered_statuses:
 			statuses.consume_trigger(target_actor_id, status_id)
@@ -621,7 +698,7 @@ func _apply_damage(
 			if status_id == &"oathguard" and is_public_intent and target.is_alive():
 				statuses.apply_status(&"echo", target_actor_id, target_actor_id, 1, 1, -1, &"")
 				_emit_event("status_applied", target_actor_id, target_actor_id, "status=echo stacks=1 source=public_enemy_intent")
-	_emit_event("damage_applied", source_actor_id, target_actor_id, "action=%s type=%s public_intent=%s raw=%d resistance_penalty=%d area_reductions=%s final_reduction=%d%% applied=%d health=%d" % [action_id, damage_type, str(is_public_intent), amount, resistance_penalty, str(area_reductions), final_reduction_percent, applied, target.health])
+	_emit_event("damage_applied", source_actor_id, target_actor_id, "action=%s type=%s public_intent=%s raw=%d resistance_penalty=%d area_reductions=%s final_reduction=%d%% absorbed=%d applied=%d health=%d shield=%d" % [action_id, damage_type, str(is_public_intent), amount, resistance_penalty, str(area_reductions), final_reduction_percent, int(damage_result.get("absorbed", 0)), applied, target.health, target.shield])
 	if target.is_defeated:
 		var removed_statuses: int = statuses.clear_actor(target_actor_id)
 		if removed_statuses > 0:
