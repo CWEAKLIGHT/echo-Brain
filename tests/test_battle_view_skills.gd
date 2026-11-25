@@ -1,20 +1,13 @@
-extends SceneTree
+extends "res://tests/framework/test_case.gd"
 
 const MainScene = preload("res://scenes/main/main.tscn")
-
-var failures: Array[String] = []
-
-
-func _initialize() -> void:
-	call_deferred("_run")
 
 
 func _run() -> void:
 	await _test_no_default_basic_attack()
 	await _test_self_skill_controls()
 	await _test_target_skill_flow()
-	print("Battle view skill integration test run complete. Failures: ", failures.size())
-	quit(1 if not failures.is_empty() else 0)
+	_report()
 
 
 func _test_no_default_basic_attack() -> void:
@@ -94,10 +87,3 @@ func _tap_cell(view: Node, cell: Vector2i) -> void:
 	var position := Vector2(384.0 + float(cell.x) * 64.0 + 32.0, 72.0 + float(cell.y) * 64.0 + 32.0)
 	view.call("_handle_tap", position)
 
-
-func _check(condition: bool, label: String) -> void:
-	if condition:
-		print("PASS: ", label)
-	else:
-		failures.append(label)
-		push_error("FAIL: " + label)

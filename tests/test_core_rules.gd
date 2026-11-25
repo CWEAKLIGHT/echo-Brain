@@ -1,23 +1,9 @@
-extends SceneTree
+extends "res://tests/framework/test_case.gd"
 
 const GridRulesScript = preload("res://scripts/battle/grid_rules.gd")
 const APBudgetScript = preload("res://scripts/battle/ap_budget.gd")
 const BattleActorScript = preload("res://scripts/actors/battle_actor.gd")
 const CombatMathScript = preload("res://scripts/battle/combat_math.gd")
-
-var failures: int = 0
-
-
-func _initialize() -> void:
-	call_deferred("_run")
-
-
-func _check(condition: bool, label: String) -> void:
-	if condition:
-		print("PASS: ", label)
-	else:
-		failures += 1
-		push_error("FAIL: " + label)
 
 
 func _run() -> void:
@@ -64,5 +50,4 @@ func _run() -> void:
 	_check(armored_actor.apply_damage(2000, "physical") == 1000, "physical damage uses defense")
 	_check(armored_actor.apply_damage(2000, "magical") == 1333, "magical damage uses magic resistance instead of defense")
 
-	print("Core rules test run complete. Failures: ", failures)
-	quit(1 if failures > 0 else 0)
+	_report()

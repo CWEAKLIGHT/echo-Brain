@@ -17,7 +17,7 @@
 | 场景（.tscn） | 1 | 单节点 |
 | 资源（.tres） | **0** | 数据全部在代码里构造 |
 | 测试套件 | 15 | 582 条断言 |
-| 文档（.md） | 17 | — |
+| 文档（.md） | 18 | 含本文 |
 
 代码分布高度集中：
 
@@ -76,10 +76,10 @@ main.tscn (Node2D)
 | P5 | **敌人属性硬编码** | `start_encounter` 里 4 层嵌套三元（`2000 if marksman else (2600 if ... else 3200)`） | 新增敌人类型要动控制器核心 |
 | P6 | **UI 单体化** | 562 行单文件，`_draw()` 里串行画棋盘/单位/预告/HUD/技能栏/结算 | 无法单独调整某一块；Android 适配无从下手 |
 | P7 | **即时模式绘制，无 Control 节点** | 唯一场景只有一个 `Node2D` | 布局全靠手算坐标（48/112/145/235…），改字号就错位；触控热区与视觉不一致风险高 |
-| P8 | **数值与样式散落** | `battle_view.gd` 内 68 处颜色字面量、26 处硬编码坐标；控制器内 37 处数值常量 | 换主题或适配分辨率需全局搜索 |
+| P8 | **数值与样式散落** | `battle_view.gd` 内 68 处颜色字面量、26 处硬编码坐标；控制器内约 37 处数值常量 | 换主题或适配分辨率需全局搜索 |
 | P9 | **测试无公共框架** | 15 个文件各自实现 `_initialize/_check/quit` | 重复约 15×25 行；无法一次跑全部并汇总 |
 | P10 | **无 CI** | 无 `.github/workflows` | 回归靠人工；项目规则明确禁止未经批准的 Actions，需先取得授权 |
-| P11 | **文档无分层** | `docs/` 下 17 篇平铺，设计规格、进度、历史验证混在一起 | 新成员不知道从哪读起 |
+| P11 | **文档无分层** | `docs/` 下 18 篇平铺，设计规格、进度、历史验证混在一起 | 新成员不知道从哪读起 |
 | P12 | **中文硬编码在 UI** | `battle_view.gd` 内 175 处中文字面量 | Prototype 阶段可接受；若要多语言需重做 |
 
 ---
@@ -241,7 +241,9 @@ main.tscn (Node2D)
 | L4 表现 | L1 / L2 / L3 的只读 API | 不得直接改 L2 对象字段 |
 | L5 平台 | L4 | — |
 
-可用一条测试守护第 4 条原则：在无头模式下不加载 `scripts/ui/`，跑完 582 条断言。当前已能做到（测试不依赖 UI 脚本），重构后必须保持。
+可用一条测试守护第 4 条原则：在无头模式下不加载 `scripts/ui/`，跑完全部规则与数据层断言。
+
+**现状核实（2026-11-25）**：15 个套件中 14 个不依赖 UI，唯一例外是 `test_battle_view_skills.gd`——它主动 `instantiate` 主场景来验证 UI 到控制器的调用链，属于**有意的集成测试**。因此"删掉表现层"的实际含义是：删除 UI 后，14 个套件仍须全绿，`test_battle_view_skills` 随之失效并被一并删除或改为桩替身。这条要在 M3 之前明确，否则拆 UI 时会误以为有测试保护。
 
 ---
 
@@ -269,6 +271,8 @@ main.tscn (Node2D)
 **`EnemyDefinition`（Resource，新增）**
 字段：`archetype_id`、`display_name_zh`、`health`、`attack`、`defense`、`magic_resistance`、`intent_priority`、`action_ids`。
 集成点：`start_encounter` 用 `EnemyDefinition` 建 `BattleActor`，替换现有 4 层嵌套三元。
+
+**边界说明（重要）**：数据化只覆盖**属性**。敌人的**行为**（先锋的蓄力锁格、神射手的射线、术士的十字区域）目前是控制器里的 `_generate_*_intent` 分支，**新增一种全新行为仍然要写代码**。数据化能解决的是"调数值"和"复用已有行为的新敌人"，不能解决"新机制"。这一区分要写进验收标准，避免对数据化收益的过度预期。
 
 **`LevelDefinition`（Resource，由 `EncounterDefinition` 演化）**
 新增字段：`enemy_definition_ids`（引用 `EnemyDefinition` 而非字符串兵种名）、`recommended_order`。
@@ -440,7 +444,7 @@ docs/framework-proposal   ← 本文档（当前）
 2. `scripts/ui/` 下无单文件超过 200 行。
 3. `scripts/rules/` 不 import 任何 `scripts/ui/` 模块（可用 grep 断言）。
 4. 规则层无魔法数字：所有数值来自 `Balance` 或数据资源。
-5. 新增一种敌人只需加一个 `.tres` + 一处关卡引用，不改控制器。
+5. 新增一种**复用已有行为**的敌人只需加一个 `.tres` + 一处关卡引用，不改控制器；新增**全新行为**仍需实现 `_generate_*_intent` 分支，并在本文档登记。
 6. 新增一个关卡只需加一个 `.tres`，不改代码。
 7. 一条命令跑完全部测试并汇总，输出 0 失败。
 8. 15 套件断言总数 ≥ 582（不得因重构减少覆盖）。
@@ -448,11 +452,16 @@ docs/framework-proposal   ← 本文档（当前）
 
 ---
 
-## 九、待作者确认的决策点
+## 九、已决策与待确认事项
 
-以下几点超出我的判断范围，需作者拍板：
+### 已决策（2026-11-25，项目所有者）
+
+1. **v1 技能废弃**：`oathkeeper_skill_catalog.gd` 及 6 个 v1 遗留 `request_*` 接口确认永久废弃，不再回归。
+   - 处置调整：第 5.3 节的删除从「M4 延后」提前到 **M2 完成后的独立提交**，但**仍须先迁移那 5 个测试文件**。
+   - 具体做法：`test_battle_controller`、`test_battle_area_effects`、`test_battle_echo_counter`、`test_battle_stats`、`test_diagonal_line_of_sight` 中涉及 v1 接口的用例，改为只测 v2 等价能力；v1 专属用例随接口一并删除，并在 `docs/archive/` 留一份用例清单，避免"删了测试等于降低覆盖"的争议。
+
+### 待确认
 
 1. **是否批准 CI**：项目规则明确要求 GitHub Actions 需单独批准。
-2. **v1 技能是否永久废弃**：`oathkeeper_skill_catalog.gd` 是否还有回归计划？若可能回归，5.3 节的删除应缓行。
-3. **UI 是否迁移到 Control 节点**：M3-4 是可选步骤。若确定要做 Android 自适应布局，建议纳入；若 Android 只做固定横屏，immediate-mode 也够用。
-4. **数值平衡阶段**：当前 12000 生命 / 2000 攻击的规模是否在 0.2 前调整？调数值会牵动 `Balance` 资源的字段设计。
+2. **UI 是否迁移到 Control 节点**：M3-4 是可选步骤。若确定要做 Android 自适应布局，建议纳入；若 Android 只做固定横屏，immediate-mode 也够用。
+3. **数值平衡阶段**：当前 12000 生命 / 2000 攻击的规模是否在 0.2 前调整？调数值会牵动 `Balance` 资源的字段设计。

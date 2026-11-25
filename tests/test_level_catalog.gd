@@ -1,21 +1,7 @@
-extends SceneTree
+extends "res://tests/framework/test_case.gd"
 
 const ControllerScript = preload("res://scripts/battle/battle_controller.gd")
 const LevelCatalogScript = preload("res://scripts/battle/level_catalog.gd")
-
-var failures: Array[String] = []
-
-
-func _initialize() -> void:
-	call_deferred("_run")
-
-
-func _check(condition: bool, label: String) -> void:
-	if condition:
-		print("PASS: ", label)
-	else:
-		failures.append(label)
-		push_error("FAIL: " + label)
 
 
 func _run() -> void:
@@ -76,5 +62,4 @@ func _run() -> void:
 	unknown.enemy_archetypes = ["sorcerer"]
 	_check(not unknown.is_valid(), "unknown archetype fails definition validation")
 
-	print("Level catalog test run complete. Failures: ", failures.size())
-	quit(1 if not failures.is_empty() else 0)
+	_report()

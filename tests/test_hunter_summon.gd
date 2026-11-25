@@ -1,4 +1,4 @@
-extends SceneTree
+extends "res://tests/framework/test_case.gd"
 
 ## Covers the hunter summon: a free single strike on a two-turn cooldown that
 ## leaves no unit behind. Exercises the cooldown accounting, the deterministic
@@ -6,20 +6,6 @@ extends SceneTree
 
 const ControllerScript = preload("res://scripts/battle/battle_controller.gd")
 const CombatMathScript = preload("res://scripts/battle/combat_math.gd")
-
-var failures: int = 0
-
-
-func _initialize() -> void:
-	call_deferred("_run")
-
-
-func _check(condition: bool, label: String, detail: String = "") -> void:
-	if condition:
-		print("PASS: ", label)
-	else:
-		failures += 1
-		push_error("FAIL: " + label + ("" if detail.is_empty() else "  [" + detail + "]"))
 
 
 func _run() -> void:
@@ -29,8 +15,7 @@ func _run() -> void:
 	_check_invalid_targets()
 	_check_lethal_strike_ends_the_battle()
 
-	print("Hunter summon test run complete. Failures: ", failures)
-	quit(1 if failures > 0 else 0)
+	_report()
 
 
 func _check_ready_on_a_fresh_encounter() -> void:

@@ -1,14 +1,8 @@
-extends SceneTree
+extends "res://tests/framework/test_case.gd"
 
 const ControllerScript = preload("res://scripts/battle/battle_controller.gd")
 const ActorScript = preload("res://scripts/actors/battle_actor.gd")
 const IntentScript = preload("res://scripts/battle/battle_intent.gd")
-
-var failures: Array[String] = []
-
-
-func _initialize() -> void:
-	call_deferred("_run")
 
 
 func _run() -> void:
@@ -18,8 +12,7 @@ func _run() -> void:
 	_test_v2_judgment_mark_rejects_invalid_targets()
 	_test_oath_shield_validation_and_duration()
 	_test_absolute_guard_taunt_counter_and_energy()
-	print("Oathkeeper v2 controller tests complete. Failures: ", failures.size())
-	quit(1 if not failures.is_empty() else 0)
+	_report()
 
 
 func _test_oath_vow_passive_and_shield_application() -> void:
@@ -202,10 +195,3 @@ func _test_absolute_guard_cleans_up_on_sevrin_death() -> void:
 	_check(not battle.statuses.has_status("sevrin", &"absolute_guard"), "Sevrin defeat clears Absolute Guard immediately")
 	battle.queue_free()
 
-
-func _check(condition: bool, label: String) -> void:
-	if condition:
-		print("PASS: ", label)
-	else:
-		failures.append(label)
-		push_error("FAIL: " + label)

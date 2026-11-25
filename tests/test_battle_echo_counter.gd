@@ -1,13 +1,7 @@
-extends SceneTree
+extends "res://tests/framework/test_case.gd"
 
 const ControllerScript = preload("res://scripts/battle/battle_controller.gd")
 const IntentScript = preload("res://scripts/battle/battle_intent.gd")
-
-var failures: Array[String] = []
-
-
-func _initialize() -> void:
-	call_deferred("_run")
 
 
 func _run() -> void:
@@ -16,8 +10,7 @@ func _run() -> void:
 	_test_non_intent_damage_does_not_grant_echo()
 	_test_evaded_intent_does_not_trigger_counter()
 	_test_lethal_counter_preserves_resolved_intent()
-	print("Battle echo counter test run complete. Failures: ", failures.size())
-	quit(1 if not failures.is_empty() else 0)
+	_report()
 
 
 func _test_oathguard_grants_echo_and_counter() -> void:
@@ -97,10 +90,3 @@ func _test_lethal_counter_preserves_resolved_intent() -> void:
 	_check(battle.phase == ControllerScript.BattlePhase.FINISHED and battle.battle_result == "victory", "defeating the final attacker ends the encounter in victory")
 	battle.queue_free()
 
-
-func _check(condition: bool, label: String) -> void:
-	if condition:
-		print("PASS: ", label)
-	else:
-		failures.append(label)
-		push_error("FAIL: " + label)

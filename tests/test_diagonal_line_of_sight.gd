@@ -1,21 +1,7 @@
-extends SceneTree
+extends "res://tests/framework/test_case.gd"
 
 const ControllerScript = preload("res://scripts/battle/battle_controller.gd")
 const GridRulesScript = preload("res://scripts/battle/grid_rules.gd")
-
-var failures: Array[String] = []
-
-
-func _initialize() -> void:
-	call_deferred("_run")
-
-
-func _check(condition: bool, label: String) -> void:
-	if condition:
-		print("PASS: ", label)
-	else:
-		failures.append(label)
-		push_error("FAIL: " + label)
 
 
 func _run() -> void:
@@ -26,8 +12,7 @@ func _run() -> void:
 	_test_non_aligned_targets_still_fail()
 	_test_marksman_lane_stays_orthogonal()
 
-	print("Diagonal line-of-sight test run complete. Failures: ", failures.size())
-	quit(1 if not failures.is_empty() else 0)
+	_report()
 
 
 func _test_line_of_sight_geometry() -> void:

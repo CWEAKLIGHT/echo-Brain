@@ -84,30 +84,37 @@ ECHO 是一款使用 Godot 4.7.2 Standard 与 GDScript 开发的 2D 回合制战
 
 ## 自动化测试
 
-在项目根目录、Godot 4.7.2 Standard 环境中运行：
+在项目根目录、Godot 4.7.2 Standard 环境中，一条命令跑完全部套件并汇总：
 
 ```sh
-godot --headless --editor --path . --quit
-godot --headless --path . --script res://tests/test_core_rules.gd
-godot --headless --path . --script res://tests/test_battle_status.gd
-godot --headless --path . --script res://tests/test_battle_area_effects.gd
-godot --headless --path . --script res://tests/test_battle_echo_counter.gd
-godot --headless --path . --script res://tests/test_battle_controller.gd
-godot --headless --path . --script res://tests/test_battle_view_skills.gd
-godot --headless --path . --script res://tests/test_skill_definitions.gd
-godot --headless --path . --script res://tests/test_turn_bookkeeping.gd
-godot --headless --path . --script res://tests/test_hunter_summon.gd
-godot --headless --path . --script res://tests/test_level_catalog.gd
-godot --headless --path . --script res://tests/test_battle_stats.gd
-godot --headless --path . --script res://tests/test_diagonal_line_of_sight.gd
-godot --headless --path . --script res://tests/test_oathkeeper_v2_actor.gd
-godot --headless --path . --script res://tests/test_oathkeeper_v2_controller.gd
-godot --headless --path . --script res://tests/test_oathkeeper_v2_skill_catalog.gd
+tests/run_all.sh          # bash
+tests\run_all.bat         # Windows：双击，或 cmd 中执行
 ```
 
-如果 Windows 没有把 Godot 加入 PATH，请使用 Godot 可执行文件的完整路径替换命令中的 `godot`。
+输出形如：
 
-以上命令已于 2026-11-25 在 Godot 4.7.2 中全部执行，结果为零失败（十五个套件共 582 条断言）。后续任何改动都应重新执行，并以实际输出中的零失败为准；headless 测试不能替代 F5 主场景的鼠标、键盘和画面检查。
+```
+test_battle_controller                 162 ok
+...
+-----
+suites=15 assertions=582 failures=0 broken=0
+```
+
+退出码为 0 仅当所有套件 `failures=0` 且无一崩溃。Windows 若未把 Godot 加入 PATH，用参数指定可执行文件：
+
+```powershell
+.\tests\run_all.ps1 -Godot "C:\Godot\Godot_v4.7.2-stable_win64_console.exe"
+```
+
+单独跑一个套件：
+
+```sh
+godot --headless --path . --script res://tests/test_core_rules.gd
+```
+
+每个套件结束时打印一行机器可读结果 `RESULT <名称> assertions=<n> failures=<n>`。
+
+当前基线为 **十五个套件、582 条断言、0 失败**，逐套件明细见 `docs/engineering/BASELINE.md`。后续任何改动都应重跑并以零失败为准；headless 测试不能替代 F5 主场景的鼠标、键盘和画面检查。
 
 ## 当前边界
 

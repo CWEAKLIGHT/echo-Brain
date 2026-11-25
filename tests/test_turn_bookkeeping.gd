@@ -1,4 +1,4 @@
-extends SceneTree
+extends "res://tests/framework/test_case.gd"
 
 ## Covers the turn bookkeeping primitives that the battle logic depends on but
 ## no existing suite exercises directly: the AP ledger, the intent state
@@ -10,20 +10,6 @@ const IntentScript = preload("res://scripts/battle/battle_intent.gd")
 const AreaEffectScript = preload("res://scripts/battle/battle_area_effect.gd")
 const AreaEffectCollectionScript = preload("res://scripts/battle/battle_area_effect_collection.gd")
 
-var failures: int = 0
-
-
-func _initialize() -> void:
-	call_deferred("_run")
-
-
-func _check(condition: bool, label: String) -> void:
-	if condition:
-		print("PASS: ", label)
-	else:
-		failures += 1
-		push_error("FAIL: " + label)
-
 
 func _run() -> void:
 	_check_ap_ledger()
@@ -31,8 +17,7 @@ func _run() -> void:
 	_check_area_effect_clearing()
 	_check_occupied_cells()
 
-	print("Turn bookkeeping test run complete. Failures: ", failures)
-	quit(1 if failures > 0 else 0)
+	_report()
 
 
 func _check_ap_ledger() -> void:
