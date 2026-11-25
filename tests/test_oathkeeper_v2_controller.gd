@@ -130,7 +130,7 @@ func _test_absolute_guard_taunt_counter_and_energy() -> void:
 	_check(not battle.request_absolute_guard(), "Absolute Guard rejects activation below five energy")
 	_check(sevrin.ultimate_energy == 4 and battle.ap.current == 3, "failed Absolute Guard activation preserves energy and AP")
 	sevrin.ultimate_energy = 5
-	battle.actors["ally_test"] = ActorScript.new("ally_test", "player", Vector2i(3, 1), 1000, "support", 300, 100, 100)
+	battle.actors["ally_test"] = ActorScript.new("ally_test", "player", Vector2i(1, 2), 1000, "support", 300, 100, 100)
 	_check(battle.request_absolute_guard(), "Absolute Guard can be activated at five energy")
 	_check(sevrin.ultimate_energy == 1 and battle.ap.current == 1, "Absolute Guard spends five energy, gains the once-per-turn active-action point, and spends two AP")
 	_check(battle.statuses.has_status("sevrin", &"absolute_guard"), "Absolute Guard status is active after casting")
@@ -196,7 +196,7 @@ func _test_absolute_guard_cleans_up_on_sevrin_death() -> void:
 	_check(battle.request_absolute_guard(), "Absolute Guard activates before Sevrin is defeated")
 	_check(battle.statuses.has_status("sevrin", &"absolute_guard"), "Absolute Guard status exists before defeat")
 	sevrin.health = 1
-	battle._apply_damage("sevrin", 1, "vanguard_00", "death_test", "physical", false)
+	battle._apply_damage("sevrin", 10000, "vanguard_00", "death_test", "physical", false)
 	battle._check_battle_end()
 	_check(battle.phase == ControllerScript.BattlePhase.FINISHED, "Sevrin defeat ends the encounter")
 	_check(not battle.statuses.has_status("sevrin", &"absolute_guard"), "Sevrin defeat clears Absolute Guard immediately")
