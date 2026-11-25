@@ -1,6 +1,11 @@
 # Godot 4 generated files
 .godot/
 
+# Resource UID sidecar files (*.gd.uid) are tracked on purpose.
+# Godot derives them from the res:// path, so they change when a file is
+# moved or renamed. Committing them keeps existing uid:// references valid
+# for every collaborator. Do not add *.uid to this file.
+
 # Imported assets and editor cache
 .import/
 

@@ -1,85 +1,128 @@
 # ECHO
 
-一款面向 Android 的 2D 回合制战术 roguelite，使用 Godot 4.x 和 GDScript 开发。
+ECHO 是一款使用 Godot 4.7.2 Standard 与 GDScript 开发的 2D 回合制战术游戏原型。
 
 ## 项目状态
 
-- **阶段**：项目搭建（Phase 0）
-- **原型目标**：Prototype 0.1
-- **引擎**：Godot 4.x
-- **主要平台**：Android（横屏优先）
-- **模式**：单机、离线
+- **里程碑**：Prototype 0.1，可运行战斗切片
+- **引擎版本**：Godot 4.7.2 Standard
+- **桌面开发与验证平台**：Windows 10/11（64 位）
+- **目标画面**：1280 × 720，横向布局
+- **移动端方向**：Android 横屏；本阶段优先完成 Windows 桌面导入与玩法验证
+- **验证状态**：已在 Godot 4.7.2 中完成导入、十二个测试套件与主场景无头运行（2026-11-25，479 条断言 0 失败）；Windows 交互与画面、Android 导出仍待人工验证
 
-本仓库是 ECHO 的独立仓库，与「时光」项目分开维护。
+本仓库是 ECHO 的独立项目，与「拾光」完全分离。
 
-## Prototype 0.1 范围
+## Windows 导入与运行
 
-- 一名可玩角色：誓守者 Sevrin
-- 一名临时猎人同伴
-- 三种普通敌人
-- 一张完整战场
-- 五到六个技能
-- 玩家回合 3 点行动点（AP）
-- 敌人预告与战术干扰
-- 胜利与失败结算
-- 触屏优先的 Android 操作
+1. 安装 **Godot 4.7.2 Standard** 的 Windows x86_64 版本。不要下载 .NET 版本。
+2. 在 GitHub 仓库页面下载 `main` 分支 ZIP，并完整解压到普通文件夹。
+3. 启动 Godot，在项目管理器中点击 **导入（Import）**。
+4. 选择解压目录中的 `project.godot` 文件，点击导入并编辑。
+5. 等待首次资源扫描完成，然后按 **F5** 运行主场景。
 
-原型范围是刻意冻结的。局内成长、契约、收集、经济系统，以及完整的 roguelite 章节循环，都不在 Prototype 0.1 内。
+也可以直接下载当前主线：
 
-## 设计约束
+- [下载 main 分支 ZIP](https://github.com/qingxu443-dev/echo-game/archive/refs/heads/main.zip)
+- [打开 ECHO GitHub 仓库](https://github.com/qingxu443-dev/echo-game/tree/main)
 
-- 俯视方形网格战场，不支持斜向移动。
-- 一次移动消耗 1 AP，最多沿正交方向移动两格。
-- 玩家每回合基础 AP 为 3。
-- 动作即时结算；只有在确认目标之前才能取消。
-- 敌人预告在玩家回合开始时生成，并按清晰可见的固定顺序执行。
-- 普通敌人的预告必须与实际执行完全一致。
-- 不提供局内存档、检查点或对局恢复。只有局外进度可以持久化。
+首次运行不需要 Android 导出模板，也不需要 Godot .NET 版本。
 
-规则尚未确认时，实现不得把提案悄悄变成最终规则。未决事项应先记录在设计文档中，再进入实现。
+## 当前可玩的战斗内容
+
+- 瑟弗林（守誓者）与 8 × 8 正交网格战场。
+- 三种敌人：先锋、神射手、区域术士。
+- 每回合 3 点 AP；移动消耗 1 AP，最多移动两格。瑟弗林的普通攻击已从玩家操作界面移除。
+- 敌人意图在玩家回合开始时公开，并按固定顺序执行。
+- 五个主动技能已接入第一版战斗界面和控制器：
+  - **誓盾架势**：下一次承伤额外降低 35%，符合条件的公开敌方攻击可产生回响。
+  - **守望壁垒**：以施放位置为中心建立五格十字区域，区域内友方承伤降低 20%。
+  - **裁决印记**：标记 1–4 格内且视线可达的敌人，干预其后续攻击。
+  - **回响反击**：预备一次反击；符合条件的公开敌方攻击命中后触发。
+  - **誓约裁断**：对 1–2 格内带有裁决印记的敌人造成 1.4×物理伤害，并打断其当前活动意图。
+- 技能按钮、AP 消耗、目标选择、目标范围提示和状态标识。
+- 猎人通灵技能栏显示余泡泡图标；本次仅增加展示资源，不改变原有通灵执行逻辑。
+- 鼠标操作与键盘技能快捷键。
+
+## 关卡与结算
+
+战斗按固定关卡配置推进，关卡数据位于 `scripts/battle/level_catalog.gd`：
+
+| 关卡 | 敌人 | 战术考点 |
+|---|---|---|
+| 第一课 · 蓄力 | 一名先锋（正前方两格） | 先锋锁定脚下的格子蓄力，移动一格即可规避 |
+| 第二课 · 射线 | 一名神射手（隔整条边） | 神射手只在 3–6 格直线上开火，贴近到最小射程内即可逼其待机 |
+| 第三课 · 混编 | 先锋 + 区域术士 + 神射手，带地形障碍 | 三种威胁叠加，目标优先级决定走向 |
+
+- 关卡初始布阵、敌人配置与障碍布局全部固定，不使用随机站位。
+- 战斗结束后弹出结算面板，显示关卡、回合数、造成伤害、承受伤害、击败敌人数与剩余生命。
+- 结算面板提供「重开本关」；胜利时提供「下一关」，打完最后一关后变为「从头开始」。
+
+## 视线规则
+
+瑟弗林的目标技能（裁决印记、誓约裁断）要求目标与自身处于**同一行、同一列或对角直线**上，且路径无遮挡：
+
+- 斜角相邻或斜角方向上的目标可以正常命中。
+- 路径中间若有障碍或单位阻挡，判定失败。
+- 非对齐的偏移（如横向差 2、纵向差 1）没有直线可言，判定失败。
+
+敌方行为不受此规则影响：神射手仍只沿正交直线开火，先锋的蓄力也仍是正交方向——这两条线是玩家需要读取的预告信息。
+
+## 桌面操作
+
+| 操作 | 输入 |
+|---|---|
+| 移动 | 鼠标左键点击可到达的格子 |
+| 誓盾架势 | 点击技能按钮，或按数字键 `1` |
+| 守望壁垒 | 点击技能按钮，或按数字键 `2` |
+| 裁决印记 | 点击技能按钮或按 `3`，再点击合法敌人 |
+| 回响反击 | 点击技能按钮，或按数字键 `4` |
+| 誓约裁断 | 点击技能按钮或按 `5`，再点击带有印记的合法敌人 |
+| 猎人通灵 | 点击技能按钮或按 `6`，再点击合法敌人 |
+| 取消目标选择 | `Esc` 或鼠标右键 |
+| 结束回合 | 点击「结束回合」、`Enter` 或空格键 |
+
+数字键 `1–6` 对应当前技能栏顺序。未选择技能时，点击敌人不会发动瑟弗林攻击；自身技能按下后立即施放，目标技能需要再点击战场上的敌人确认。敌方单位的普通攻击机制不受影响。
+
+## 自动化测试
+
+在项目根目录、Godot 4.7.2 Standard 环境中运行：
+
+```sh
+godot --headless --editor --path . --quit
+godot --headless --path . --script res://tests/test_core_rules.gd
+godot --headless --path . --script res://tests/test_battle_status.gd
+godot --headless --path . --script res://tests/test_battle_area_effects.gd
+godot --headless --path . --script res://tests/test_battle_echo_counter.gd
+godot --headless --path . --script res://tests/test_battle_controller.gd
+godot --headless --path . --script res://tests/test_battle_view_skills.gd
+godot --headless --path . --script res://tests/test_skill_definitions.gd
+godot --headless --path . --script res://tests/test_turn_bookkeeping.gd
+godot --headless --path . --script res://tests/test_hunter_summon.gd
+godot --headless --path . --script res://tests/test_level_catalog.gd
+godot --headless --path . --script res://tests/test_battle_stats.gd
+godot --headless --path . --script res://tests/test_diagonal_line_of_sight.gd
+```
+
+如果 Windows 没有把 Godot 加入 PATH，请使用 Godot 可执行文件的完整路径替换命令中的 `godot`。
+
+以上命令已于 2026-11-25 在 Godot 4.7.2 中全部执行，结果为零失败（十二个套件共 479 条断言）。后续任何改动都应重新执行，并以实际输出中的零失败为准；headless 测试不能替代 F5 主场景的鼠标、键盘和画面检查。
+
+## 当前边界
+
+- 主场景直接进入第一关战斗，没有标题菜单或关卡选择界面；关卡切换只通过结算面板的「下一关」。
+- 当前战斗界面仍是功能原型表现，不是最终美术。
+- 伙伴、章节流程、局外成长、经济和存档不属于当前 Prototype 0.1 范围。
+- Android 导出和设备表现尚未验证。
+- 所有技能与敌人数值仍是待实际对局验证的原型基线。
 
 ## 仓库结构
 
-```
-.
-├── docs/                 # 项目与技术文档
-│   ├── ARCHITECTURE.md                  # 架构说明
-│   ├── DECISIONS_AND_OPEN_QUESTIONS.md  # 已定决策与未决问题
-│   └── PROJECT_STATUS.md                # 项目进度
-├── scenes/
-│   └── main/             # 主入口场景
-├── scripts/              # GDScript 源码
-│   ├── core/
-│   ├── battle/
-│   ├── actors/
-│   ├── data/
-│   └── ui/
-└── project.godot
-```
+- `docs/`：设计规范、项目状态和验证清单
+- `scenes/main/`：主入口场景
+- `scripts/battle/`：战斗规则、技能效果、意图与状态系统、关卡数据
+- `scripts/actors/`：战斗单位数据
+- `scripts/ui/`：原型战斗界面
+- `tests/`：规则、控制器、技能效果、关卡数据和 UI 集成测试
 
-## 引擎与工程设置
-
-- 渲染后端：GL Compatibility，桌面与移动端一致，优先保证 Android 兼容性。
-- 视口尺寸：1280 × 720。
-- 主场景：`res://scenes/main/main.tscn`。
-- 项目配置：`project.godot`。
-
-## 快速开始
-
-1. 安装兼容的 Godot 4.x 版本。
-2. 克隆本仓库。
-3. 在 Godot 中导入仓库目录。
-4. 用主场景运行项目。
-
-当前提交只建立了工程骨架，玩法系统尚未实现。
-
-## 相关文档
-
-- [ARCHITECTURE.md](docs/ARCHITECTURE.md)：架构与模块划分
-- [DECISIONS_AND_OPEN_QUESTIONS.md](docs/DECISIONS_AND_OPEN_QUESTIONS.md)：已定决策与未决问题
-- [PROJECT_STATUS.md](docs/PROJECT_STATUS.md)：项目进度
-
-## 已知限制
-
-- 没有局内存档、检查点和恢复机制，这是设计上的刻意选择。
-- 玩法系统尚未实现，当前为工程骨架。
+ECHO 与「拾光」项目严格隔离。不要将拾光代码、配置或数据加入本仓库。

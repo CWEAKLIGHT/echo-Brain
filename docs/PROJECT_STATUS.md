@@ -1,48 +1,200 @@
-# ECHO — Project Status
+# ECHO Prototype 0.1｜项目状态与开发任务清单
 
-## Current milestone
+> **本文件是当前开发任务的主清单。** 请优先查看「当前阶段」「待办任务」和「完成标准」，不要把后面的历史说明当成尚未完成的任务。
+>
+> 当前开发分支：`prototype/0.1`  
+> 引擎版本：Godot 4.7.2 Standard  
+> 目标平台：Windows 桌面原型验证；Android 横屏与触控验证仍在后续待办中
 
-**Phase 0 — Project setup and design closure**
+## 一、当前阶段
 
-The GitHub repository and minimal Godot project skeleton have been created. No gameplay systems have been implemented or tested in-engine yet.
+**Prototype 0.1 已具备可运行战斗原型的主要功能，猎人通灵技已实现并通过自动化测试，当前重点是完成桌面与移动设备的实际验证。**
 
-## Prototype 0.1 target
+已实现的主要内容包括：8×8 战场、行动点与移动/攻击、三种敌人、敌方行动预告、瑟弗林的五项主动技能、战斗界面，以及胜负判定。
 
-- Sevrin (Oathkeeper) as the sole playable character
-- One temporary Hunter companion
-- Three ordinary enemy types
-- One complete battlefield
-- Five to six skills
-- Three AP per player turn
-- Enemy telegraph system
-- Victory and defeat resolution
-- Android landscape and touch interaction
+这不代表 Prototype 0.1 已全部验收：猎人同伴尚未接入；Windows 实际交互与画面检查、Android 导出和真机测试仍未完成。
 
-## Implementation order
+## 二、目标范围
 
-1. P0 — Grid, movement, AP, attacks, and damage.
-2. P1 — Enemy telegraphs, interference, skill ranges, and telegraph/execution consistency.
-3. P2 — Hunter companion and its independent support action.
-4. P3 — Death, win/loss conditions, settlement, and restart loop.
-5. P4 — Android layout, touch controls, performance, export, and device testing.
+Prototype 0.1 的目标内容：
 
-## Explicit exclusions from Prototype 0.1
+- 一名可操作角色：守誓者瑟弗林（Sevrin）。
+- 一个猎人通灵技：不占场的单次支援打击，两回合冷却（详见 P0）。
+- 三种普通敌人：近战先锋、远程神射手、区域控制者。
+- 一张完整战场。
+- 瑟弗林的五项主动技能及普通攻击。
+- 每个玩家回合 3 点行动点（AP）。
+- 敌人行动预告与可见的行动顺序。
+- 战斗胜利与失败判定。
+- Android 横屏布局与触控操作。
 
-No run economy, chapter progression, Echo contracts, collections, full unlock system, or in-run save/checkpoint/restore system.
+## 三、已完成
 
-## Current status
+以下项目根据当前 `prototype/0.1` 源码和现有验证记录整理。标记为「已实现」不自动代表所有平台都已验收。
 
-- [x] Private repository created
-- [x] GitHub connector access verified
-- [x] Initial project skeleton committed
-- [ ] Import and open in Godot editor
-- [ ] Validate the project on a Godot 4.x installation
-- [ ] Complete D0 design-rule review
-- [ ] Begin P0 gameplay implementation
+| 项目 | 当前状态 | 说明 |
+|---|---|---|
+| Godot 项目基础结构与主场景 | 已完成 | 项目可导入，主场景已配置 |
+| 8×8 网格与战场阻挡 | 已完成 | 包含单位占格与障碍检查 |
+| 移动与行动点系统 | 已完成 | 玩家回合基础 AP 为 3；移动规则已接入 |
+| 普通攻击与伤害结算 | 已完成 | 物理防御、魔法抗性及伤害倍率已接入 |
+| 敌人行动预告 | 已完成 | 支持角色锁定、格子锁定和区域锁定等目标方式 |
+| 敌人行动顺序与执行 | 已完成 | 预告顺序可见，按固定规则执行 |
+| 三种普通敌人 | 已完成 | 近战先锋、远程神射手、区域控制者 |
+| 瑟弗林五项主动技能 | 已完成 | 誓盾架势、守望壁垒、裁决印记、回响反击、誓约裁断 |
+| 猎人通灵技 | 已实现 | 不占 AP、两回合冷却的单次支援打击；详见 P0 |
+| 战斗界面与桌面基础操作 | 已实现 | 七项行动入口、目标选择、AP 与状态显示等 |
+| 战斗胜负判定 | 已实现 | 已有胜利/失败终止逻辑 |
+| Godot 4.7.2 Linux 无头验证 | 验证报告记载通过 | 导入、主场景无头运行及六套测试；详情见下方「验证记录」 |
 
-## Safety and scope constraints
+## 四、待办任务（按优先级）
 
-- ECHO is independent from Shiguang.
-- Do not add GitHub Actions workflows or paid automation without separate approval.
-- Do not implement in-run persistence, checkpoints, or run restoration.
-- Unconfirmed design proposals remain unresolved until explicitly approved.
+### P0｜猎人通灵（原「猎人同伴」）
+
+**状态：待验证**——实现与自动化测试已完成，桌面实际操作尚未验证。
+
+**设计定位**：猎人不是常驻战场的单位，而是一个**通灵技**。施放后猎人出现在目标身旁、完成一次突袭后立即离场，不占用行动点，也不在战场上留下任何东西。原任务描述写作「第二个友方单位 + 指令流程」，与实际方向不符，已按此定位更正。
+
+**规则**：
+
+| 项目 | 规则 |
+|---|---|
+| 施放方式 | 技能栏第 7 项（数字键 7），选中后点击任意存活敌人 |
+| 出现位置 | 目标周围第一个空闲正交邻格，顺序固定为上、右、下、左 |
+| 存在时长 | 一击即走：结算完伤害即离场 |
+| 代价 | **不消耗行动点** |
+| 节流 | 两回合冷却（第 1 回合使用后，第 3 回合才可再次使用） |
+| 不生成单位 | 不占格、不进入敌方行动顺序、不会被敌人锁定 |
+| 失败条件 | 目标已阵亡 / 非敌人 / 四周无空位 |
+
+**完成标准**：
+
+- [x] 通灵技出现在技能栏并可通过数字键 7 选择
+- [x] 施放后不消耗行动点
+- [x] 两回合冷却正确计数与重置
+- [x] 猎人不生成战场单位、不占格、不进入行动顺序
+- [x] 目标四周无空位时施放失败，且不进入冷却
+- [x] 被拒的施放不造成伤害、不重启冷却
+- [x] 击杀最后一个敌人时正确触发胜利
+- [x] 自动化测试通过（`tests/test_hunter_summon.gd`，39 条断言，Godot 4.7.2 headless）
+- [ ] Windows 桌面实际操作确认（待验证）
+
+**数值基线**（待实测调整）：攻击 1400、倍率 0.9，即原始伤害 1260；对近战先锋（防御 700）实际造成 741 点伤害。
+
+### P1｜完成 Windows 桌面实际验证
+
+**状态：待验证**
+
+目标：确认原型在 Windows Godot 4.7.2 Standard 中能够正常导入、启动和操作。
+
+工作内容：
+- 使用最新 `prototype/0.1` 源码或明确对应提交的测试包重新导入。
+- 按 F5 启动主场景。
+- 检查窗口尺寸、战场显示、技能栏、AP/生命值、敌人预告和行动顺序。
+- 实际操作移动、攻击、五项技能、目标确认、取消和结束回合。
+- 记录错误截图、日志和对应 Commit ID。
+
+完成标准：
+- Windows Godot 4.7.2 能成功导入并启动主场景。
+- 鼠标、键盘和目标选择操作符合预期。
+- 没有阻断游戏流程的解析错误或运行时错误。
+- 测试记录注明 Windows 与 Godot 的具体版本，以及被测源码 Commit。
+
+### P2｜完成 Android 横屏与触控验证
+
+**状态：待开发 / 待验证**
+
+目标：确认原型能在目标 Android 设备上使用横屏触控运行。
+
+工作内容：
+- 检查手机横屏下的战场缩放、界面布局和信息可读性。
+- 检查触控目标大小、移动选格、技能选择和目标确认。
+- 检查不同屏幕比例下是否出现遮挡或操作困难。
+- 配置 Android 导出并生成测试包。
+- 在实际 Android 设备安装和运行，记录设备型号与系统版本。
+
+完成标准：
+- Android 导出成功，测试包可安装并启动。
+- 横屏界面没有关键内容遮挡。
+- 核心战斗操作可以通过触控完成。
+- 记录实际测试设备、系统版本、测试包对应 Commit 和问题清单。
+
+### P3｜补齐战斗结束后的流程
+
+**状态：部分完成，需确认剩余范围**
+
+目标：让一场战斗从开始、进行到结束形成清晰完整的体验。
+
+已具备：胜利与失败判定，以及战斗结束状态。
+
+需要检查并明确：
+- 战斗结束时是否有清晰的胜利/失败提示。
+- 是否需要结果展示或结算界面。
+- 是否需要重新开始当前战斗的入口。
+- 重新开始时，AP、单位状态、敌人预告和区域效果是否全部正确重置。
+
+完成标准：
+- 先确认 Prototype 0.1 必须包含哪些结束后流程，再实现缺少的部分。
+- 重新开始（若纳入本阶段）后不会残留上一场战斗状态。
+- 相关流程有测试和实际运行验证。
+
+## 五、暂不纳入 Prototype 0.1
+
+以下内容不应在没有重新确认范围前擅自加入当前原型：
+
+- 战斗内存档、检查点和中途恢复。
+- 完整章节推进与关卡解锁。
+- 回响契约、收藏系统和完整解锁系统。
+- 完整局外成长与经济系统。
+- 未经确认的额外角色、敌人、地图或技能扩展。
+
+## 六、验证记录与注意事项
+
+### 已有 Godot 引擎验证记录
+
+文档 `docs/GODOT_ENGINE_VALIDATION_zh-CN.md` 记载了以下结果：
+
+- 环境：Godot 4.7.2 Standard，Linux x86_64，headless（无图形界面）模式。
+- 项目导入：通过，记录为零错误。
+- 主场景：无头运行 120 帧，记录为无运行时错误。
+- 六个测试套件：共 300 条断言，记录为 0 失败。
+- 测试范围包括核心规则、战斗状态、区域效果、回响反击、战斗控制器和技能界面集成。
+
+**重要限制：**
+- 这是验证文档中记录的 Linux 无头测试结果，不等于 Windows 桌面试玩通过。
+- 无头测试不验证实际窗口绘制、鼠标键盘焦点、画面观感或 Android 触控。
+- Android 导出和真机行为尚未验证。
+- 技能数值仍属于原型调试基线，需要实际游玩后再评估。
+
+### 测试版本需要核对
+
+最近一次修复技能按钮回调的 PR #2 已合并到 `prototype/0.1`。但引擎验证文档中的测试环境章节记录的 HEAD 标识，与该修复分支及合并版本的对应关系需要维护者再次确认。
+
+在确认之前，不要直接宣称「300 条断言已在 PR #2 合并后的最终版本上运行」。后续测试必须记录完整 Commit SHA，确保测试结果能对应到具体源码版本。
+
+> **已确认（2026-11-25）**：`docs/GODOT_ENGINE_VALIDATION_zh-CN.md` 的「版本对应关系」小节记录了两轮运行——修复前 `dbfbbeb`（导入失败）与 PR #2 合并后全新克隆的 `906d585`（导入零错误，300 条断言 0 失败，主场景 120 帧无错误）。后续验证仍须记录完整 SHA。
+
+## 七、协作与提交要求
+
+每项开发任务开始前，先确认目标分支、最新 Commit 和相关文件。
+
+- 当前原型开发主线：`prototype/0.1`。
+- 新任务优先使用独立功能分支开发，再通过 Pull Request 合并。
+- 不要直接把未审查的改动提交到 `main`。
+- 每次改动说明修改文件、改动目的和影响范围。
+- 源码变化后同步更新相关文档和测试。
+- 提交时记录完整 Commit SHA。
+- 测试包必须注明它对应的 Commit SHA。
+- 分别记录静态检查、Godot 导入、自动化测试、桌面实测和设备实测；没有执行的项目标记为「待验证」。
+- ECHO 与「拾光」项目严格隔离。
+- 不擅自覆盖或替换朋友已经发布的测试包。
+
+## 八、每项任务的状态定义
+
+- **待开发**：功能尚未实现。
+- **开发中**：正在修改或接入。
+- **待验证**：代码看起来已具备，但还没有完成对应环境的实际测试。
+- **已完成**：达到该任务的完成标准，并有相应验证记录。
+- **暂缓**：明确不属于当前阶段，暂不安排。
+
+> 更新本文件时，应优先维护上面的任务状态和完成标准。详细的历史过程、设计决定和测试步骤分别保留在各自的专题文档中，避免本文件再次变成冗长的开发日志。

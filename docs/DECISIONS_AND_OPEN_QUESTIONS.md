@@ -18,7 +18,15 @@ Use these labels consistently:
 - Base player turn budget is 3 AP.
 - Actions resolve immediately and may only be canceled before target confirmation.
 - Enemy telegraphs are generated at the start of the player turn.
-- Enemy execution order is fixed and visibly communicated.
+- Telegraph targeting uses a mixed model: each action may lock to an actor, a grid cell, or an area according to its design; the telegraph must communicate the selected mode.
+- Actor-locked attacks continue tracking their designated actor; tile-locked attacks resolve at the originally marked cell; area-locked attacks resolve in the originally marked area.
+- If an actor-locked action's designated target is defeated before execution, that action is canceled, does not retarget another actor, and does not refund or compensate player AP; the enemy's action slot is considered resolved.
+- A successful control/interruption immediately cancels the affected enemy's current telegraph; a failed control leaves that telegraph unchanged. The effect does not alter other enemies' telegraphs.
+- Enemy execution order is fixed and visibly communicated: sort by predefined enemy action priority, then by stable battlefield position for ties; show the complete order before the enemy phase and keep it fixed for that phase.
+- Prototype 0.1 enemy intent selection uses deterministic priorities: eligible special actions first, ordinary attacks second, movement or waiting last; ties use a fixed deterministic rule, not a fresh random choice. Once telegraphed, the intent is not freely reselected at execution time.
+- Earlier enemy actions do not silently rewrite later enemies' telegraphed targets: actor locks continue tracking the same actor, tile locks resolve at the original cell, and area locks resolve in the original area. If a later action becomes genuinely impossible because the battlefield changed, cancel it rather than retargeting or generating a replacement attack.
+- Terrain changes do not silently alter existing telegraphs: if the original action remains possible, it resolves at its original target/area; if terrain makes it impossible, cancel it. Terrain changes cannot silently expand its area or change its target.
+- If an enemy's telegraphed action cannot legally execute at resolution time, cancel it without selecting a new target or switching skills, do not refund/compensate player AP, and record the cancellation reason in the battle log/debug event.
 - An enemy's telegraph is canceled immediately when that enemy dies.
 - Prototype companion actions are player-commanded, then automatically executed; the companion has one independent support action per player turn.
 - No mid-run saves, checkpoints, or run restoration. Out-of-run progression may persist.
@@ -28,15 +36,21 @@ Use these labels consistently:
 
 One playable Oathkeeper (Sevrin), one temporary Hunter companion, three ordinary enemy types, one battlefield, five to six skills, the AP and telegraph systems, victory/defeat resolution, and Android touch interaction.
 
+Confirmed enemy battlefield roles: melee vanguard (close-range pressure), ranged marksman (long-range threat), and area controller (area denial). The melee vanguard's approved behavior direction is hybrid: normally pursues and applies steady melee pressure, then uses a charged strike when conditions are met. Exact trigger conditions and all action details remain open. Other identities, art, stats, exact actions, targeting assignments, and numerical values remain open.
+
+## Maintainer-selected planning baselines (delegated autonomy)
+
+The project owner delegated detailed Prototype 0.1 design and implementation decisions to the maintainer while unavailable. The following are selected implementation baselines, not claims of explicit owner review; numerical values remain subject to playtesting.
+
+- Melee Vanguard: 6 HP; pursuit up to 2 orthogonal cells; adjacent actor-locked basic attack for 1 damage; straight-line distance-2 tile-locked charged strike for 2 damage to one marked cell. Selection priority is charged strike, basic attack, pursuit, wait. Target and action are captured at telegraph generation; no execution-time retargeting.
+- Melee Vanguard target selection: lowest health ratio, then stable actor ID; pursuit target: shortest Manhattan distance, then stable actor ID.
+- Pursuit pathfinding uses a deterministic neighbor order (up, right, down, left); no diagonal movement or traversal through blocked/occupied cells.
+- These values are first-pass encounter tuning, not final balance. Revisit after the Oathkeeper's combat profile and the complete three-enemy encounter can be tested.
+
 ## Open questions — do not silently decide in code
 
-- How should a telegraph behave if its target moves before enemy execution?
-- What happens if the target leaves the telegraphed area?
-- How do successful and failed control/interruption effects change a telegraph?
-- What is the exact fixed-order sorting rule for enemy execution?
-- If an earlier enemy action invalidates a later enemy's planned action, what is the later enemy's fallback?
-- Can terrain changes alter an existing telegraph, and if so, under what explicit rules?
-- What should an enemy do when its planned action has no legal target or destination?
+- Which targeting mode (actor-locked, tile-locked, or area-locked) should each individual Prototype 0.1 enemy action use?
+- Do tile-locked or area-locked actions have additional range/line-of-sight invalidation conditions after telegraph generation?
 - How should overlapping telegraphs be layered and inspected on a phone screen?
 - What is the final event-resolution order for damage, death, status effects, telegraph cancellation, and triggers?
 - What are the final damage, armor, health, and control formulas?
