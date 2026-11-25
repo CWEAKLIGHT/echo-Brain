@@ -4,6 +4,7 @@ extends Resource
 ## Data-only skill specification. Runtime execution is handled by BattleController.
 
 const TARGET_SELF: StringName = &"self"
+const TARGET_SELF_AND_ALLY: StringName = &"self_and_ally"
 const TARGET_ACTOR: StringName = &"actor"
 const TARGET_CELL: StringName = &"cell"
 const TARGET_AREA: StringName = &"area"
@@ -32,7 +33,7 @@ func is_valid() -> bool:
 		return false
 	if ap_cost < 0 or (ap_cost == 0 and not is_passive) or (is_passive and ap_cost != 0) or min_range < 0 or max_range < min_range:
 		return false
-	if target_mode != TARGET_SELF and target_mode != TARGET_ACTOR and target_mode != TARGET_CELL and target_mode != TARGET_AREA:
+	if target_mode != TARGET_SELF and target_mode != TARGET_SELF_AND_ALLY and target_mode != TARGET_ACTOR and target_mode != TARGET_CELL and target_mode != TARGET_AREA:
 		return false
 	if damage_multiplier < 0.0 or duration_player_phases < 0:
 		return false
