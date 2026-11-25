@@ -93,6 +93,8 @@ godot --headless --path . --script res://tests/test_battle_controller.gd
 
 ```bash
 godot --headless --path . --script res://tests/test_battle_view_skills.gd
+godot --headless --path . --script res://tests/test_skill_definitions.gd
+godot --headless --path . --script res://tests/test_turn_bookkeeping.gd
 ```
 
 该测试通过主场景实例化战斗界面，检查：

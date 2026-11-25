@@ -170,11 +170,6 @@ func clear_actor(target_actor_id: String) -> int:
 	return removed_count
 
 
-func get_status_count(target_actor_id: String) -> int:
-	var actor_statuses: Dictionary = _get_actor_statuses(target_actor_id)
-	return actor_statuses.size()
-
-
 func _get_actor_statuses(actor_id: String) -> Dictionary:
 	var value: Variant = _statuses_by_actor.get(actor_id, {})
 	if value is Dictionary:
