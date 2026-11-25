@@ -108,3 +108,34 @@ godot --headless --path . --script res://tests/test_battle_echo_counter.gd
 godot --headless --path . --script res://tests/test_battle_controller.gd
 godot --headless --path . --script res://tests/test_battle_view_skills.gd
 ```
+
+---
+
+## 2026-11-25 补记 — 套件扩充至八个
+
+上面第一至第五节记录的是 `906d585` 那一次运行，六个套件共 300 条断言，内容保持原样不改。本节记录此后新增的覆盖。
+
+### 新增与补齐
+
+| 套件 | 断言 | 说明 |
+|---|---|---|
+| `test_turn_bookkeeping.gd` | 49 | **新增**。覆盖此前零测试的回合账本基础函数 |
+| `test_skill_definitions.gd` | 20 | **补齐**。该套件一直存在并持续通过，但此前未列入复现命令，也未计入总数 |
+
+`test_turn_bookkeeping.gd` 覆盖的四组行为：
+
+- **AP 账本**：初始满额、零成本放行、负成本拒绝、正好用完、超额拒绝；**扣减失败时账本不变**；部分扣减保留余额；`clear` 清空后零成本仍放行、正成本拒绝；`reset` 回到上限；负数上限被钳制为 0。
+- **意图状态机**：新意图为 `ACTIVE`；`cancel` 成功后记录原因并进入 `CANCELED`；**重复 cancel 被拒且不覆盖首个原因**；`CANCELED` 不能转 `RESOLVED`；`RESOLVED` 不能重复标记、不能撤销为 `CANCELED`；被拒的转换不改变状态。
+- **区域效果清理**：空集合清理返回 0；清理返回实际移除数量；清理后不可再取回；**重复清理幂等**。
+- **占格查询**：存活单位各自占格；排除指定单位只移除其自身条目；空位不上报；**阵亡单位立即让出格子**，存活单位不受影响。
+
+### 当前总数
+
+八个套件，共 **369 条断言，0 失败**。命令见 `README.md` 的「自动化测试」章节，现将两个此前遗漏的套件一并列入。
+
+### 本次同时做的两处清理
+
+- 删除 `BattleStatusCollection.get_status_count`：全仓库零调用（生产代码与测试均为 0），属死代码。
+- `BattleController.ap` 补上 `APBudget` 类型标注，此前为无类型 `var`，是唯一未标注类型的公开成员。
+
+两处均不改变运行时行为，320 条既有断言（原 300 条 + `test_skill_definitions` 的 20 条）全部继续通过。

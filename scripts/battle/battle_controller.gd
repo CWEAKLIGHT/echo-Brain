@@ -19,7 +19,7 @@ enum BattlePhase { PLAYER, ENEMY, FINISHED }
 @export var player_ap: int = 3
 
 var phase: BattlePhase = BattlePhase.FINISHED
-var ap
+var ap: APBudget
 var actors: Dictionary = {}
 var blocked_cells: Dictionary = {}
 var intents: Array = []
