@@ -4,7 +4,7 @@
 
 **Phase 1 — Prototype 0.1 foundations in progress**
 
-The GitHub repository and minimal Godot project skeleton have been created. Foundational gameplay scripts and an authoritative battle model have been committed; Godot engine validation is still pending.
+The GitHub repository and minimal Godot project skeleton have been created. Foundational gameplay scripts and an authoritative battle model have been committed. Godot engine validation was completed on 2026-11-25 on Godot 4.7.2: the project imports cleanly and all six headless suites pass (300 assertions, 0 failures). See `docs/GODOT_ENGINE_VALIDATION_zh-CN.md`.
 
 ## Prototype 0.1 target
 
@@ -35,10 +35,14 @@ No run economy, chapter progression, Echo contracts, collections, full unlock sy
 - [x] Private repository created
 - [x] GitHub connector access verified
 - [x] Initial project skeleton committed
-- [ ] Import and open in Godot editor
-- [ ] Validate the project on a Godot 4.x installation
+- [x] Import and open in Godot editor (Godot 4.7.2, 2026-11-25)
+- [x] Validate the project on a Godot 4.7.2 installation (headless import, zero errors)
 - [ ] Complete D0 design-rule review
-- [x] Begin P0 gameplay implementation (grid/AP/actor primitives and a test harness committed)\n- [x] Add authoritative battle controller and captured enemy intents\n- [x] Add controller scenario test harness\n- [x] Connect battle controller to a first-pass playable battle view\n- [ ] Run both headless test harnesses in Godot 4.x
+- [x] Begin P0 gameplay implementation (grid/AP/actor primitives and a test harness committed)
+- [x] Add authoritative battle controller and captured enemy intents
+- [x] Add controller scenario test harness
+- [x] Connect battle controller to a first-pass playable battle view
+- [x] Run all six headless test suites in Godot 4.7.2 (300 assertions, 0 failures)
 
 ## Safety and scope constraints
 
@@ -207,3 +211,12 @@ The main scene now opens an 8×8 tactical board with Sevrin, two Melee Vanguard 
 
 - Follow-up UI polish: Watchwall now draws its locked five-cell protection footprint; the player displays separate Oathguard, Echo Counter, and Echo markers; marked enemies display Judgment Mark and Exposed markers.
 - Expanded the UI integration test to verify right-click cancellation before target confirmation. Reconciled docs/battle_status_system_zh-CN.md so it no longer describes Echo generation, Echo Counter, Watchwall, or the skill UI as unimplemented.
+
+## Engine validation — 2026-11-25
+
+The project was imported and run for the first time in a real engine: Godot `4.7.2.stable.official.ed1daf0bf` on Linux x86_64, headless. Full record in `docs/GODOT_ENGINE_VALIDATION_zh-CN.md`.
+
+- **Blocking defect found and fixed**: `scripts/ui/battle_view.gd` had `_on_skill_pressed`'s body present but its `func` header missing, so the script failed to parse (7 call-site errors plus 4 scope errors for `index`). Because the main scene script could not load, every scene-dependent validation was impossible — this is why earlier entries in this file repeatedly say "not executed in the engine". The fix restores the one-line signature; the function body is unchanged.
+- **Result after the fix**: import clean with zero errors; main scene runs 120 headless frames with no runtime errors; six suites pass with **300 assertions and 0 failures** (`test_core_rules` 18, `test_battle_status` 25, `test_battle_area_effects` 43, `test_battle_echo_counter` 38, `test_battle_controller` 162, `test_battle_view_skills` 14).
+- **What this supersedes**: earlier "Godot 4.7.2 import and runtime tests have not yet been executed" notes describe the state before this run and should be read as history, not as the current status.
+- **Still unverified**: Windows F5 interaction and visual review, Android export and device behaviour, and all skill numbers, which remain prototype baselines awaiting real play.

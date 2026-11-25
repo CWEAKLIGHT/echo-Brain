@@ -356,6 +356,7 @@ func _handle_tap(position: Vector2) -> void:
 	queue_redraw()
 
 
+func _on_skill_pressed(index: int) -> void:
 	if index < 0 or index >= SKILL_BAR.size():
 		return
 	var skill: Dictionary = SKILL_BAR[index]
