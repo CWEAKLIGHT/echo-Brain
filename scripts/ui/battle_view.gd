@@ -81,6 +81,7 @@ func _draw_board() -> void:
 
 func _draw_area_effects() -> void:
 	# Legacy Watchwall effects remain supported by the controller but are not part of the V2 skill UI.
+	pass
 
 
 func _draw_actors() -> void:
@@ -175,7 +176,7 @@ func _draw_target_hints() -> void:
 			continue
 		if skill["id"] == "oathkeeper_judgment_mark" and not GridRulesScript.has_clear_orthogonal_line(player.cell, actor.cell, controller.blocked_cells, controller.get_occupied_cells()):
 			continue
-				draw_arc(_cell_center(actor.cell), 31.0, 0.0, TAU, 48, Color(0.95, 0.85, 0.55, 0.55), 2.0)
+		draw_arc(_cell_center(actor.cell), 31.0, 0.0, TAU, 48, Color(0.95, 0.85, 0.55, 0.55), 2.0)
 
 
 func _draw_hud() -> void:
