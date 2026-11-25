@@ -1,15 +1,9 @@
-extends SceneTree
+extends "res://tests/framework/test_case.gd"
 
 const ControllerScript = preload("res://scripts/battle/battle_controller.gd")
 const ActorScript = preload("res://scripts/actors/battle_actor.gd")
 const AreaEffectScript = preload("res://scripts/battle/battle_area_effect.gd")
 const AreaEffectCollectionScript = preload("res://scripts/battle/battle_area_effect_collection.gd")
-
-var failures: Array[String] = []
-
-
-func _initialize() -> void:
-	call_deferred("_run")
 
 
 func _run() -> void:
@@ -18,8 +12,7 @@ func _run() -> void:
 	_test_damage_order_and_magic()
 	_test_refresh_and_edge_clipping()
 	_test_collection_relations_and_expiry()
-	print("Battle area effect test run complete. Failures: ", failures.size())
-	quit(1 if not failures.is_empty() else 0)
+	_report()
 
 
 func _test_watchwall_cast_and_expiry() -> void:
@@ -124,10 +117,3 @@ func _test_collection_relations_and_expiry() -> void:
 	_check(collection.expire_boundary(&"player_phase_start") == 0 and collection.get_effect_count() == 1, "persistent effect remains until explicitly removed")
 	_check(collection.remove_effect(&"persistent") and collection.get_effect_count() == 0, "persistent effect can be removed explicitly")
 
-
-func _check(condition: bool, label: String) -> void:
-	if condition:
-		print("PASS: ", label)
-	else:
-		failures.append(label)
-		push_error("FAIL: " + label)

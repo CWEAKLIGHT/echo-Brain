@@ -1,21 +1,7 @@
-extends SceneTree
+extends "res://tests/framework/test_case.gd"
 
 const ControllerScript = preload("res://scripts/battle/battle_controller.gd")
 const IntentScript = preload("res://scripts/battle/battle_intent.gd")
-
-var failures: int = 0
-
-
-func _initialize() -> void:
-	call_deferred("_run")
-
-
-func _check(condition: bool, label: String) -> void:
-	if condition:
-		print("PASS: ", label)
-	else:
-		failures += 1
-		push_error("FAIL: " + label)
 
 
 func _run() -> void:
@@ -315,5 +301,4 @@ func _run() -> void:
 	_check(validation_battle.blocked_cells.has(Vector2i(3, 3)), "invalid setup preserves existing blockers")
 	validation_battle.queue_free()
 
-	print("Battle controller test run complete. Failures: ", failures)
-	quit(1 if failures > 0 else 0)
+	_report()

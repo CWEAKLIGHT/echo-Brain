@@ -1,20 +1,6 @@
-extends SceneTree
+extends "res://tests/framework/test_case.gd"
 
 const ControllerScript = preload("res://scripts/battle/battle_controller.gd")
-
-var failures: Array[String] = []
-
-
-func _initialize() -> void:
-	call_deferred("_run")
-
-
-func _check(condition: bool, label: String) -> void:
-	if condition:
-		print("PASS: ", label)
-	else:
-		failures.append(label)
-		push_error("FAIL: " + label)
 
 
 func _run() -> void:
@@ -61,5 +47,4 @@ func _run() -> void:
 	_check(fresh.damage_dealt == 0 and fresh.damage_taken == 0 and fresh.enemies_defeated == 0, "restarting an encounter resets the tallies")
 	fresh.queue_free()
 
-	print("Battle stats test run complete. Failures: ", failures.size())
-	quit(1 if not failures.is_empty() else 0)
+	_report()
