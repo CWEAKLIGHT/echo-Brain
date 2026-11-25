@@ -49,7 +49,7 @@ func _test_self_skill_controls() -> void:
 	sevrin.ultimate_energy = 5
 	_tap_skill(view, 2)
 	_check(controller.statuses.has_status("sevrin", &"absolute_guard"), "Absolute Guard activates from the skill bar")
-	_check(sevrin.ultimate_energy == 0 and controller.ap.current == 0, "Absolute Guard spends five energy and two AP through the battle view")
+	_check(sevrin.ultimate_energy == 1 and controller.ap.current == 0, "Absolute Guard spends five energy, gains one active-action point, and spends two AP through the battle view")
 
 	view.queue_free()
 	await process_frame
