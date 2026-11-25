@@ -15,6 +15,11 @@ var attack: int
 var defense: int
 var magic_resistance: int
 var is_defeated: bool = false
+var shield: int = 0
+## Independent ultimate-energy pool; capped at five for each actor.
+var ultimate_energy: int = 0
+## Prevents more than one successful-action energy gain per player turn.
+var active_energy_gain_turn: int = -1
 
 
 func _init(
@@ -38,6 +43,27 @@ func _init(
 	magic_resistance = maxi(0, p_magic_resistance)
 
 
+func gain_ultimate_energy(amount: int = 1) -> int:
+	ultimate_energy = clampi(ultimate_energy + maxi(0, amount), 0, 5)
+	return ultimate_energy
+
+
+func spend_ultimate_energy(amount: int) -> bool:
+	if amount < 0 or ultimate_energy < amount:
+		return false
+	ultimate_energy -= amount
+	return true
+
+
+func grant_shield(requested_amount: int) -> int:
+	## Reapplication never lowers a stronger remaining shield; each actor has
+	## an independent cap of 15% max health.
+	var shield_cap: int = floori(float(max_health) * 0.15)
+	var new_shield: int = clampi(requested_amount, 0, shield_cap)
+	shield = maxi(shield, new_shield)
+	return shield
+
+
 func apply_damage(
 	raw_damage: int,
 	damage_type: String = "physical",
@@ -45,8 +71,28 @@ func apply_damage(
 	resistance_penalty: int = 0,
 	additional_reduction_percents: Array[int] = []
 ) -> int:
+	## Compatibility API: legacy callers still receive health damage only.
+	var result: Dictionary = apply_damage_with_result(
+		raw_damage,
+		damage_type,
+		final_reduction_percent,
+		resistance_penalty,
+		additional_reduction_percents
+	)
+	return int(result.get("health_damage", 0))
+
+
+func apply_damage_with_result(
+	raw_damage: int,
+	damage_type: String = "physical",
+	final_reduction_percent: int = 0,
+	resistance_penalty: int = 0,
+	additional_reduction_percents: Array[int] = []
+) -> Dictionary:
+	## Detailed result for new combat systems. "hit" means a valid positive
+	## damage instance reached this living actor, even if shield absorbs all of it.
 	if is_defeated or raw_damage <= 0:
-		return 0
+		return {"hit": false, "absorbed": 0, "health_damage": 0, "final_damage": 0}
 	var base_resistance: int = defense if damage_type == "physical" else (magic_resistance if damage_type == "magical" else 0)
 	var resistance: int = maxi(0, base_resistance - maxi(0, resistance_penalty))
 	var mitigated: int = CombatMathScript.calculate_damage(raw_damage, resistance)
@@ -60,13 +106,19 @@ func apply_damage(
 	var personal_reduction: int = clampi(final_reduction_percent, 0, 100)
 	if personal_reduction > 0 and final_damage > 0:
 		final_damage = maxi(1, floori(float(final_damage) * float(100 - personal_reduction) / 100.0))
-	var applied: int = mini(final_damage, health)
-	health -= applied
+	var absorbed: int = mini(shield, final_damage)
+	shield -= absorbed
+	var health_damage: int = mini(final_damage - absorbed, health)
+	health -= health_damage
 	if health <= 0:
 		health = 0
 		is_defeated = true
-	return applied
-
+	return {
+		"hit": true,
+		"absorbed": absorbed,
+		"health_damage": health_damage,
+		"final_damage": final_damage
+	}
 
 func is_alive() -> bool:
 	return not is_defeated and health > 0

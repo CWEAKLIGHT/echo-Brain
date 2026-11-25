@@ -23,7 +23,9 @@ func _test_no_default_basic_attack() -> void:
 	await process_frame
 	var controller: Variant = view.get("controller")
 	_check(int(view.get("selected_skill")) == -1, "battle view starts with no selected player skill")
-	_check(view.get("SKILL_BAR").size() == 6, "player skill bar no longer exposes basic attack")
+	var skill_bar: Array = view.get("SKILL_BAR")
+	_check(skill_bar.size() == 4, "player skill bar exposes three V2 skills and Hunter Summon")
+	_check(skill_bar[0]["id"] == "oathkeeper_judgment_mark" and skill_bar[1]["id"] == "oath_shield" and skill_bar[2]["id"] == "absolute_guard" and skill_bar[3]["id"] == "hunter_summon", "skill bar order contains only V2 skills and the retained summon")
 	var enemy = controller.get_actor("vanguard_00")
 	var starting_ap: int = controller.ap.current
 	_tap_cell(view, enemy.cell)
@@ -39,20 +41,15 @@ func _test_self_skill_controls() -> void:
 	await process_frame
 	var controller: Variant = view.get("controller")
 
-	var oathguard_key := InputEventKey.new()
-	oathguard_key.pressed = true
-	oathguard_key.keycode = KEY_1
-	view.call("_input", oathguard_key)
-	_check(controller.statuses.has_status("sevrin", &"oathguard"), "keyboard shortcut 1 activates Oathguard Stance")
-	_check(controller.ap.current == 2, "Oathguard Stance spends one AP through the battle view")
-
 	_tap_skill(view, 1)
-	_check(controller.area_effects.get_effect(&"watchwall") != null, "mouse skill button activates Watchwall")
-	_check(controller.ap.current == 1, "Watchwall spends one AP through the battle view")
+	_check(controller.get_actor("sevrin").shield > 0, "V2 Oath Shield activates from the skill bar")
+	_check(controller.ap.current == 2, "V2 Oath Shield spends one AP through the battle view")
 
-	_tap_skill(view, 3)
-	_check(controller.statuses.has_status("sevrin", &"echo_counter"), "mouse skill button prepares Echo Counter")
-	_check(controller.ap.current == 0, "Echo Counter spends one AP through the battle view")
+	var sevrin = controller.get_actor("sevrin")
+	sevrin.ultimate_energy = 5
+	_tap_skill(view, 2)
+	_check(controller.statuses.has_status("sevrin", &"absolute_guard"), "Absolute Guard activates from the skill bar")
+	_check(sevrin.ultimate_energy == 0 and controller.ap.current == 0, "Absolute Guard spends five energy without exceeding the once-per-turn active-action gain cap")
 
 	view.queue_free()
 	await process_frame
@@ -68,24 +65,21 @@ func _test_target_skill_flow() -> void:
 	var marksman = controller.get_actor("marksman_02")
 	_check(marksman != null, "main encounter exposes the expected Marksman target")
 
-	_tap_skill(view, 2)
+	_tap_skill(view, 0)
 	var cancel_event := InputEventMouseButton.new()
 	cancel_event.pressed = true
 	cancel_event.button_index = MOUSE_BUTTON_RIGHT
 	view.call("_input", cancel_event)
 	_check(int(view.get("selected_skill")) == -1, "right mouse cancels target selection without selecting a default attack")
-	_tap_skill(view, 2)
-	_tap_cell(view, Vector2i(1, 0))
-	_check(controller.statuses.has_status("marksman_02", &"judgment_mark"), "Judgment Mark can be selected and confirmed on the battlefield")
-	_check(controller.ap.current == 2, "Judgment Mark spends one AP through the battle view")
+	_tap_skill(view, 0)
+	_tap_cell(view, marksman.cell)
+	_check(controller.statuses.has_status("marksman_02", &"oathkeeper_mark"), "V2 Judgment Mark can be selected and confirmed on the battlefield")
+	_check(controller.ap.current == 2, "V2 Judgment Mark spends one AP through the battle view")
+	_check(marksman.health < marksman.max_health, "V2 Judgment Mark deals damage when confirmed")
 
-	marksman.cell = Vector2i(2, 3)
-	_tap_skill(view, 4)
-	_tap_cell(view, Vector2i(2, 3))
-	_check(not controller.statuses.has_status("marksman_02", &"judgment_mark"), "Oath Severance consumes the selected target's Judgment Mark")
-	_check(marksman.is_defeated, "Oath Severance applies its damage through the battle view")
-	_check(controller.intents.any(func(intent): return intent.source_actor_id == "marksman_02" and intent.cancel_reason == "oath_severance"), "Oath Severance interrupts the target's active intent")
-	_check(controller.ap.current == 0, "Judgment Mark plus Oath Severance spends three AP through the battle view")
+	_tap_skill(view, 3)
+	_tap_cell(view, marksman.cell)
+	_check(controller.summon_cooldown_remaining() > 0, "Hunter Summon remains available after the V2 skill bar switch")
 
 	view.queue_free()
 	await process_frame
