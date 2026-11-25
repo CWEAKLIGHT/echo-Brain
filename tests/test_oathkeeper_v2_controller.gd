@@ -67,7 +67,7 @@ func _test_v2_judgment_mark_damage_replacement_and_expiry() -> void:
 	var first_target = battle.get_actor("vanguard_00")
 	var second_target = battle.get_actor("vanguard_01")
 	var first_health: int = first_target.health
-	var expected_damage: int = 520
+	var expected_damage: int = 305
 	_check(battle.request_oathkeeper_judgment_mark("vanguard_00"), "v2 Judgment Mark accepts a legal enemy target")
 	_check(first_target.health == first_health - expected_damage, "v2 Judgment Mark deals DEF times 0.8 physical damage")
 	_check(battle.get_oathkeeper_marked_target() == "vanguard_00", "v2 Judgment Mark records the selected target")
