@@ -9,7 +9,7 @@ func _initialize() -> void:
 
 
 func _run() -> void:
-	var failures: Array[String]
+	var failures: Array[String] = []
 	var skills: Array[SkillDefinition] = CatalogScript.create_prototype_skills()
 	_check(skills.size() == 3, "V2 catalog contains exactly three active Oathkeeper skills", failures)
 	var ids: Array[StringName] = [&"oathkeeper_judgment_mark", &"oath_shield", &"absolute_guard"]
@@ -25,7 +25,7 @@ func _run() -> void:
 	quit(1 if not failures.is_empty() else 0)
 
 
-func _check(condition: bool, label: String, failures: Array[String] = []) -> void:
+func _check(condition: bool, label: String, failures: Array[String]) -> void:
 	if condition:
 		print("PASS: ", label)
 	else:
