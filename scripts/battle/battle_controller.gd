@@ -146,6 +146,7 @@ func request_absolute_guard() -> bool:
 	if not ap.spend(2) or not caster.spend_ultimate_energy(5):
 		statuses.remove_status("sevrin", &"absolute_guard")
 		return false
+	_gain_active_energy("sevrin")
 	_emit_event("skill_resolved", "sevrin", "sevrin", "skill=absolute_guard ap=2 energy=5 radius=2 expires=next_player_phase_start")
 	return true
 
@@ -685,8 +686,6 @@ func _redirect_single_target_intent_to_sevrin(intent) -> void:
 			legal = distance == 1
 		"charged_strike":
 			legal = distance == 2 and GridRulesScript.has_clear_orthogonal_line(source.cell, target.cell, blocked_cells, get_occupied_cells(intent.source_actor_id))
-		"aimed_shot":
-			legal = distance >= 3 and distance <= 6 and (source.cell.x == target.cell.x or source.cell.y == target.cell.y) and GridRulesScript.has_clear_orthogonal_line(source.cell, target.cell, blocked_cells, get_occupied_cells(intent.source_actor_id))
 		_:
 			return
 	if not legal:
