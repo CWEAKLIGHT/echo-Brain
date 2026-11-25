@@ -10,10 +10,27 @@ func _initialize() -> void:
 
 
 func _run() -> void:
+	await _test_no_default_basic_attack()
 	await _test_self_skill_controls()
 	await _test_target_skill_flow()
 	print("Battle view skill integration test run complete. Failures: ", failures.size())
 	quit(1 if not failures.is_empty() else 0)
+
+
+func _test_no_default_basic_attack() -> void:
+	var view: Node = MainScene.instantiate()
+	root.add_child(view)
+	await process_frame
+	var controller: Variant = view.get("controller")
+	_check(int(view.get("selected_skill")) == -1, "battle view starts with no selected player skill")
+	_check(view.get("SKILL_BAR").size() == 6, "player skill bar no longer exposes basic attack")
+	var enemy = controller.get_actor("vanguard_00")
+	var starting_ap: int = controller.ap.current
+	_tap_cell(view, enemy.cell)
+	_check(controller.ap.current == starting_ap, "clicking an enemy without selecting a skill does not spend AP")
+	_check(enemy.health == enemy.max_health, "clicking an enemy without selecting a skill does not attack")
+	view.queue_free()
+	await process_frame
 
 
 func _test_self_skill_controls() -> void:
@@ -29,11 +46,11 @@ func _test_self_skill_controls() -> void:
 	_check(controller.statuses.has_status("sevrin", &"oathguard"), "keyboard shortcut 2 activates Oathguard Stance")
 	_check(controller.ap.current == 2, "Oathguard Stance spends one AP through the battle view")
 
-	_tap_skill(view, 2)
+	_tap_skill(view, 1)
 	_check(controller.area_effects.get_effect(&"watchwall") != null, "mouse skill button activates Watchwall")
 	_check(controller.ap.current == 1, "Watchwall spends one AP through the battle view")
 
-	_tap_skill(view, 4)
+	_tap_skill(view, 3)
 	_check(controller.statuses.has_status("sevrin", &"echo_counter"), "mouse skill button prepares Echo Counter")
 	_check(controller.ap.current == 0, "Echo Counter spends one AP through the battle view")
 
@@ -49,19 +66,19 @@ func _test_target_skill_flow() -> void:
 	var marksman = controller.get_actor("marksman_02")
 	_check(marksman != null, "main encounter exposes the expected Marksman target")
 
-	_tap_skill(view, 3)
+	_tap_skill(view, 2)
 	var cancel_event := InputEventMouseButton.new()
 	cancel_event.pressed = true
 	cancel_event.button_index = MOUSE_BUTTON_RIGHT
 	view.call("_input", cancel_event)
-	_check(int(view.get("selected_skill")) == 0, "right mouse cancels target selection before confirmation")
-	_tap_skill(view, 3)
+	_check(int(view.get("selected_skill")) == -1, "right mouse cancels target selection without selecting a default attack")
+	_tap_skill(view, 2)
 	_tap_cell(view, Vector2i(1, 0))
 	_check(controller.statuses.has_status("marksman_02", &"judgment_mark"), "Judgment Mark can be selected and confirmed on the battlefield")
 	_check(controller.ap.current == 2, "Judgment Mark spends one AP through the battle view")
 
 	marksman.cell = Vector2i(2, 3)
-	_tap_skill(view, 5)
+	_tap_skill(view, 4)
 	_tap_cell(view, Vector2i(2, 3))
 	_check(not controller.statuses.has_status("marksman_02", &"judgment_mark"), "Oath Severance consumes the selected target's Judgment Mark")
 	_check(marksman.is_defeated, "Oath Severance applies its damage through the battle view")
