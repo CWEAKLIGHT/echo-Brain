@@ -9,7 +9,7 @@ ECHO 是一款使用 Godot 4.7.2 Standard 与 GDScript 开发的 2D 回合制战
 - **桌面开发与验证平台**：Windows 10/11（64 位）
 - **目标画面**：1280 × 720，横向布局
 - **移动端方向**：Android 横屏；本阶段优先完成 Windows 桌面导入与玩法验证
-- **验证状态**：已完成源码静态复核并加入战斗 UI 技能集成测试；仍需在 Godot 4.7.2 中实际导入、运行测试和主场景
+- **验证状态**：已在 Godot 4.7.2 中完成导入、六个测试套件与主场景无头运行（2026-11-25，300 条断言 0 失败，详见 `docs/GODOT_ENGINE_VALIDATION_zh-CN.md`）；Windows 交互与画面、Android 导出仍待人工验证
 
 本仓库是 ECHO 的独立项目，与「拾光」完全分离。
 
@@ -75,7 +75,7 @@ godot --headless --path . --script res://tests/test_battle_view_skills.gd
 
 如果 Windows 没有把 Godot 加入 PATH，请使用 Godot 可执行文件的完整路径替换命令中的 `godot`。
 
-这些命令是验证步骤，不代表测试已经通过。每个测试都应以实际输出中的零失败为准；headless 测试也不能替代 F5 主场景的鼠标、键盘和画面检查。
+以上命令已于 2026-11-25 在 Godot 4.7.2 中全部执行，结果为零失败（六个套件共 300 条断言，详见 `docs/GODOT_ENGINE_VALIDATION_zh-CN.md`）。后续任何改动都应重新执行，并以实际输出中的零失败为准；headless 测试不能替代 F5 主场景的鼠标、键盘和画面检查。
 
 ## 当前边界
 
