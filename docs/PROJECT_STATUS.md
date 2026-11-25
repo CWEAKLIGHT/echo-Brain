@@ -1,222 +1,185 @@
-# ECHO — Project Status
+# ECHO Prototype 0.1｜项目状态与开发任务清单
 
-## Current milestone
+> **本文件是当前开发任务的主清单。** 请优先查看「当前阶段」「待办任务」和「完成标准」，不要把后面的历史说明当成尚未完成的任务。
+>
+> 当前开发分支：`prototype/0.1`  
+> 引擎版本：Godot 4.7.2 Standard  
+> 目标平台：Windows 桌面原型验证；Android 横屏与触控验证仍在后续待办中
 
-**Phase 1 — Prototype 0.1 foundations in progress**
+## 一、当前阶段
 
-The GitHub repository and minimal Godot project skeleton have been created. Foundational gameplay scripts and an authoritative battle model have been committed. Godot engine validation was completed on 2026-11-25 on Godot 4.7.2: the project imports cleanly and all six headless suites pass (300 assertions, 0 failures). See `docs/GODOT_ENGINE_VALIDATION_zh-CN.md`.
+**Prototype 0.1 已具备可运行战斗原型的主要功能，当前重点是补齐同伴功能，并完成桌面与移动设备验证。**
 
-## Prototype 0.1 target
+已实现的主要内容包括：8×8 战场、行动点与移动/攻击、三种敌人、敌方行动预告、瑟弗林的五项主动技能、战斗界面，以及胜负判定。
 
-- Sevrin (Oathkeeper) as the sole playable character
-- One temporary Hunter companion
-- Three ordinary enemy types
-- One complete battlefield
-- Five to six skills
-- Three AP per player turn
-- Enemy telegraph system
-- Victory and defeat resolution
-- Android landscape and touch interaction
+这不代表 Prototype 0.1 已全部验收：猎人同伴尚未接入；Windows 实际交互与画面检查、Android 导出和真机测试仍未完成。
 
-## Implementation order
+## 二、目标范围
 
-1. P0 — Grid, movement, AP, attacks, and damage.
-2. P1 — Enemy telegraphs, interference, skill ranges, and telegraph/execution consistency.
-3. P2 — Hunter companion and its independent support action.
-4. P3 — Death, win/loss conditions, settlement, and restart loop.
-5. P4 — Android layout, touch controls, performance, export, and device testing.
+Prototype 0.1 的目标内容：
 
-## Explicit exclusions from Prototype 0.1
+- 一名可操作角色：守誓者瑟弗林（Sevrin）。
+- 一名临时猎人同伴。
+- 三种普通敌人：近战先锋、远程神射手、区域控制者。
+- 一张完整战场。
+- 瑟弗林的五项主动技能及普通攻击。
+- 每个玩家回合 3 点行动点（AP）。
+- 敌人行动预告与可见的行动顺序。
+- 战斗胜利与失败判定。
+- Android 横屏布局与触控操作。
 
-No run economy, chapter progression, Echo contracts, collections, full unlock system, or in-run save/checkpoint/restore system.
+## 三、已完成
 
-## Current status
+以下项目根据当前 `prototype/0.1` 源码和现有验证记录整理。标记为「已实现」不自动代表所有平台都已验收。
 
-- [x] Private repository created
-- [x] GitHub connector access verified
-- [x] Initial project skeleton committed
-- [x] Import and open in Godot editor (Godot 4.7.2, 2026-11-25)
-- [x] Validate the project on a Godot 4.7.2 installation (headless import, zero errors)
-- [ ] Complete D0 design-rule review
-- [x] Begin P0 gameplay implementation (grid/AP/actor primitives and a test harness committed)
-- [x] Add authoritative battle controller and captured enemy intents
-- [x] Add controller scenario test harness
-- [x] Connect battle controller to a first-pass playable battle view
-- [x] Run all six headless test suites in Godot 4.7.2 (300 assertions, 0 failures)
+| 项目 | 当前状态 | 说明 |
+|---|---|---|
+| Godot 项目基础结构与主场景 | 已完成 | 项目可导入，主场景已配置 |
+| 8×8 网格与战场阻挡 | 已完成 | 包含单位占格与障碍检查 |
+| 移动与行动点系统 | 已完成 | 玩家回合基础 AP 为 3；移动规则已接入 |
+| 普通攻击与伤害结算 | 已完成 | 物理防御、魔法抗性及伤害倍率已接入 |
+| 敌人行动预告 | 已完成 | 支持角色锁定、格子锁定和区域锁定等目标方式 |
+| 敌人行动顺序与执行 | 已完成 | 预告顺序可见，按固定规则执行 |
+| 三种普通敌人 | 已完成 | 近战先锋、远程神射手、区域控制者 |
+| 瑟弗林五项主动技能 | 已完成 | 誓盾架势、守望壁垒、裁决印记、回响反击、誓约裁断 |
+| 战斗界面与桌面基础操作 | 已实现 | 六项行动入口、目标选择、AP 与状态显示等 |
+| 战斗胜负判定 | 已实现 | 已有胜利/失败终止逻辑 |
+| Godot 4.7.2 Linux 无头验证 | 验证报告记载通过 | 导入、主场景无头运行及六套测试；详情见下方「验证记录」 |
 
-## Safety and scope constraints
+## 四、待办任务（按优先级）
 
-- ECHO is independent from Shiguang.
-- Do not add GitHub Actions workflows or paid automation without separate approval.
-- Do not implement in-run persistence, checkpoints, or run restoration.
-- Unconfirmed design proposals remain unresolved until explicitly approved.
+### P0｜完成猎人同伴功能
 
+**状态：待开发 / 待接入**
 
-## Latest implementation note
+目标：让临时猎人同伴成为 Prototype 0.1 战斗中的第二个友方单位。
 
-Foundational scripts and a headless test harness have been added on `prototype/0.1`. They have been committed and are awaiting Godot 4.x runtime validation. Do not treat the tests as passed until the project is imported and the harness is executed in Godot.
+工作内容：
+- 将猎人同伴加入战场与遭遇配置。
+- 实现玩家下达指令、同伴随后自动执行的流程。
+- 实现每个玩家回合一次的独立支援行动。
+- 明确同伴的行动范围、目标规则、失败条件和界面提示。
+- 为同伴行动及回合限制增加测试。
 
+完成标准：
+- 战斗中能正确显示猎人同伴。
+- 玩家能发出同伴指令，同伴能按规则自动执行。
+- 每个玩家回合的独立支援行动次数正确限制为一次。
+- 同伴行动不会破坏现有 AP、敌人预告和回合执行流程。
+- 新增测试通过，并完成 Godot 4.7.2 引擎验证。
 
-## Latest implementation note
+### P1｜完成 Windows 桌面实际验证
 
-The runtime battle model now supports validated player movement and adjacent attacks, a 3-AP turn budget, captured melee-vanguard intents (actor-locked basic attack, tile-locked charged strike, deterministic pursuit up to two cells), enemy-phase execution, damage/defeat, and victory/defeat termination. Controller scenarios cover key lock and turn behaviors. The code and test harnesses are committed but have not been run in Godot 4.x; treat all runtime behavior as unverified until engine execution.
+**状态：待验证**
 
+目标：确认原型在 Windows Godot 4.7.2 Standard 中能够正常导入、启动和操作。
 
-## Playable-slice presentation
+工作内容：
+- 使用最新 `prototype/0.1` 源码或明确对应提交的测试包重新导入。
+- 按 F5 启动主场景。
+- 检查窗口尺寸、战场显示、技能栏、AP/生命值、敌人预告和行动顺序。
+- 实际操作移动、攻击、五项技能、目标确认、取消和结束回合。
+- 记录错误截图、日志和对应 Commit ID。
 
-The main scene now opens an 8×8 tactical board with Sevrin, two Melee Vanguard units, obstacle cells, enemy intent previews/order, AP and health display, tap-to-move, tap-to-attack, and an End Turn control. Landscape-first viewport settings are configured. This is an unvalidated first-pass UI: no Godot runtime, Android export, or device test has been performed in this environment.
+完成标准：
+- Windows Godot 4.7.2 能成功导入并启动主场景。
+- 鼠标、键盘和目标选择操作符合预期。
+- 没有阻断游戏流程的解析错误或运行时错误。
+- 测试记录注明 Windows 与 Godot 的具体版本，以及被测源码 Commit。
 
+### P2｜完成 Android 横屏与触控验证
 
-## Static review — 2026-11-24
+**状态：待开发 / 待验证**
 
-- Encounter setup now validates the full player/enemy/obstacle layout before changing the active battle state. Invalid duplicate or overlapping enemy positions no longer leave a partially replaced encounter.
-- Battle UI intent rendering and enemy-order labels now use the named `IntentState` enum rather than numeric state literals; active, resolved, and canceled states are distinguished.
-- Added controller scenarios verifying that an invalid encounter setup is rejected without mutating the currently active encounter.
-- This is a source-level review and test-harness update only. Godot 4.x import, script parsing, headless execution, Android export, and device behavior remain unverified because no Godot runtime is available in the current environment.
+目标：确认原型能在目标 Android 设备上使用横屏触控运行。
 
-- Encounter validation now also rejects an empty enemy roster, preventing a nominally started encounter with no possible victory condition. A regression scenario covers this rejection and verifies the prior encounter remains intact.
+工作内容：
+- 检查手机横屏下的战场缩放、界面布局和信息可读性。
+- 检查触控目标大小、移动选格、技能选择和目标确认。
+- 检查不同屏幕比例下是否出现遮挡或操作困难。
+- 配置 Android 导出并生成测试包。
+- 在实际 Android 设备安装和运行，记录设备型号与系统版本。
 
-- Enemies that have no legal pursuit route now receive an explicit, visible `wait` intent instead of silently disappearing from the execution order. The wait intent resolves without movement or damage; a controller scenario covers a fully blocked enemy.
+完成标准：
+- Android 导出成功，测试包可安装并启动。
+- 横屏界面没有关键内容遮挡。
+- 核心战斗操作可以通过触控完成。
+- 记录实际测试设备、系统版本、测试包对应 Commit 和问题清单。
 
-- Added a provisional Ranged Marksman implementation specification: orthogonal line-of-fire, range 3–6, tile-locked single-cell aimed shot, 2 provisional damage, and explicit wait/cancel behavior. This is a design baseline for implementation and playtesting, not a claim that the archetype is implemented or balance-approved.
+### P3｜补齐战斗结束后的流程
 
-- Implemented explicit enemy archetypes on runtime actors and optional, validated encounter archetype input. Existing encounters without an archetype list remain Vanguard encounters; unknown types and mismatched lists are rejected before state mutation.
-- Implemented the provisional Ranged Marksman aimed shot: orthogonal line-of-fire at range 3–6, tile-locked single-cell target, 2 damage, execution-time range/line revalidation, and wait intent when no legal shot exists. Added controller scenarios for a valid shot, blocked lane, and minimum-range failure. These tests are committed but not run in Godot 4.x.
+**状态：部分完成，需确认剩余范围**
 
-- Mixed-enemy review found and corrected a priority mismatch: Marksman aimed shots now use execution priority 2, after Vanguard charged strikes (0) and basic melee (1). Added mixed-roster coverage verifying the visible order and actual damage resolution, plus rejection tests for unknown/mismatched archetype input. Test harness remains unexecuted pending Godot 4.x runtime access.
-- Added a Marksman tile-lock evasion regression scenario: moving Sevrin off the marked cell cancels the aimed shot without damage. This is source-level test coverage only; no Godot test execution has occurred.
+目标：让一场战斗从开始、进行到结束形成清晰完整的体验。
 
-- Implemented the provisional Area Controller archetype: explicit `area_controller` encounter type, five-health provisional profile, range-2–4 fixed orthogonal-cross `ground_pulse`, area-locked one-damage resolution, and explicit cancellation when the captured area is empty. Added a distinct `C` actor marker and cross-cell telegraph rendering.
-- Added controller scenarios for area-lock metadata, damage to a player remaining in the footprint, and evasion by moving outside the captured area. Added the provisional behavior and acceptance criteria to the enemy specification.
-- Source-level implementation and test authoring only. Godot 4.x parsing and execution remain unverified because the runtime is unavailable in this environment.
+已具备：胜利与失败判定，以及战斗结束状态。
 
-- Added a boundary regression scenario verifying the area-locked cross footprint is clipped to valid cells when its center is at the map corner.
+需要检查并明确：
+- 战斗结束时是否有清晰的胜利/失败提示。
+- 是否需要结果展示或结算界面。
+- 是否需要重新开始当前战斗的入口。
+- 重新开始时，AP、单位状态、敌人预告和区域效果是否全部正确重置。
 
-- Mixed-archetype integration pass: added a controller scenario with Vanguard, Marksman, and Area Controller active together. The scenario checks one captured intent per enemy, the shared priority/tie-break order, fixed telegraph geometry, and damage resolution matching the displayed sequence. Added a second scenario confirming that an intervening Vanguard blocks the Marksman's firing lane at planning time. Updated the first-pass battle scene to instantiate all three archetypes so the prototype view exposes the complete ordinary-enemy roster. These are source-level changes and authored tests only; Godot import, parsing, and test execution remain pending.
+完成标准：
+- 先确认 Prototype 0.1 必须包含哪些结束后流程，再实现缺少的部分。
+- 重新开始（若纳入本阶段）后不会残留上一场战斗状态。
+- 相关流程有测试和实际运行验证。
 
+## 五、暂不纳入 Prototype 0.1
 
-## Static review — configured grid bounds
+以下内容不应在没有重新确认范围前擅自加入当前原型：
 
-- Corrected encounter validation so obstacle and enemy coordinates are checked against the controller's configured `grid_size`, rather than calling the bounds helper without its required dimensions.
-- Added regression scenarios using a 6×6 configured board: valid in-bounds setup is accepted, while an enemy or obstacle at x=6 is rejected.
-- Controller and test files were re-fetched after the commits to verify the exact changes. This remains source-level review only; Godot import, parsing, and test execution are still pending.
+- 战斗内存档、检查点和中途恢复。
+- 完整章节推进与关卡解锁。
+- 回响契约、收藏系统和完整解锁系统。
+- 完整局外成长与经济系统。
+- 未经确认的额外角色、敌人、地图或技能扩展。
 
+## 六、验证记录与注意事项
 
-## First Windows Godot import feedback — occupied Dictionary type
+### 已有 Godot 引擎验证记录
 
-- A tester opened the project with Godot 4.7.2 stable on Windows and reported a parser error in `scripts/ui/battle_view.gd:183`: Godot could not infer the type of `occupied`.
-- Confirmed that `BattleController.get_occupied_cells()` returns `Dictionary`; changed the local declaration to explicitly type `occupied: Dictionary`.
-- The fix was committed to `prototype/0.1` and re-fetched for verification. The project has not yet been re-imported or run after this fix; further parser errors may appear and should be handled from the tester's next screenshot.
+文档 `docs/GODOT_ENGINE_VALIDATION_zh-CN.md` 记载了以下结果：
 
+- 环境：Godot 4.7.2 Standard，Linux x86_64，headless（无图形界面）模式。
+- 项目导入：通过，记录为零错误。
+- 主场景：无头运行 120 帧，记录为无运行时错误。
+- 六个测试套件：共 300 条断言，记录为 0 失败。
+- 测试范围包括核心规则、战斗状态、区域效果、回响反击、战斗控制器和技能界面集成。
 
-## Follow-up static parser-risk review
+**重要限制：**
+- 这是验证文档中记录的 Linux 无头测试结果，不等于 Windows 桌面试玩通过。
+- 无头测试不验证实际窗口绘制、鼠标键盘焦点、画面观感或 Android 触控。
+- Android 导出和真机行为尚未验证。
+- 技能数值仍属于原型调试基线，需要实际游玩后再评估。
 
-- The Windows Godot 4.7.2 report identified an inference failure at the UI call to `get_occupied_cells`. In addition to the explicit `Dictionary` annotation in `battle_view.gd`, the controller method now declares its return type as `-> Dictionary` and its local map as `Dictionary`.
-- Re-scanned all tracked GDScript files in the current prototype tree for inferred declarations involving method calls. Remaining matches use concrete built-in constructors/helpers or functions with explicit return types; no additional same-pattern untyped getter call was found in this scan.
-- Reviewed the main scene resource path and `project.godot` main-scene setting; both point to the tracked `scenes/main/main.tscn` and `scripts/ui/battle_view.gd` resources.
-- These are source-level checks only. Godot editor import, parser validation, runtime behavior, and test-suite execution remain unverified until the tester reimports the latest ZIP and runs the project.
+### 测试版本需要核对
 
-## Static audit follow-up — Godot 4.7.2 Windows feedback
+最近一次修复技能按钮回调的 PR #2 已合并到 `prototype/0.1`。但引擎验证文档中的测试环境章节记录的 HEAD 标识，与该修复分支及合并版本的对应关系需要维护者再次确认。
 
-- Re-fetched the project configuration, main scene, battle view, battle controller, grid rules, AP budget, intent model, actor model, and both test harnesses from `prototype/0.1`.
-- Confirmed `project.godot` points to `res://scenes/main/main.tscn`, and that scene references the tracked `res://scripts/ui/battle_view.gd` script.
-- Confirmed the earlier `occupied` inference issue is addressed by an explicit `Dictionary` declaration at the UI call site and an explicit `-> Dictionary` return type on `get_occupied_cells()`.
-- Reviewed remaining inferred local declarations (`:=`) across the tracked GDScript files. Calls used for inferred values now have declared return types; other matches derive from typed parameters, built-in constructors, literals, or built-in integer helpers.
-- Found and corrected stale README text that still described the repository as an unimplemented skeleton. README now describes the current playable battle slice, Windows import/run steps, test-harness commands, and the still-unverified runtime status.
-- Static review did not reveal another confirmed parser error. This is not equivalent to Godot parsing or execution: only a Godot 4.7.2 import and actual test run can establish that. The tester should re-download the latest ZIP before retrying so the fixes and README are included.
+在确认之前，不要直接宣称「300 条断言已在 PR #2 合并后的最终版本上运行」。后续测试必须记录完整 Commit SHA，确保测试结果能对应到具体源码版本。
 
+## 七、协作与提交要求
 
-## Chinese-first interface and scaled combat — 2026-11-24
+每项开发任务开始前，先确认目标分支、最新 Commit 和相关文件。
 
-- Set the in-game battle interface, status messages, action labels, unit labels, and battlefield glyphs to Simplified Chinese by default.
-- Added four combat attributes to every runtime actor: health, attack, defense, and magic resistance.
-- Added a shared multiplier-based damage formula and separate physical-defense / magical-resistance mitigation.
-- Updated the Oathkeeper and three enemy archetypes to thousand-scale baseline values; added 0.7×–1.5× multipliers to current enemy attacks and a 1.0× player basic attack.
-- Added docs/combat_stats_zh-CN.md as the numeric baseline and rules reference, plus regression cases for multipliers and mitigation.
-- Source files and tests were committed and re-fetched. Godot 4.7.2 parsing and runtime test execution have not yet been performed; do not mark the tests as passed until they run in the engine.
+- 当前原型开发主线：`prototype/0.1`。
+- 新任务优先使用独立功能分支开发，再通过 Pull Request 合并。
+- 不要直接把未审查的改动提交到 `main`。
+- 每次改动说明修改文件、改动目的和影响范围。
+- 源码变化后同步更新相关文档和测试。
+- 提交时记录完整 Commit SHA。
+- 测试包必须注明它对应的 Commit SHA。
+- 分别记录静态检查、Godot 导入、自动化测试、桌面实测和设备实测；没有执行的项目标记为「待验证」。
+- ECHO 与「拾光」项目严格隔离。
+- 不擅自覆盖或替换朋友已经发布的测试包。
 
+## 八、每项任务的状态定义
 
-## Sevrin tactical skill kit design — 2026-11-24
+- **待开发**：功能尚未实现。
+- **开发中**：正在修改或接入。
+- **待验证**：代码看起来已具备，但还没有完成对应环境的实际测试。
+- **已完成**：达到该任务的完成标准，并有相应验证记录。
+- **暂缓**：明确不属于当前阶段，暂不安排。
 
-- Authored a five-active-skill design for Sevrin plus the existing basic attack: Oathguard Stance, Watchwall, Judgment Mark, Echo Counter, and Oath Severance (Chinese in-game names are specified in the design document).
-- The kit emphasizes defensive timing, area protection, intent-aware marking, conditional counterattacks, and a high-cost interrupt rather than damage-only buttons.
-- Documented AP costs, target/range rules, duration, status consumption, intent cancellation, combo turns, event/settlement order, edge cases, and initial balance parameters.
-- This is a design specification only. No skill implementation has been committed yet; implementation must follow the documented order with per-step static review and Godot 4.7.2 validation when an engine environment is available.
-
-
-## Data-driven skill foundation — 2026-11-24
-
-- Added a typed `SkillDefinition` Resource with stable skill ID, Simplified Chinese display name/description, AP cost, target mode, range, damage type/multiplier, effect ID, duration, and judgment-mark requirement.
-- Added an Oathkeeper skill catalog containing the five designed skills as data; this does not yet execute skills or change the existing battle loop.
-- Added a dedicated skill-definition test harness covering catalog size/order, validation, AP costs, targeting/range, mark requirements, and invalid zero-AP data. Corrected the harness to aggregate failures reliably rather than passing an integer counter by value.
-- Re-fetched the new scripts and test file after writing. This remains source-level verification only. Godot 4.7.2 import and execution are still required; do not mark the new harness as passed until it runs in-engine.
-
-
-## Battle status foundation — 2026-11-24
-
-- Added typed `BattleStatus` runtime data and `BattleStatusCollection` lifecycle management as independent infrastructure.
-- Supports replace/refresh/add stacking policies, capped stacks, unlimited or finite trigger counts, explicit trigger consumption, phase-boundary expiry, explicit removal, and actor-wide cleanup.
-- Added `tests/test_battle_status.gd` for creation, lookup, trigger consumption, expiry, stack policies, refresh semantics, invalid input, and cleanup.
-- Documented the status API and planned skill-to-status mapping in `docs/battle_status_system_zh-CN.md`.
-- The status collection is deliberately not wired into BattleController yet. No skill effect or damage pipeline behavior changes in this milestone.
-- Files were re-fetched after edits for source-level review. Godot 4.7.2 import and test execution remain outstanding; do not claim the test harness passed until run in-engine.
-
-
-## Battle status lifecycle integration — 2026-11-24
-
-- Integrated `BattleStatusCollection` with `BattleController` phase boundaries: `player_phase_start` expires before new player intents are generated; `enemy_phase_end` expires after enemy actions and before the next player turn.
-- Actor defeat clears that actor's statuses. Battle completion and encounter restart clear the collection.
-- Added global boundary expiry and whole-collection cleanup APIs.
-- Extended controller tests for enemy-phase-end expiry and defeated-actor status cleanup.
-- Status effects are still not applied to damage or enemy intent behavior; skill casting and effect execution remain future work.
-- Source files were re-fetched for review. Godot 4.7.2 import/runtime tests remain unexecuted.
-
-
-## Oathguard damage mitigation — 2026-11-24
-
-- `BattleActor.apply_damage` now accepts a final-stage reduction percentage applied after physical defense or magic resistance.
-- `BattleController._apply_damage` checks the `oathguard` status, applies 35% final damage reduction, and consumes its trigger only after positive damage is actually applied.
-- Added a `status_triggered` battle event and controller regression coverage using the Marksman aimed-shot case (post-resistance damage 727, Oathguard damage 472).
-- Oathguard does not yet generate the Echo resource; that reaction condition remains explicitly unimplemented.
-- Updated status system documentation. Changed files were fetched again for source-level review. Godot 4.7.2 import/runtime tests remain unexecuted.
-
-
-## Judgment Mark intent intervention — 2026-11-24
-
-- Added BattleIntent.judgment_marked so an already revealed intent can retain its marked state without changing its captured target or footprint.
-- Added BattleController.request_judgment_mark: validates player phase, living enemy target, orthogonal range 1–4, clear line, and 1 AP; applies the mark and annotates the target's current active attack intent.
-- Single-target attacks (basic melee and aimed shot) reduce raw damage by 25% before resistance, then consume the mark on execution.
-- Charged tile attacks and area attacks preserve their original damage and telegraph footprint; successful execution consumes the mark and applies exposed to the attacker.
-- exposed reduces physical defense and magic resistance by 200 through the following player phase and expires when that player phase ends.
-- Wait/pursuit intents do not consume the mark; an unused mark is deferred at the first enemy-phase boundary and expires after the following enemy phase if no attack executes. Canceled or empty-target attacks do not apply Exposed.
-- Added controller regression cases for marked aimed shot, charged strike/Exposed, pursuit-to-next-attack persistence, and area-attack/Exposed. Updated battle status documentation.
-- Source files were fetched again for static review. Godot 4.7.2 import and runtime tests have not yet been executed.
-
-- Added BattleController.request_oath_severance: validates a marked living enemy at orthogonal range 1–2 with clear line and 2 AP; consumes the mark, cancels its active intent with reason oath_severance, then applies 1.4× physical damage.
-- Added regression coverage for rejecting unmarked targets without AP loss, the combined 3-AP mark/severance sequence, exact post-defense damage, and prevention of the canceled intent during that enemy phase.
-
-- Added BattleStatusCollection.defer_status_boundary and regression coverage to preserve an unused Judgment Mark through one enemy phase, allowing it to attach to the target's next attack intent.
-- Added an area-attack mark regression case confirming the captured footprint and damage remain unchanged while Exposed is applied to the attacker.
-
-## Desktop skill integration — 2026-11-25
-
-- Reconciled the earlier historical status notes with the current implementation: all five Sevrin active-skill controller requests and their combat effects are present in the current prototype branch.
-- Confirmed the main battle view already contains the six-entry action bar (basic attack plus five active skills), mouse selection, self-skill activation, actor-target confirmation, AP display, status markers, and target range hints.
-- Improved desktop controls: number keys 1–6 activate/select the matching action; Enter/Space ends the player turn; Esc/right mouse cancels an actor-target selection and returns to basic attack.
-- Target previews for Judgment Mark and Oath Severance now require a clear orthogonal line, matching controller validation.
-- Added tests/test_battle_view_skills.gd to exercise the main scene's UI-to-controller paths for self skills, Judgment Mark, and Oath Severance.
-- Updated README with Godot 4.7.2 Standard Windows import/run instructions, the current skill list, desktop controls, and all current test commands. Updated the skill specification and validation checklist to reflect UI integration.
-- The main scene remains a functional prototype battle view and starts directly in combat; a title/menu and level-selection flow are not part of this integration.
-- All changes were statically re-fetched from prototype/0.1. Godot 4.7.2 import, automated test execution, and interactive Windows desktop verification are still pending; do not mark them as passed until the user runs them in the engine.
-
-- Follow-up UI polish: Watchwall now draws its locked five-cell protection footprint; the player displays separate Oathguard, Echo Counter, and Echo markers; marked enemies display Judgment Mark and Exposed markers.
-- Expanded the UI integration test to verify right-click cancellation before target confirmation. Reconciled docs/battle_status_system_zh-CN.md so it no longer describes Echo generation, Echo Counter, Watchwall, or the skill UI as unimplemented.
-
-## Engine validation — 2026-11-25
-
-The project was imported and run for the first time in a real engine: Godot `4.7.2.stable.official.ed1daf0bf` on Linux x86_64, headless. Full record in `docs/GODOT_ENGINE_VALIDATION_zh-CN.md`.
-
-- **Blocking defect found and fixed**: `scripts/ui/battle_view.gd` had `_on_skill_pressed`'s body present but its `func` header missing, so the script failed to parse (7 call-site errors plus 4 scope errors for `index`). Because the main scene script could not load, every scene-dependent validation was impossible — this is why earlier entries in this file repeatedly say "not executed in the engine". The fix restores the one-line signature; the function body is unchanged.
-- **Result after the fix**: import clean with zero errors; main scene runs 120 headless frames with no runtime errors; six suites pass with **300 assertions and 0 failures** (`test_core_rules` 18, `test_battle_status` 25, `test_battle_area_effects` 43, `test_battle_echo_counter` 38, `test_battle_controller` 162, `test_battle_view_skills` 14).
-- **What this supersedes**: earlier "Godot 4.7.2 import and runtime tests have not yet been executed" notes describe the state before this run and should be read as history, not as the current status.
-- **Still unverified**: Windows F5 interaction and visual review, Android export and device behaviour, and all skill numbers, which remain prototype baselines awaiting real play.
+> 更新本文件时，应优先维护上面的任务状态和完成标准。详细的历史过程、设计决定和测试步骤分别保留在各自的专题文档中，避免本文件再次变成冗长的开发日志。
