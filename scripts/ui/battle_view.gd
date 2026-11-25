@@ -80,13 +80,7 @@ func _draw_board() -> void:
 
 
 func _draw_area_effects() -> void:
-	var watchwall = controller.area_effects.get_effect(&"watchwall")
-	if watchwall == null:
-		return
-	for cell in watchwall.affected_cells:
-		var rect := _cell_rect(cell).grow(-3.0)
-		draw_rect(rect, Color(0.24, 0.52, 0.70, 0.16), true)
-		draw_rect(rect, Color("#76b6d2"), false, 2.0)
+	# Legacy Watchwall effects remain supported by the controller but are not part of the V2 skill UI.
 
 
 func _draw_actors() -> void:
@@ -317,7 +311,8 @@ func _input(event: InputEvent) -> void:
 				_on_skill_pressed(1)
 			KEY_3:
 				_on_skill_pressed(2)
-			
+			KEY_4:
+				_on_skill_pressed(3)
 			KEY_ESCAPE:
 				_cancel_target_selection()
 			KEY_ENTER, KEY_SPACE:
