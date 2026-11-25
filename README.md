@@ -10,7 +10,7 @@ ECHO 是一款使用 Godot 4.7.2 Standard 与 GDScript 开发的 2D 回合制战
 - **目标画面**：1280 × 720，横向布局
 - **移动端方向**：Android 横屏；本阶段优先完成 Windows 桌面导入与玩法验证
 - **技能组版本**：誓守者 V2（裁决印记 / 誓盾庇护 / 绝对守护 + 被动不屈誓约）
-- **验证状态**：已在 Godot 4.7.2 中完成导入、十五个测试套件与主场景无头运行（2026-11-25，582 条断言 0 失败）；Windows 交互与画面、Android 导出仍待人工验证
+- **验证状态**：已在 Godot 4.7.2 中完成导入、十六个测试套件与主场景无头运行（2026-11-25，623 条断言 0 失败）；Windows 交互与画面、Android 导出仍待人工验证
 
 本仓库是 ECHO 的独立项目，与「拾光」完全分离。
 
@@ -97,7 +97,7 @@ tests\run_all.bat         # Windows：双击，或 cmd 中执行
 test_battle_controller                 162 ok
 ...
 -----
-suites=15 assertions=582 failures=0 broken=0
+suites=16 assertions=623 failures=0 broken=0
 ```
 
 退出码为 0 仅当所有套件 `failures=0` 且无一崩溃。Windows 若未把 Godot 加入 PATH，用参数指定可执行文件：
@@ -114,7 +114,7 @@ godot --headless --path . --script res://tests/test_core_rules.gd
 
 每个套件结束时打印一行机器可读结果 `RESULT <名称> assertions=<n> failures=<n>`。
 
-当前基线为 **十五个套件、582 条断言、0 失败**，逐套件明细见 `docs/engineering/BASELINE.md`。后续任何改动都应重跑并以零失败为准；headless 测试不能替代 F5 主场景的鼠标、键盘和画面检查。
+当前基线为 **十六个套件、623 条断言、0 失败**，逐套件明细见 `docs/engineering/BASELINE.md`。后续任何改动都应重跑并以零失败为准；headless 测试不能替代 F5 主场景的鼠标、键盘和画面检查。
 
 ## 当前边界
 

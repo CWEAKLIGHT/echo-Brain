@@ -12,6 +12,7 @@ const CombatMathScript = preload("res://scripts/battle/combat_math.gd")
 const StatusCollectionScript = preload("res://scripts/battle/battle_status_collection.gd")
 const AreaEffectScript = preload("res://scripts/battle/battle_area_effect.gd")
 const AreaEffectCollectionScript = preload("res://scripts/battle/battle_area_effect_collection.gd")
+const EnemyCatalogScript = preload("res://scripts/battle/enemy_catalog.gd")
 
 ## Hunter summon: a free support strike on a cooldown. The hunter is not a
 ## battlefield unit -- it appears next to the chosen enemy, strikes once and is
@@ -72,7 +73,7 @@ func start_encounter(
 	if not enemy_archetypes.is_empty() and enemy_archetypes.size() != enemy_cells.size():
 		return false
 	for archetype in enemy_archetypes:
-		if archetype != "vanguard" and archetype != "marksman" and archetype != "area_controller":
+		if not EnemyCatalogScript.has_definition(archetype):
 			return false
 	var candidate_blockers: Dictionary = {}
 	for cell in obstacles:
@@ -110,13 +111,10 @@ func start_encounter(
 	actors["sevrin"] = BattleActorScript.new("sevrin", "player", player_cell, 12000, "oathkeeper", 2000, 650, 500)
 	for index in range(enemy_cells.size()):
 		var cell: Vector2i = enemy_cells[index]
-		var archetype := "vanguard" if enemy_archetypes.is_empty() else enemy_archetypes[index]
+		var archetype := EnemyCatalogScript.DEFAULT_ARCHETYPE if enemy_archetypes.is_empty() else enemy_archetypes[index]
 		var enemy_id := "%s_%02d" % [archetype, index]
-		var enemy_health := 2000 if archetype == "marksman" else (2600 if archetype == "area_controller" else 3200)
-		var enemy_attack := 1200 if archetype == "marksman" else (1100 if archetype == "area_controller" else 1400)
-		var enemy_defense := 350 if archetype == "marksman" else (450 if archetype == "area_controller" else 700)
-		var enemy_magic_resistance := 250 if archetype == "marksman" else (650 if archetype == "area_controller" else 350)
-		actors[enemy_id] = BattleActorScript.new(enemy_id, "enemy", cell, enemy_health, archetype, enemy_attack, enemy_defense, enemy_magic_resistance)
+		var profile: EnemyDefinition = EnemyCatalogScript.get_definition(archetype)
+		actors[enemy_id] = BattleActorScript.new(enemy_id, "enemy", cell, profile.health, archetype, profile.attack, profile.defense, profile.magic_resistance)
 
 	phase = BattlePhase.PLAYER
 	_begin_player_turn()
